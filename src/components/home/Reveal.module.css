@@ -1,7 +1,7 @@
 /* Animación de entrada por scroll (paridad con el master: `.reveal`/`.in`).
-   El bloque es visible por defecto; solo se oculta cuando el documento
-   tiene JS (`html.js`, añadido por el layout antes del primer paint), de
-   modo que sin JavaScript el contenido nunca queda oculto. */
+   El layout entrega `html.js` desde SSR (sin script inline, sin hydration
+   mismatch). Con JS, IntersectionObserver añade `.in`; sin JS, un
+   `<noscript>` en el layout fuerza [data-reveal] a opacity 1. */
 
 .reveal {
   opacity: 1;

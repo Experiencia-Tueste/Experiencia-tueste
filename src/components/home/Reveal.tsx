@@ -11,18 +11,19 @@ export interface RevealProps {
 
 /**
  * Animación de entrada por scroll (paridad con el master: `.reveal` +
- * IntersectionObserver con threshold 0.12). El bloque nace visible y solo
- * se oculta cuando el documento tiene JS (`html.js`, añadido por un
- * script inline en el layout antes del primer paint): sin JavaScript el
- * contenido nunca queda oculto. Al entrar en viewport se añade la clase
- * `in` (opacity 1, sin transformación) y el observador se desconecta.
+ * IntersectionObserver con threshold 0.12). El layout envía `html.js`
+ * directamente desde SSR (sin script inline, sin hydration mismatch); con
+ * JS activo el bloque se oculta vía CSS (`html.js .reveal:not(.in)`) y el
+ * observer añade `.in` al entrar en viewport. Sin JavaScript, un
+ * `<noscript>` en el layout fuerza `[data-reveal]` a opacity 1
+ * y sin transformación, así el contenido nunca queda oculto. Al revelarse
+ * el observador se desconecta.
  *
- * La clase se aplica directamente al DOM (sin estado React) para evitar
- * re-renders y respetar la regla de lint de efectos. Accesibilidad:
- * `prefers-reduced-motion` deja todo visible sin transición, y
- * `:focus-within` muestra cualquier bloque aún oculto si el usuario
- * tabula hacia su interior. El wrapper no añade texto ni roles: solo
- * envuelve el contenido real.
+ * La clase `.in` se aplica directamente al DOM (sin estado React) para
+ * evitar re-renders. Accesibilidad: `prefers-reduced-motion` deja todo
+ * visible sin transición, y `:focus-within` muestra cualquier bloque aún
+ * oculto si el usuario tabula hacia su interior. El wrapper no añade texto
+ * ni roles: solo envuelve el contenido real.
  */
 export default function Reveal({ children, className }: RevealProps) {
   const ref = useRef<HTMLDivElement>(null);

@@ -46,16 +46,21 @@ const FONT_HREF =
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="es">
+    <html lang="es" className="js">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href={FONT_HREF} rel="stylesheet" />
-        {/* Marca de JS antes del primer paint: habilita la animación de
-            entrada por scroll (Reveal) sin ocultar contenido sin JS. */}
-        <script
-          dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }}
-        />
+        {/*
+         * html.js se entrega directamente desde SSR: el servidor y el
+         * cliente coinciden, sin hydration mismatch. Con JS activo, Reveal
+         * usa IntersectionObserver para añadir la clase .in. Sin JS, el
+         * bloque <noscript> fuerza que todos los [data-reveal] queden
+         * visibles, así el contenido nunca se oculta.
+         */}
+        <noscript>
+          <style>{'[data-reveal]{opacity:1!important;transform:none!important}'}</style>
+        </noscript>
       </head>
       <body>{children}</body>
     </html>

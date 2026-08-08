@@ -1,0 +1,279 @@
+.section {
+  position: relative;
+  padding: var(--space-section) var(--space-gutter);
+  background: radial-gradient(110% 85% at 88% 10%, rgba(251, 169, 34, 0.1), transparent 60%);
+  scroll-margin-top: 80px;
+}
+
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.sechead {
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
+  margin-bottom: 14px;
+}
+
+.secnum {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.3em;
+  color: var(--amber);
+}
+
+.lead {
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: rgba(var(--cream-rgb), 0.75);
+  max-width: 58ch;
+  margin-bottom: 10px;
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-style: italic;
+  letter-spacing: -0.025em;
+  line-height: 0.92;
+  font-size: clamp(2.5rem, 6.4vw, 5rem);
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+
+.title em {
+  font-style: italic;
+  background: linear-gradient(95deg, var(--amber), var(--coral));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ── Botón «Tu selección» con contador ── */
+.cartbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(var(--cream-rgb), 0.06);
+  border: 1px solid rgba(var(--cream-rgb), 0.18);
+  padding: 12px 20px;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  font-family: var(--font-sans);
+  color: var(--cream);
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.cartbtn svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: var(--amber);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.cartbtn:hover {
+  border-color: var(--amber);
+}
+
+.cartbtn:focus-visible,
+.add:focus-visible {
+  outline: 2px solid var(--teal-bright);
+  outline-offset: 3px;
+}
+
+.count {
+  background: var(--coral);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+
+/* ── Grid de productos ── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 24px;
+  margin-top: 46px;
+}
+
+.card {
+  border-radius: 20px;
+  overflow: hidden;
+  background: rgba(var(--cream-rgb), 0.03);
+  border: 1px solid rgba(var(--cream-rgb), 0.1);
+  transition: 0.4s;
+  display: flex;
+  flex-direction: column;
+}
+
+.card:hover {
+  transform: translateY(-8px);
+  border-color: rgba(251, 169, 34, 0.4);
+}
+
+.ph {
+  aspect-ratio: 1;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(120% 120% at 30% 20%, rgba(251, 169, 34, 0.1), transparent 60%);
+}
+
+.ph svg {
+  width: 55%;
+  height: 55%;
+  opacity: 0.92;
+  transition: 0.5s;
+}
+
+.card:hover .ph svg {
+  transform: scale(1.08) rotate(-2deg);
+}
+
+.badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  font-family: var(--font-mono);
+  font-size: 0.56rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: var(--ink);
+  color: var(--cream);
+  padding: 5px 10px;
+  border-radius: 20px;
+}
+
+.body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.cat {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--teal-bright);
+}
+
+.name {
+  font-family: var(--font-serif);
+  font-size: 1.22rem;
+  font-weight: 500;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.desc {
+  font-size: 0.82rem;
+  color: rgba(var(--cream-rgb), 0.6);
+  line-height: 1.5;
+  flex: 1;
+  margin: 0;
+}
+
+.foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.price {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  color: var(--amber);
+}
+
+.add {
+  background: var(--cream);
+  color: var(--ink);
+  border: none;
+  padding: 9px 16px;
+  border-radius: 40px;
+  font-weight: 600;
+  font-size: 0.78rem;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.add:hover {
+  background: var(--amber);
+}
+
+/* ── Nota de pagos y aria-live ── */
+.note {
+  text-align: center;
+  margin-top: 44px;
+  font-size: 0.9rem;
+  color: rgba(var(--cream-rgb), 0.6);
+}
+
+.live {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--teal-bright);
+  margin: 24px 0 0;
+  min-height: 1.2em;
+  text-align: center;
+}
+
+/* ── Modo día ── */
+:global(body.day) .lead {
+  color: rgba(46, 42, 36, 0.75);
+}
+
+:global(body.day) .cartbtn {
+  color: var(--ink);
+}
+
+:global(body.day) .desc {
+  color: rgba(46, 42, 36, 0.6);
+}
+
+:global(body.day) .note {
+  color: rgba(46, 42, 36, 0.6);
+}
+
+:global(body.day) .badge {
+  background: var(--cream);
+  color: var(--ink);
+}
+
+/* ── Móvil: sin overflow horizontal ── */
+@media (max-width: 560px) {
+  .head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,64 @@
+/* Error global (root layout): no depende de tokens globales ni del
+   layout (que podría haber fallado), por eso usa valores literales de
+   la paleta Tueste. Mínimo, seguro y con foco visible. */
+
+.body {
+  margin: 0;
+  background: #1d0526;
+}
+
+.wrap {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 32px 20px;
+  text-align: center;
+  font-family: 'Hanken Grotesk', system-ui, sans-serif;
+}
+
+.title {
+  margin: 0;
+  font:
+    700 1.7rem/1.2 'Fraunces',
+    Georgia,
+    serif;
+  color: #ffe8bf;
+}
+
+.lead {
+  margin: 0;
+  max-width: 34rem;
+  font-size: 1.05rem;
+  color: rgba(255, 232, 191, 0.72);
+}
+
+.retry {
+  margin-top: 24px;
+  padding: 12px 32px;
+  border: 1px solid #fba922;
+  border-radius: 9999px;
+  background: transparent;
+  font:
+    600 0.78rem 'Hanken Grotesk',
+    system-ui,
+    sans-serif;
+  letter-spacing: 0.08em;
+  color: #fba922;
+  cursor: pointer;
+  transition:
+    background 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
+    color 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.retry:hover {
+  background: #fba922;
+  color: #1d0526;
+}
+
+.retry:focus-visible {
+  outline: 2px solid #19c9b8;
+  outline-offset: 3px;
+}

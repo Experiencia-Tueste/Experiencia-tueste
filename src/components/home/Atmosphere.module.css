@@ -1,0 +1,77 @@
+.mesh {
+  position: fixed;
+  inset: -20%;
+  z-index: -2;
+  pointer-events: none;
+  filter: blur(72px) saturate(1.3);
+  opacity: 0.68;
+}
+
+.mesh span {
+  position: absolute;
+  border-radius: 50%;
+  mix-blend-mode: screen;
+  animation: drift 19s ease-in-out infinite;
+}
+
+.m1 {
+  width: 46vw;
+  height: 46vw;
+  left: -8%;
+  top: -6%;
+  background: var(--teal);
+  animation-delay: 0s;
+}
+
+.m2 {
+  width: 40vw;
+  height: 40vw;
+  right: -6%;
+  top: 8%;
+  background: var(--coral);
+  animation-delay: -7s;
+}
+
+.m3 {
+  width: 50vw;
+  height: 50vw;
+  left: 14%;
+  bottom: -18%;
+  background: var(--purple);
+  animation-delay: -13s;
+}
+
+.m4 {
+  width: 30vw;
+  height: 30vw;
+  right: 10%;
+  bottom: -6%;
+  background: var(--amber);
+  opacity: 0.6;
+  animation-delay: -19s;
+}
+
+@keyframes drift {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(6%, 4%) scale(1.12);
+  }
+  66% {
+    transform: translate(-5%, -3%) scale(0.93);
+  }
+}
+
+/* Modo día: el mesh se atenúa para no competir con el fondo claro. */
+:global(body.day) .mesh {
+  opacity: 0.36;
+  filter: blur(85px) saturate(1.05);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mesh span {
+    animation: none;
+  }
+}

@@ -1,0 +1,24 @@
+.sun {
+  color: var(--amber);
+  animation: spin 40s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* En modo día el sol se oscurece para mantener contraste sobre fondo claro. */
+:global(body.day) .sun {
+  color: var(--amber-deep);
+}
+
+/* Motion reducido: quietud total (los tokens globales ya lo cubren, pero
+   reforzamos aquí para que el sol no gire en absoluto). */
+@media (prefers-reduced-motion: reduce) {
+  .sun {
+    animation: none;
+  }
+}

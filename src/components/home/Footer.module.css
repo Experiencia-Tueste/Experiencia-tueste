@@ -1,0 +1,134 @@
+/* ── Footer público ── */
+.footer {
+  padding: var(--space-section) var(--space-gutter) 34px;
+  border-top: 1px solid rgba(var(--cream-rgb), 0.08);
+  background: linear-gradient(180deg, transparent, rgba(46, 9, 60, 0.35));
+}
+
+.top {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 40px;
+  margin-bottom: 48px;
+}
+
+.brand {
+  max-width: 300px;
+}
+
+.logo {
+  display: inline-block;
+  margin-bottom: 16px;
+}
+
+.brand p {
+  color: rgba(var(--cream-rgb), 0.6);
+  font-size: 0.88rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.brand p b {
+  color: var(--cream);
+  font-weight: 600;
+}
+
+.cols {
+  display: flex;
+  gap: 60px;
+  flex-wrap: wrap;
+}
+
+.col h5 {
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin: 0 0 16px;
+}
+
+.col ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.col li {
+  margin-bottom: 10px;
+}
+
+.col a {
+  display: block;
+  font-size: 0.86rem;
+  color: rgba(var(--cream-rgb), 0.72);
+  margin-bottom: 0;
+  text-decoration: none;
+  transition: 0.2s;
+}
+
+.col a:hover {
+  color: var(--cream);
+  padding-left: 4px;
+}
+
+.col a:focus-visible {
+  outline: 2px solid var(--teal-bright);
+  outline-offset: 3px;
+}
+
+/* ── Barra inferior ── */
+.bar {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(var(--cream-rgb), 0.08);
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  color: rgba(var(--cream-rgb), 0.55);
+  text-transform: uppercase;
+}
+
+.eco {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.eco i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+/* ── Modo día ── */
+:global(body.day) .brand p {
+  color: rgba(46, 42, 36, 0.6);
+}
+
+:global(body.day) .brand p b {
+  color: var(--ink);
+}
+
+:global(body.day) .col a {
+  color: rgba(46, 42, 36, 0.72);
+}
+
+:global(body.day) .col a:hover {
+  color: var(--ink);
+}
+
+:global(body.day) .bar {
+  color: rgba(46, 42, 36, 0.55);
+}
+
+/* ── Móvil: sin overflow horizontal ── */
+@media (max-width: 560px) {
+  .cols {
+    gap: 32px;
+  }
+}

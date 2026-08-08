@@ -1,0 +1,32 @@
+/* SkipLink: salto al contenido para teclado.
+   Oculto sin foco (fuera de pantalla, sin layout); al recibir foco se
+   muestra fijo arriba a la izquierda. Colores fijos de tokens que no
+   cambian con el modo día/noche: contraste alto en ambos modos. */
+
+.skip {
+  position: fixed;
+  top: var(--space-3);
+  left: var(--space-3);
+  z-index: var(--z-toast);
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-pill);
+  background: var(--eggplant-deep);
+  color: var(--amber);
+  font: 600 var(--text-sm) var(--font-sans);
+  letter-spacing: var(--tracking-wide);
+  text-decoration: none;
+  transform: translateY(calc(-100% - var(--space-8)));
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.skip:focus-visible {
+  transform: translateY(0);
+  outline: 2px solid var(--teal-bright);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skip {
+    transition: none;
+  }
+}

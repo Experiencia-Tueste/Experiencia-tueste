@@ -1,0 +1,82 @@
+/* Página 404: coherente con la marca, responsive y válida en modo
+   día/noche (los overrides de modo día usan el patrón del proyecto). */
+
+.wrap {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-8) var(--space-gutter);
+  text-align: center;
+  background: var(--eggplant-deep);
+}
+
+.code {
+  margin: 0;
+  font: 500 var(--text-display) var(--font-serif);
+  color: var(--amber);
+  line-height: 1;
+  letter-spacing: 0.04em;
+}
+
+.title {
+  margin: 0;
+  font: 700 var(--text-2xl) var(--font-serif);
+  color: var(--cream);
+}
+
+.lead {
+  margin: 0;
+  max-width: 34rem;
+  font: 400 var(--text-md) var(--font-sans);
+  color: rgba(var(--cream-rgb), 0.72);
+}
+
+.home {
+  margin-top: var(--space-6);
+  padding: var(--space-3) var(--space-8);
+  border: 1px solid var(--amber);
+  border-radius: var(--radius-pill);
+  font: 600 var(--text-sm) var(--font-sans);
+  letter-spacing: var(--tracking-wide);
+  color: var(--amber);
+  text-decoration: none;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.home:hover {
+  background: var(--amber);
+  color: var(--eggplant-deep);
+}
+
+.home:focus-visible {
+  outline: 2px solid var(--teal-bright);
+  outline-offset: 3px;
+}
+
+/* Modo día: texto oscuro sobre fondo claro. */
+:global(body.day) .wrap {
+  background: var(--cream-soft);
+}
+
+:global(body.day) .title {
+  color: var(--ink);
+}
+
+:global(body.day) .lead {
+  color: rgba(46, 42, 36, 0.72);
+}
+
+:global(body.day) .home {
+  border-color: var(--amber-deep);
+  color: var(--amber-deep);
+}
+
+:global(body.day) .home:hover {
+  background: var(--amber-deep);
+  color: var(--cream-soft);
+}

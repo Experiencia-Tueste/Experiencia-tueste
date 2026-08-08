@@ -1,0 +1,71 @@
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 80px;
+}
+
+.reg {
+  padding: 34px;
+  border-radius: var(--radius-xl);
+  border: 1px solid rgba(var(--cream-rgb), 0.12);
+  position: relative;
+  overflow: hidden;
+  transition: transform var(--dur-slow) var(--ease-out);
+}
+
+.reg:hover {
+  transform: translateY(-6px);
+}
+
+.escucha {
+  background: linear-gradient(160deg, rgba(102, 103, 168, 0.18), transparent);
+}
+
+.pista {
+  background: linear-gradient(160deg, rgba(255, 111, 134, 0.16), transparent);
+}
+
+.reg h3 {
+  font-family: var(--font-serif);
+  font-size: 1.6rem;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.sub {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.escucha .sub {
+  color: var(--purple-soft);
+}
+
+.pista .sub {
+  color: var(--coral);
+}
+
+.reg p {
+  color: rgba(var(--cream-rgb), 0.72);
+  line-height: 1.65;
+  font-size: 0.95rem;
+}
+
+:global(body.day) .reg {
+  border-color: rgba(46, 42, 36, 0.18);
+}
+
+:global(body.day) .reg p {
+  color: rgba(46, 42, 36, 0.72);
+}
+
+@media (max-width: 720px) {
+  .grid {
+    grid-template-columns: 1fr;
+    margin-top: 56px;
+  }
+}

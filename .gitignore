@@ -1,0 +1,29 @@
+# Dependencias y artefactos
+node_modules/
+.next/
+out/
+build/
+coverage/
+dist/
+
+# Entorno: nunca subir claves reales (se permite .env.example)
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor
+.vscode/
+.idea/
+
+# TypeScript
+*.tsbuildinfo

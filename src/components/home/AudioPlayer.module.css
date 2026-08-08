@@ -1,0 +1,82 @@
+.player {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 48px;
+  align-items: center;
+}
+
+.col {
+  min-width: 0;
+}
+
+.now {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.26em;
+  color: var(--amber);
+  text-transform: uppercase;
+  margin-bottom: 18px;
+}
+
+.scrub {
+  margin-top: 24px;
+}
+
+.bar {
+  height: 4px;
+  border-radius: 4px;
+  background: rgba(var(--cream-rgb), 0.14);
+  position: relative;
+  overflow: hidden;
+}
+
+.fill {
+  position: absolute;
+  inset: 0 100% 0 0;
+  background: linear-gradient(90deg, var(--teal), var(--amber));
+}
+
+.times {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  color: rgba(var(--cream-rgb), 0.55);
+  margin-top: 8px;
+}
+
+.note {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  color: rgba(var(--cream-rgb), 0.58);
+  margin-top: 22px;
+  line-height: 1.6;
+}
+
+.liveNote {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--teal-bright);
+  margin-top: 14px;
+  min-height: 1.2em;
+}
+
+:global(body.day) .note {
+  color: rgba(46, 42, 36, 0.6);
+}
+
+:global(body.day) .times {
+  color: rgba(46, 42, 36, 0.55);
+}
+
+:global(body.day) .bar {
+  background: rgba(46, 42, 36, 0.14);
+}
+
+@media (max-width: 900px) {
+  .player {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+}

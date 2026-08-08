@@ -1,0 +1,205 @@
+/* Fila editorial de evento (del mockup, `.event`): fecha | info | acción.
+   En escritorio es una grilla de tres columnas; en móvil, bloque vertical. */
+.row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 24px;
+  align-items: center;
+  padding: 20px 24px;
+  border-radius: var(--radius-lg);
+  background: rgba(var(--cream-rgb), 0.03);
+  border: 1px solid rgba(var(--cream-rgb), 0.1);
+  transition:
+    transform 0.35s var(--ease-out),
+    background 0.3s,
+    border-color 0.3s,
+    opacity 0.9s;
+}
+
+.row:hover {
+  transform: translateX(10px);
+  background: rgba(251, 169, 34, 0.07);
+  border-color: rgba(251, 169, 34, 0.4);
+}
+
+.rowPast {
+  opacity: 0.45;
+}
+
+.rowPast:hover {
+  transform: none;
+  background: rgba(var(--cream-rgb), 0.03);
+  border-color: rgba(var(--cream-rgb), 0.1);
+}
+
+/* ── Fecha visible (time) ── */
+.date {
+  text-align: center;
+  min-width: 62px;
+  border-right: 1px solid rgba(var(--cream-rgb), 0.14);
+  padding-right: 22px;
+}
+
+.day {
+  display: block;
+  font-family: var(--font-serif);
+  font-size: 2.1rem;
+  line-height: 0.9;
+}
+
+.month {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.16em;
+  color: var(--amber);
+}
+
+.year {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.56rem;
+  color: rgba(var(--cream-rgb), 0.58);
+}
+
+/* ── Información ── */
+.info {
+  min-width: 0;
+}
+
+.etype {
+  font-family: var(--font-mono);
+  font-size: 0.56rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 20px;
+  display: inline-block;
+  margin-bottom: 8px;
+}
+
+.RITUAL {
+  color: var(--coral);
+  border: 1px solid rgba(255, 111, 134, 0.4);
+}
+
+.LISTENING {
+  color: var(--purple-soft);
+  border: 1px solid rgba(138, 139, 208, 0.4);
+}
+
+.CLUB {
+  color: var(--teal-bright);
+  border: 1px solid rgba(25, 201, 184, 0.4);
+}
+
+.LANZAMIENTO {
+  color: var(--cream);
+  border: 1px solid rgba(var(--cream-rgb), 0.3);
+}
+
+.title3 {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.1;
+  margin: 0 0 5px;
+}
+
+.where {
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: rgba(var(--cream-rgb), 0.65);
+  margin: 0;
+}
+
+.city {
+  color: var(--teal-bright);
+}
+
+/* ── Acción: precio opcional + CTA ── */
+.action {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.price {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--amber);
+}
+
+.btn {
+  background: var(--amber);
+  color: var(--ink);
+  border: none;
+  padding: 11px 20px;
+  border-radius: 40px;
+  font-weight: 700;
+  font-size: 0.8rem;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: 0.25s;
+  white-space: nowrap;
+}
+
+.btn:hover {
+  background: var(--cream);
+}
+
+.btnFew {
+  background: var(--coral);
+  color: var(--cream);
+}
+
+.btnFew:hover {
+  background: var(--coral-deep);
+}
+
+.btnWait {
+  background: transparent;
+  border: 1px solid rgba(var(--cream-rgb), 0.3);
+  color: var(--cream);
+}
+
+.btnWait:hover {
+  border-color: var(--teal-bright);
+  color: var(--teal-bright);
+}
+
+.btnPast {
+  background: rgba(var(--cream-rgb), 0.08);
+  color: rgba(var(--cream-rgb), 0.62);
+  cursor: default;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--teal-bright);
+  outline-offset: 3px;
+}
+
+/* ── Móvil: bloque vertical sin overflow horizontal ── */
+@media (max-width: 720px) {
+  .row {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .date {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    text-align: left;
+    min-width: 0;
+    border-right: none;
+    padding-right: 0;
+  }
+
+  .action {
+    text-align: left;
+    align-items: flex-start;
+  }
+}

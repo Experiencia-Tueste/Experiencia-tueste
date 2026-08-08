@@ -1,0 +1,141 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   TUESTE · DESIGN TOKENS
+   ---------------------------------------------------------------------
+   Fuente de verdad visual. Extraídos de los mockups de referencia
+   (origen-tostado.html y panel-tueste.html), que son SOLO LECTURA.
+   No se agregan librerías visuales: estos tokens + CSS Modules
+   reproducen fielmente el lenguaje de marca.
+
+   Paleta, tipografías, espaciado, radios, sombras, motion y breakpoints.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Color · marca ── */
+  --eggplant: #2e093c;
+  --eggplant-deep: #1d0526;
+  --cream: #ffe8bf;
+  --cream-soft: #f8edd0;
+  --cream-rgb: 255, 232, 191;
+  --charcoal: #282828;
+  --ink: #0d0210;
+  --ink-rgb: 40, 40, 40;
+  --void: #0d0210;
+  --void-rgb: 13, 2, 16;
+
+  /* ── Color · acentos ─────────────────────────────── */
+  --amber: #fba922;
+  --amber-deep: #d68a13;
+  --coral: #ff6f86;
+  --coral-deep: #ed5f6f;
+  --teal: #0fa295;
+  --teal-bright: #19c9b8;
+  --purple: #6667a8;
+  --purple-soft: #8a8bd0;
+  --lime: #bfe06a;
+
+  /* ── Tipografía ──────────────────────────────────── */
+  --font-serif: 'Fraunces', Georgia, serif;
+  --font-sans: 'Hanken Grotesk', system-ui, sans-serif;
+  --font-mono: 'DM Mono', ui-monospace, monospace;
+
+  /* ── Escala tipográfica (clamp, fluida) ──────────── */
+  --text-xs: 0.62rem;
+  --text-sm: 0.78rem;
+  --text-base: 0.92rem;
+  --text-md: 1.05rem;
+  --text-lg: 1.35rem;
+  --text-xl: 1.7rem;
+  --text-2xl: 2.2rem;
+  --text-3xl: 3rem;
+  --text-display: clamp(3.6rem, 14.5vw, 12.6rem);
+
+  --tracking-mono: 0.2em;
+  --tracking-wide: 0.08em;
+
+  /* ── Espaciado ───────────────────────────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-section: clamp(70px, 11vw, 150px);
+  --space-gutter: clamp(20px, 6vw, 90px);
+
+  /* ── Radios ──────────────────────────────────────── */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 22px;
+  --radius-2xl: 28px;
+  --radius-pill: 9999px;
+
+  /* ── Sombras ─────────────────────────────────────── */
+  --shadow-card: 0 40px 90px -30px #000;
+  --shadow-float: 0 18px 46px -14px rgba(0, 0, 0, 0.65);
+  --shadow-glow-amber: 0 0 14px rgba(251, 169, 34, 0.55);
+  --shadow-glow-teal: 0 0 90px -18px rgba(25, 201, 184, 0.5);
+
+  /* ── Bordes ──────────────────────────────────────── */
+  --border-soft: 1px solid rgba(var(--cream-rgb), 0.12);
+  --border-mid: 1px solid rgba(var(--cream-rgb), 0.2);
+  --border-strong: 1px solid rgba(var(--cream-rgb), 0.35);
+
+  /* ── Motion ──────────────────────────────────────── */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-snap: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --dur-fast: 0.2s;
+  --dur-base: 0.3s;
+  --dur-slow: 0.45s;
+  --dur-reveal: 0.9s;
+
+  /* ── Capas (z-index) ─────────────────────────────── */
+  --z-mesh: -2;
+  --z-mmenu: 490;
+  --z-nav: 500;
+  --z-progress: 1200;
+  --z-cart-overlay: 1300;
+  --z-cart: 1310;
+  --z-toast: 1400;
+  --z-cursor: 9999;
+
+  /* ── Breakpoints ─────────────────────────────────── */
+  --bp-sm: 560px;
+  --bp-md: 720px;
+  --bp-lg: 880px;
+  --bp-xl: 900px;
+  --bp-2xl: 1360px;
+
+  /* ── Vidrio (liquid glass Tueste) ────────────────── */
+  --glass-bg: rgba(255, 255, 255, 0.012);
+  --glass-border: rgba(255, 244, 224, 0.15);
+  --glass-inset: inset 0 1px 1px rgba(255, 255, 255, 0.1);
+}
+
+/* ── Modo día (body.day) ─────────────────────────────────────────────── */
+body.day {
+  --cream: #2e2a24;
+  --cream-rgb: 46, 42, 36;
+  --void-rgb: 255, 244, 224;
+  --glass-bg: rgba(46, 42, 36, 0.05);
+  --glass-border: rgba(46, 42, 36, 0.18);
+  --glass-inset: inset 0 1px 1px rgba(255, 255, 255, 0.6);
+}
+
+/* ── Motion reducido: quietud total ──────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  html {
+    scroll-behavior: auto !important;
+  }
+}

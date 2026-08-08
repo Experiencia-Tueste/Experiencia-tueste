@@ -1,0 +1,126 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.track {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 18px;
+  border-radius: var(--radius-md);
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    transform var(--dur-base) var(--ease-out);
+  border: 1px solid transparent;
+  background: none;
+  color: var(--cream);
+  text-align: left;
+  font-family: var(--font-sans);
+  width: 100%;
+}
+
+.track:hover {
+  background: rgba(var(--cream-rgb), 0.05);
+  transform: translateX(8px);
+}
+
+.active {
+  background: rgba(15, 162, 149, 0.12);
+  border-color: rgba(25, 201, 184, 0.35);
+}
+
+.num {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: rgba(var(--cream-rgb), 0.58);
+  width: 22px;
+  flex-shrink: 0;
+}
+
+.active .num {
+  color: var(--teal-bright);
+}
+
+.bars {
+  display: flex;
+  gap: 2px;
+  width: 22px;
+  align-items: flex-end;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.bars i {
+  width: 3px;
+  background: var(--teal-bright);
+  height: 30%;
+  border-radius: 2px;
+}
+
+.active .bars i {
+  animation: eq 0.8s ease-in-out infinite;
+}
+
+.active .bars i:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.active .bars i:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes eq {
+  0%,
+  100% {
+    height: 25%;
+  }
+  50% {
+    height: 95%;
+  }
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+}
+
+.info b {
+  display: block;
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 1.12rem;
+  line-height: 1.2;
+}
+
+.info span {
+  display: block;
+  font-size: 0.78rem;
+  color: rgba(var(--cream-rgb), 0.6);
+  margin-top: 2px;
+}
+
+.tag {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  padding: 4px 10px;
+  border-radius: 30px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  color: var(--purple-soft);
+  border: 1px solid rgba(138, 139, 208, 0.4);
+}
+
+.tagPista {
+  color: var(--coral);
+  border-color: rgba(255, 111, 134, 0.4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .active .bars i {
+    animation: none;
+  }
+}

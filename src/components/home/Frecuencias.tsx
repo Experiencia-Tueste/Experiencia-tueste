@@ -1,43 +1,51 @@
-import type { TrackId } from '@/lib/audio';
+import type { AudioPlayerResult } from '@/hooks/useAudioPlayer';
 import AudioPlayer from './AudioPlayer';
 import Registros from './Registros';
+import Reveal from './Reveal';
+import SectionGhost from './SectionGhost';
 import styles from './Frecuencias.module.css';
 
 export interface FrecuenciasProps {
-  /** Pista seleccionada actualmente (compartida con la sección Origen). */
-  selectedId: TrackId;
-  /** Cambia la pista seleccionada. */
-  onSelect: (id: TrackId) => void;
-  /** Se dispara al pulsar el botón principal del deck. */
-  onPlay: () => void;
-  /** Mensaje accesible a anunciar (aria-live). */
-  mensaje: string | null;
+  /** Estado y controles del reproductor (hook useAudioPlayer). */
+  player: AudioPlayerResult;
 }
 
 /**
- * Sección «Escucha el origen» · reproductor visual de Origen Tostado.
+ * Sección «Escucha el origen» · reproductor de Origen Tostado.
  * Replica la estructura del mockup: acto, encabezado, player y registros.
- * El estado de la pista seleccionada llega por props desde
- * ListeningExperience, que lo comparte con la sección Origen.
+ * El estado completo del reproductor (pista, play, radio encadenada)
+ * viene del hook useAudioPlayer a través de ListeningExperience, que lo
+ * comparte con Origen, Lanzamientos, Barista Sonoro y Radio Origen.
  */
-export default function Frecuencias({ selectedId, onSelect, onPlay, mensaje }: FrecuenciasProps) {
+export default function Frecuencias({ player }: FrecuenciasProps) {
   return (
     <section id="frecuencias" className={styles.section} aria-labelledby="frec-titulo">
-      <p className={styles.acto}>Acto I · El territorio suena</p>
-      <div className={styles.sechead}>
-        <span className={styles.secnum}>01 / FRECUENCIAS</span>
-      </div>
-      <h2 id="frec-titulo" className={styles.title}>
-        Escucha el <em>origen</em>
-      </h2>
-      <p className={styles.lead}>
-        Cada pieza nace de una finca real. Agua, viento, cerezas, tostión, máquinas y voces de
-        productores se convierten en frecuencia. Pulsa play y deja que el café suene.
-      </p>
+      <SectionGhost number="01" />
+      <Reveal>
+        <p className={styles.acto}>Acto I · El territorio suena</p>
+      </Reveal>
+      <Reveal>
+        <div className={styles.sechead}>
+          <span className={styles.secnum}>01 / FRECUENCIAS</span>
+        </div>
+      </Reveal>
+      <Reveal>
+        <h2 id="frec-titulo" className={styles.title}>
+          Escucha el <em>origen</em>
+        </h2>
+      </Reveal>
+      <Reveal>
+        <p className={styles.lead}>
+          Cada pieza nace de una finca real. Agua, viento, cerezas, tostión, máquinas y voces de
+          productores se convierten en frecuencia. Pulsa play y deja que el café suene.
+        </p>
+      </Reveal>
 
-      <AudioPlayer selectedId={selectedId} onSelect={onSelect} onPlay={onPlay} mensaje={mensaje} />
+      <AudioPlayer player={player} />
 
-      <Registros />
+      <Reveal>
+        <Registros />
+      </Reveal>
     </section>
   );
 }

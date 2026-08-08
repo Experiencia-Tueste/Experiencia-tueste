@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { COMUNIDAD_CTA, comunidadMensaje } from '@/features/community';
+import Reveal from './Reveal';
+import SectionGhost from './SectionGhost';
 import styles from './Comunidad.module.css';
 
 /**
@@ -27,47 +29,58 @@ export default function Comunidad() {
 
   return (
     <section id="comunidad" className={styles.section} aria-labelledby="comunidad-titulo">
+      <SectionGhost number="10" side="start" />
       <div className={styles.wrap}>
-        <div className={styles.sechead}>
-          <span className={styles.secnum}>{COMUNIDAD_CTA.encabezado}</span>
-        </div>
-        <h2 id="comunidad-titulo" className={styles.big}>
-          No solo lo escuchas.
-          <br />
-          <em>Lo vives.</em>
-        </h2>
-        <p className={styles.lead}>{COMUNIDAD_CTA.texto}</p>
+        <Reveal>
+          <div className={styles.sechead}>
+            <span className={styles.secnum}>{COMUNIDAD_CTA.encabezado}</span>
+          </div>
+        </Reveal>
+        <Reveal>
+          <h2 id="comunidad-titulo" className={styles.big}>
+            No solo lo escuchas.
+            <br />
+            <em>Lo vives.</em>
+          </h2>
+        </Reveal>
+        <Reveal>
+          <p className={styles.lead}>{COMUNIDAD_CTA.texto}</p>
+        </Reveal>
 
-        <form className={styles.signup} onSubmit={unirme}>
-          <label className={styles.srOnly} htmlFor="comunidad-correo">
-            Correo
-          </label>
-          <input
-            id="comunidad-correo"
-            type="email"
-            name="correo"
-            required
-            autoComplete="email"
-            placeholder={COMUNIDAD_CTA.placeholderCorreo}
-          />
-          <button type="submit" className={styles.btn}>
-            {COMUNIDAD_CTA.cta}
-          </button>
-        </form>
+        <Reveal>
+          <form className={styles.signup} onSubmit={unirme}>
+            <label className={styles.srOnly} htmlFor="comunidad-correo">
+              Correo
+            </label>
+            <input
+              id="comunidad-correo"
+              type="email"
+              name="correo"
+              required
+              autoComplete="email"
+              placeholder={COMUNIDAD_CTA.placeholderCorreo}
+            />
+            <button type="submit" className={styles.btn}>
+              {COMUNIDAD_CTA.cta}
+            </button>
+          </form>
+        </Reveal>
         <p className={styles.aviso}>{COMUNIDAD_CTA.aviso}</p>
 
         <p className={styles.live} role="status" aria-live="polite">
           {anuncio ?? '\u00A0'}
         </p>
 
-        <div className={styles.cierre}>
-          <p className={styles.ciLine}>
-            El café también <em>se escucha.</em>
-          </p>
-          <a href="#frecuencias" className={styles.back}>
-            ▶ {COMUNIDAD_CTA.volver}
-          </a>
-        </div>
+        <Reveal>
+          <div className={styles.cierre}>
+            <p className={styles.ciLine}>
+              El café también <em>se escucha.</em>
+            </p>
+            <a href="#frecuencias" className={styles.back}>
+              ▶ {COMUNIDAD_CTA.volver}
+            </a>
+          </div>
+        </Reveal>
       </div>
     </section>
   );

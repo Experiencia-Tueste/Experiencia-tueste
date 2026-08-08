@@ -1,4 +1,5 @@
 import Atmosphere from '@/components/home/Atmosphere';
+import EditorialTicker from '@/components/home/EditorialTicker';
 import Footer from '@/components/home/Footer';
 import Hero from '@/components/home/Hero';
 import ListeningExperience from '@/components/home/ListeningExperience';
@@ -27,6 +28,7 @@ export default function Home() {
         <main id="contenido" tabIndex={-1}>
           <Hero />
           <Manifiesto />
+          <EditorialTicker variant="amber" />
           <ListeningExperience />
         </main>
         <Footer />

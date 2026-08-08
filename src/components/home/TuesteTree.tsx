@@ -13,6 +13,8 @@ import {
 } from '@/features/adoption';
 import type { Beneficio } from '@/features/adoption';
 import { Arbol, LotePaisaje } from './LoteVisual';
+import Reveal from './Reveal';
+import SectionGhost from './SectionGhost';
 import styles from './TuesteTree.module.css';
 
 type Vista = 'oferta' | 'activacion' | 'panel';
@@ -93,242 +95,258 @@ export default function TuesteTree() {
 
   return (
     <section id="tueste-tree" className={styles.section} aria-labelledby="tt-titulo">
+      <SectionGhost number="06" />
       <div className={styles.topo} aria-hidden="true">
         <Topografia />
       </div>
 
-      <div className={styles.sechead}>
-        <span className={styles.secnum}>06 / TUESTE TREE</span>
-      </div>
-      <h2 id="tt-titulo" className={styles.title}>
-        Adopta un árbol y <em>escucha cómo crece</em>
-      </h2>
+      <Reveal>
+        <div className={styles.sechead}>
+          <span className={styles.secnum}>06 / TUESTE TREE</span>
+        </div>
+      </Reveal>
+      <Reveal>
+        <h2 id="tt-titulo" className={styles.title}>
+          Adopta un árbol y <em>escucha cómo crece</em>
+        </h2>
+      </Reveal>
 
       {vista === 'oferta' ? (
-        <div className={styles.view}>
-          <p className={styles.lead}>
-            No compras una planta: entras a una historia viva. Tu árbol vive en el Lote 000 de Finca
-            Tres Esquinas, en las montañas del Quindío. Recibe una frecuencia propia, fotos del
-            cultivo a lo largo del año y la puerta abierta para venir a caminarlo.
-          </p>
+        <Reveal>
+          <div className={styles.view}>
+            <p className={styles.lead}>
+              No compras una planta: entras a una historia viva. Tu árbol vive en el Lote 000 de
+              Finca Tres Esquinas, en las montañas del Quindío. Recibe una frecuencia propia, fotos
+              del cultivo a lo largo del año y la puerta abierta para venir a caminarlo.
+            </p>
 
-          <div className={styles.grid}>
-            <div className={styles.visual}>
-              <LotePaisaje className={styles.visualSvg} />
-              <span className={styles.vtag}>{LOTE_FUNDADOR.nombre}</span>
-              <div className={styles.vfoot}>
-                {LOTE_FUNDADOR.coordenadas} · {LOTE_FUNDADOR.ubicacion} · {LOTE_FUNDADOR.altitud}
+            <div className={styles.grid}>
+              <div className={styles.visual}>
+                <LotePaisaje className={styles.visualSvg} />
+                <span className={styles.vtag}>{LOTE_FUNDADOR.nombre}</span>
+                <div className={styles.vfoot}>
+                  {LOTE_FUNDADOR.coordenadas} · {LOTE_FUNDADOR.ubicacion} · {LOTE_FUNDADOR.altitud}
+                </div>
+              </div>
+
+              <div>
+                <div className={styles.benefits}>
+                  {BENEFICIOS.map((b) => (
+                    <div className={styles.benefit} key={b.id}>
+                      <span className={styles.bi}>
+                        <IconoBeneficio id={b.icono} />
+                      </span>
+                      <div>
+                        <b>{b.titulo}</b>
+                        <span>{b.descripcion}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className={styles.cta}>
+                  <div className={styles.priceTag}>
+                    <b>{PRECIO_ADOPCION.valor}</b>
+                    <span>{PRECIO_ADOPCION.detalle}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className={styles.btn}
+                    onClick={() => irA('activacion', 'Formulario de activación.')}
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      aria-hidden="true"
+                      focusable="false"
+                    >
+                      <path d="M12 2l2 7h7l-6 4 2 7-5-4-5 4 2-7-6-4h7z" />
+                    </svg>
+                    Activar mi árbol
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.ghost}
+                    onClick={() => irA('panel', 'Panel de demostración del adoptante.')}
+                  >
+                    Ver el panel del adoptante (demo)
+                  </button>
+                </div>
+
+                <p className={styles.note}>{AVISO_LEGAL}</p>
+              </div>
+            </div>
+          </div>
+        </Reveal>
+      ) : null}
+
+      {vista === 'activacion' ? (
+        <Reveal>
+          <div className={styles.view}>
+            <div className={styles.activate}>
+              <div className={styles.seed} aria-hidden="true">
+                <Arbol pct={16} />
+              </div>
+              <h3>Activa tu árbol</h3>
+              <p>
+                Escribe tu nombre y correo. Es una solicitud demostrativa: el árbol se sembrará y el
+                panel se abrirá solo cuando el equipo confirme la activación y el tratamiento de
+                datos. No se envía ni se guarda nada en esta página.
+              </p>
+              <form className={styles.form} onSubmit={enviarActivacion} noValidate={false}>
+                <label className={styles.field}>
+                  Tu nombre
+                  <input
+                    type="text"
+                    name="nombre"
+                    required
+                    autoComplete="name"
+                    placeholder="Tu nombre"
+                  />
+                </label>
+                <label className={styles.field}>
+                  Tu correo
+                  <input
+                    type="email"
+                    name="correo"
+                    required
+                    autoComplete="email"
+                    placeholder="tu@correo.com"
+                  />
+                </label>
+                <button type="submit" className={`${styles.btn} ${styles.btnFull}`}>
+                  Sembrar mi árbol
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.ghost} ${styles.back}`}
+                  onClick={() => irA('oferta', 'Volviste a la oferta de adopción.')}
+                >
+                  Volver
+                </button>
+              </form>
+              <p className={styles.note}>{AVISO_LEGAL}</p>
+            </div>
+          </div>
+        </Reveal>
+      ) : null}
+
+      {vista === 'panel' ? (
+        <Reveal>
+          <div className={styles.view}>
+            <div className={styles.dashTop}>
+              <div className={styles.who}>
+                <b>Hola, invitado</b>
+                <span>{DEMO_ADOPCION.lote} · Finca Tres Esquinas</span>
+              </div>
+              <div className={styles.cert}>
+                Árbol <b>{DEMO_ADOPCION.arbolId}</b>
+                <br />
+                Certificado <b>{DEMO_ADOPCION.certificado}</b>
+                <br />
+                Adoptado: {DEMO_ADOPCION.desde}
               </div>
             </div>
 
-            <div>
-              <div className={styles.benefits}>
-                {BENEFICIOS.map((b) => (
-                  <div className={styles.benefit} key={b.id}>
-                    <span className={styles.bi}>
-                      <IconoBeneficio id={b.icono} />
-                    </span>
-                    <div>
-                      <b>{b.titulo}</b>
-                      <span>{b.descripcion}</span>
+            <div className={styles.dashCols}>
+              <div className={`${styles.panel} ${styles.treeState}`}>
+                <h4>◐ Estado de tu árbol</h4>
+                <div className={styles.ringwrap}>
+                  <svg
+                    className={styles.ring}
+                    viewBox="0 0 100 100"
+                    aria-hidden="true"
+                    focusable="false"
+                  >
+                    <defs>
+                      <linearGradient id="tt-ring" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0" stopColor="#0FA295" />
+                        <stop offset="1" stopColor="#FBA922" />
+                      </linearGradient>
+                    </defs>
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="44"
+                      fill="none"
+                      stroke="rgba(255,232,191,.12)"
+                      strokeWidth="6"
+                    />
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="44"
+                      fill="none"
+                      stroke="url(#tt-ring)"
+                      strokeWidth="6"
+                      strokeLinecap="round"
+                      strokeDasharray={RING_C.toFixed(1)}
+                      strokeDashoffset={RING_OFF.toFixed(1)}
+                    />
+                  </svg>
+                  <div className={styles.plant}>
+                    <Arbol pct={DEMO_ADOPCION.progreso} />
+                  </div>
+                </div>
+                <div className={styles.pct}>{DEMO_ADOPCION.progreso}%</div>
+                <div className={styles.stt}>Camino a la cosecha</div>
+                <dl className={styles.meta}>
+                  <div>
+                    <dt>Estación</dt>
+                    <dd>{DEMO_ADOPCION.estacion}</dd>
+                  </div>
+                  <div>
+                    <dt>Salud</dt>
+                    <dd>{DEMO_ADOPCION.salud}</dd>
+                  </div>
+                  <div>
+                    <dt>Altura est.</dt>
+                    <dd>{DEMO_ADOPCION.alturaEstimada}</dd>
+                  </div>
+                  <div>
+                    <dt>Próx. foto</dt>
+                    <dd>{DEMO_ADOPCION.proximaFoto}</dd>
+                  </div>
+                </dl>
+              </div>
+
+              <div className={styles.panel}>
+                <div className={styles.bitaHead}>
+                  <h3>▦ Bitácora del cultivo</h3>
+                  <span className={styles.upd}>
+                    ● actualizado {DEMO_ADOPCION.ultimaActualizacion}
+                  </span>
+                </div>
+                {BITACORA_DEMO.map((l, i) => (
+                  <div
+                    className={`${styles.logrow}${l.hecho ? '' : ` ${styles.pending}`}`}
+                    key={`${l.cuando}-${i}`}
+                  >
+                    <div className={styles.thumb}>
+                      {l.hecho ? <LotePaisaje className={styles.thumbSvg} /> : null}
+                    </div>
+                    <div className={styles.ld}>
+                      <span className={styles.when}>{l.cuando}</span>
+                      <b>{l.titulo}</b>
+                      <p>{l.nota}</p>
                     </div>
                   </div>
                 ))}
               </div>
-
-              <div className={styles.cta}>
-                <div className={styles.priceTag}>
-                  <b>{PRECIO_ADOPCION.valor}</b>
-                  <span>{PRECIO_ADOPCION.detalle}</span>
-                </div>
-                <button
-                  type="button"
-                  className={styles.btn}
-                  onClick={() => irA('activacion', 'Formulario de activación.')}
-                >
-                  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
-                    <path d="M12 2l2 7h7l-6 4 2 7-5-4-5 4 2-7-6-4h7z" />
-                  </svg>
-                  Activar mi árbol
-                </button>
-                <button
-                  type="button"
-                  className={styles.ghost}
-                  onClick={() => irA('panel', 'Panel de demostración del adoptante.')}
-                >
-                  Ver el panel del adoptante (demo)
-                </button>
-              </div>
-
-              <p className={styles.note}>{AVISO_LEGAL}</p>
             </div>
-          </div>
-        </div>
-      ) : null}
 
-      {vista === 'activacion' ? (
-        <div className={styles.view}>
-          <div className={styles.activate}>
-            <div className={styles.seed} aria-hidden="true">
-              <Arbol pct={16} />
-            </div>
-            <h3>Activa tu árbol</h3>
-            <p>
-              Escribe tu nombre y correo. Es una solicitud demostrativa: el árbol se sembrará y el
-              panel se abrirá solo cuando el equipo confirme la activación y el tratamiento de
-              datos. No se envía ni se guarda nada en esta página.
-            </p>
-            <form className={styles.form} onSubmit={enviarActivacion} noValidate={false}>
-              <label className={styles.field}>
-                Tu nombre
-                <input
-                  type="text"
-                  name="nombre"
-                  required
-                  autoComplete="name"
-                  placeholder="Tu nombre"
-                />
-              </label>
-              <label className={styles.field}>
-                Tu correo
-                <input
-                  type="email"
-                  name="correo"
-                  required
-                  autoComplete="email"
-                  placeholder="tu@correo.com"
-                />
-              </label>
-              <button type="submit" className={`${styles.btn} ${styles.btnFull}`}>
-                Sembrar mi árbol
-              </button>
+            <p className={styles.dashDisc}>{AVISO_DEMO}</p>
+            <div className={styles.exitWrap}>
               <button
                 type="button"
-                className={`${styles.ghost} ${styles.back}`}
+                className={styles.ghost}
                 onClick={() => irA('oferta', 'Volviste a la oferta de adopción.')}
               >
-                Volver
+                ← Volver a la adopción
               </button>
-            </form>
-            <p className={styles.note}>{AVISO_LEGAL}</p>
-          </div>
-        </div>
-      ) : null}
-
-      {vista === 'panel' ? (
-        <div className={styles.view}>
-          <div className={styles.dashTop}>
-            <div className={styles.who}>
-              <b>Hola, invitado</b>
-              <span>{DEMO_ADOPCION.lote} · Finca Tres Esquinas</span>
-            </div>
-            <div className={styles.cert}>
-              Árbol <b>{DEMO_ADOPCION.arbolId}</b>
-              <br />
-              Certificado <b>{DEMO_ADOPCION.certificado}</b>
-              <br />
-              Adoptado: {DEMO_ADOPCION.desde}
             </div>
           </div>
-
-          <div className={styles.dashCols}>
-            <div className={`${styles.panel} ${styles.treeState}`}>
-              <h4>◐ Estado de tu árbol</h4>
-              <div className={styles.ringwrap}>
-                <svg
-                  className={styles.ring}
-                  viewBox="0 0 100 100"
-                  aria-hidden="true"
-                  focusable="false"
-                >
-                  <defs>
-                    <linearGradient id="tt-ring" x1="0" y1="0" x2="1" y2="1">
-                      <stop offset="0" stopColor="#0FA295" />
-                      <stop offset="1" stopColor="#FBA922" />
-                    </linearGradient>
-                  </defs>
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="44"
-                    fill="none"
-                    stroke="rgba(255,232,191,.12)"
-                    strokeWidth="6"
-                  />
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="44"
-                    fill="none"
-                    stroke="url(#tt-ring)"
-                    strokeWidth="6"
-                    strokeLinecap="round"
-                    strokeDasharray={RING_C.toFixed(1)}
-                    strokeDashoffset={RING_OFF.toFixed(1)}
-                  />
-                </svg>
-                <div className={styles.plant}>
-                  <Arbol pct={DEMO_ADOPCION.progreso} />
-                </div>
-              </div>
-              <div className={styles.pct}>{DEMO_ADOPCION.progreso}%</div>
-              <div className={styles.stt}>Camino a la cosecha</div>
-              <dl className={styles.meta}>
-                <div>
-                  <dt>Estación</dt>
-                  <dd>{DEMO_ADOPCION.estacion}</dd>
-                </div>
-                <div>
-                  <dt>Salud</dt>
-                  <dd>{DEMO_ADOPCION.salud}</dd>
-                </div>
-                <div>
-                  <dt>Altura est.</dt>
-                  <dd>{DEMO_ADOPCION.alturaEstimada}</dd>
-                </div>
-                <div>
-                  <dt>Próx. foto</dt>
-                  <dd>{DEMO_ADOPCION.proximaFoto}</dd>
-                </div>
-              </dl>
-            </div>
-
-            <div className={styles.panel}>
-              <div className={styles.bitaHead}>
-                <h3>▦ Bitácora del cultivo</h3>
-                <span className={styles.upd}>
-                  ● actualizado {DEMO_ADOPCION.ultimaActualizacion}
-                </span>
-              </div>
-              {BITACORA_DEMO.map((l, i) => (
-                <div
-                  className={`${styles.logrow}${l.hecho ? '' : ` ${styles.pending}`}`}
-                  key={`${l.cuando}-${i}`}
-                >
-                  <div className={styles.thumb}>
-                    {l.hecho ? <LotePaisaje className={styles.thumbSvg} /> : null}
-                  </div>
-                  <div className={styles.ld}>
-                    <span className={styles.when}>{l.cuando}</span>
-                    <b>{l.titulo}</b>
-                    <p>{l.nota}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <p className={styles.dashDisc}>{AVISO_DEMO}</p>
-          <div className={styles.exitWrap}>
-            <button
-              type="button"
-              className={styles.ghost}
-              onClick={() => irA('oferta', 'Volviste a la oferta de adopción.')}
-            >
-              ← Volver a la adopción
-            </button>
-          </div>
-        </div>
+        </Reveal>
       ) : null}
 
       <p className={styles.live} role="status" aria-live="polite">

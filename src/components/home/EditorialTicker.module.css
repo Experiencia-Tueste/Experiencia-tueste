@@ -1,0 +1,92 @@
+/* Cinta editorial (paridad con el master: .tickerwrap/.ticker/.row).
+   El contenedor recorta con overflow hidden: nunca causa scroll
+   horizontal. La animación es determinista y se detiene con
+   prefers-reduced-motion. */
+
+.wrap {
+  overflow: hidden;
+  padding: 30px 0;
+  position: relative;
+  z-index: 3;
+}
+
+.ticker {
+  width: 106%;
+  margin-left: -3%;
+  padding: 13px 0;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.row {
+  display: inline-flex;
+  width: max-content;
+  animation: marq 26s linear infinite;
+}
+
+.copy {
+  display: inline-block;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-style: italic;
+  font-size: clamp(1.05rem, 2.5vw, 1.7rem);
+  letter-spacing: 0.02em;
+}
+
+/* Variante ámbar: fondo ámbar, texto tinta, inclinación sutil. */
+.amber {
+  background: var(--amber);
+  color: var(--ink);
+  transform: rotate(-1.4deg);
+  box-shadow: 0 14px 44px -18px rgba(251, 169, 34, 0.55);
+}
+
+/* Inclinación opuesta (master .amber.alt). */
+.alt {
+  transform: rotate(1.4deg);
+}
+
+/* Variante tenue: sin fondo, contorno superior/inferior y texto hueco. */
+.dim {
+  background: transparent;
+  border-top: 1px solid rgba(var(--cream-rgb), 0.16);
+  border-bottom: 1px solid rgba(var(--cream-rgb), 0.16);
+}
+
+.dim .copy {
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(var(--cream-rgb), 0.5);
+}
+
+/* Dirección inversa (master .rev). */
+.reverse .row {
+  animation-direction: reverse;
+}
+
+@keyframes marq {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Pausa al pasar el cursor (como el master). */
+.wrap:hover .row {
+  animation-play-state: paused;
+}
+
+/* Reduced motion: cinta estática, sin animación. */
+@media (prefers-reduced-motion: reduce) {
+  .row {
+    animation: none;
+  }
+}
+
+/* Modo día: la variante tenue necesita tinta oscura sobre fondo claro. */
+:global(body.day) .dim {
+  border-top-color: rgba(46, 42, 36, 0.2);
+  border-bottom-color: rgba(46, 42, 36, 0.2);
+}
+
+:global(body.day) .dim .copy {
+  -webkit-text-stroke: 1px rgba(46, 42, 36, 0.45);
+}

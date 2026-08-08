@@ -3,7 +3,10 @@
 import { useState } from 'react';
 import { RELEASES } from '@/features/music';
 import type { TrackId } from '@/lib/audio';
+import ListeningPlatforms from './ListeningPlatforms';
 import ReleaseCard from './ReleaseCard';
+import Reveal from './Reveal';
+import SectionGhost from './SectionGhost';
 import styles from './Lanzamientos.module.css';
 
 const MENSAJE_COMPRA = 'Compra disponible próximamente.';
@@ -28,23 +31,38 @@ export default function Lanzamientos({ onSelect }: LanzamientosProps) {
 
   return (
     <section id="lanzamientos" className={styles.section} aria-labelledby="lanz-titulo">
-      <p className={styles.acto}>Acto II · La obra</p>
-      <div className={styles.sechead}>
-        <span className={styles.secnum}>03 / MÚSICA</span>
-      </div>
-      <h2 id="lanz-titulo" className={styles.title}>
-        La <em>discografía</em> del origen
-      </h2>
-      <p className={styles.lead}>
-        Cada lanzamiento es una temporada del café hecha sonido, publicada bajo el sello Logik Pro.
-        Escúchalos, guárdalos y llévatelos en digital o en formato físico de colección.
-      </p>
+      <SectionGhost number="03" />
+      <Reveal>
+        <p className={styles.acto}>Acto II · La obra</p>
+      </Reveal>
+      <Reveal>
+        <div className={styles.sechead}>
+          <span className={styles.secnum}>03 / MÚSICA</span>
+        </div>
+      </Reveal>
+      <Reveal>
+        <h2 id="lanz-titulo" className={styles.title}>
+          La <em>discografía</em> del origen
+        </h2>
+      </Reveal>
+      <Reveal>
+        <p className={styles.lead}>
+          Cada lanzamiento es una temporada del café hecha sonido, publicada bajo el sello Logik
+          Pro. Escúchalos, guárdalos y llévatelos en digital o en formato físico de colección.
+        </p>
+      </Reveal>
 
-      <div className={styles.grid}>
-        {RELEASES.map((release) => (
-          <ReleaseCard key={release.id} release={release} onSelect={onSelect} onBuy={handleBuy} />
-        ))}
-      </div>
+      <Reveal>
+        <div className={styles.grid}>
+          {RELEASES.map((release) => (
+            <ReleaseCard key={release.id} release={release} onSelect={onSelect} onBuy={handleBuy} />
+          ))}
+        </div>
+      </Reveal>
+
+      <Reveal>
+        <ListeningPlatforms />
+      </Reveal>
 
       <p className={styles.live} role="status" aria-live="polite">
         {anuncio ?? '\u00A0'}

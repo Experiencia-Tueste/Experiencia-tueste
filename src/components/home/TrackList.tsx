@@ -10,21 +10,26 @@ import styles from './TrackList.module.css';
 export default function TrackList({
   tracks,
   selectedId,
+  playing,
   onSelect,
 }: {
   tracks: Track[];
   selectedId: TrackId;
+  playing: boolean;
   onSelect: (id: TrackId) => void;
 }) {
   return (
-    <div className={styles.list}>
+    <div className={styles.list} data-tracklist>
       {tracks.map((t, i) => {
         const active = t.id === selectedId;
+        const sounding = active && playing;
         return (
           <button
             key={t.id}
             type="button"
-            className={`${styles.track}${active ? ` ${styles.active}` : ''}`}
+            className={`${styles.track}${active ? ` ${styles.active}` : ''}${
+              sounding ? ` ${styles.playing}` : ''
+            }`}
             onClick={() => onSelect(t.id)}
             aria-pressed={active}
           >

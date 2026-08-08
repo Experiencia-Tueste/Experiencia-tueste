@@ -60,15 +60,15 @@
   border-radius: 2px;
 }
 
-.active .bars i {
+.active.playing .bars i {
   animation: eq 0.8s ease-in-out infinite;
 }
 
-.active .bars i:nth-child(2) {
+.active.playing .bars i:nth-child(2) {
   animation-delay: 0.2s;
 }
 
-.active .bars i:nth-child(3) {
+.active.playing .bars i:nth-child(3) {
   animation-delay: 0.4s;
 }
 
@@ -120,7 +120,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .active .bars i {
+  .active.playing .bars i {
     animation: none;
   }
 }

@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { EVENTS, reservaMensaje } from '@/features/events';
 import type { EventItem } from '@/features/events';
 import EventRow from './EventRow';
+import Reveal from './Reveal';
+import SectionGhost from './SectionGhost';
 import styles from './Eventos.module.css';
 
 /**
@@ -20,24 +22,35 @@ export default function Eventos() {
 
   return (
     <section id="eventos" className={styles.section} aria-labelledby="ev-titulo">
-      <p className={styles.acto}>Acto III · La pertenencia</p>
-      <div className={styles.sechead}>
-        <span className={styles.secnum}>05 / EN VIVO</span>
-      </div>
-      <h2 id="ev-titulo" className={styles.title}>
-        Vive el ritual <em>en persona</em>
-      </h2>
-      <p className={styles.lead}>
-        El territorio también se vive en persona: rituales entre cafetales, catas donde el sonido y
-        la taza son la misma cosa, y noches donde la montaña baja a la ciudad. Estas son las
-        próximas fechas.
-      </p>
+      <SectionGhost number="05" />
+      <Reveal>
+        <p className={styles.acto}>Acto III · La pertenencia</p>
+      </Reveal>
+      <Reveal>
+        <div className={styles.sechead}>
+          <span className={styles.secnum}>05 / EN VIVO</span>
+        </div>
+      </Reveal>
+      <Reveal>
+        <h2 id="ev-titulo" className={styles.title}>
+          Vive el ritual <em>en persona</em>
+        </h2>
+      </Reveal>
+      <Reveal>
+        <p className={styles.lead}>
+          El territorio también se vive en persona: rituales entre cafetales, catas donde el sonido
+          y la taza son la misma cosa, y noches donde la montaña baja a la ciudad. Estas son las
+          próximas fechas.
+        </p>
+      </Reveal>
 
-      <div className={styles.events}>
-        {EVENTS.map((ev) => (
-          <EventRow key={ev.id} ev={ev} onReserva={handleReserva} />
-        ))}
-      </div>
+      <Reveal>
+        <div className={styles.events}>
+          {EVENTS.map((ev) => (
+            <EventRow key={ev.id} ev={ev} onReserva={handleReserva} />
+          ))}
+        </div>
+      </Reveal>
 
       <p className={styles.live} role="status" aria-live="polite">
         {anuncio ?? '\u00A0'}

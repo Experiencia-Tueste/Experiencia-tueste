@@ -1,0 +1,114 @@
+/* Demo de radio por suscripción (del mockup: .radiodemo). */
+.card {
+  margin-top: 26px;
+  border: 1.5px dashed rgba(251, 169, 34, 0.4);
+  border-radius: 1.25rem;
+  padding: 20px 22px;
+  background: rgba(251, 169, 34, 0.05);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.56rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  background: var(--amber);
+  color: var(--ink);
+  border-radius: 20px;
+  padding: 4px 11px;
+  margin-bottom: 10px;
+}
+
+.title {
+  display: block;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.text {
+  font-size: 0.84rem;
+  color: rgba(var(--cream-rgb), 0.75);
+  line-height: 1.55;
+  margin: 0 0 14px;
+  max-width: 52ch;
+}
+
+.senales {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin: 0 0 6px;
+}
+
+.chip {
+  border: 1px solid rgba(var(--cream-rgb), 0.22);
+  background: rgba(var(--cream-rgb), 0.04);
+  color: var(--cream);
+  border-radius: 9999px;
+  padding: 7px 13px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  transition:
+    border-color var(--dur-base) var(--ease-out),
+    color var(--dur-base) var(--ease-out),
+    background var(--dur-base) var(--ease-out);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.chip:hover {
+  border-color: var(--amber);
+  color: var(--amber);
+}
+
+.chip.on {
+  background: var(--amber);
+  color: var(--ink);
+  border-color: var(--amber);
+}
+
+.live {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  color: var(--teal-bright);
+  margin: 2px 0 8px;
+  min-height: 1em;
+}
+
+.link {
+  display: inline-block;
+  margin-top: 10px;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--amber);
+  transition: letter-spacing var(--dur-base) var(--ease-out);
+}
+
+.link:hover {
+  letter-spacing: 0.2em;
+}
+
+@media (max-width: 560px) {
+  .card {
+    padding: 16px 14px;
+  }
+
+  .senales {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .chip {
+    text-align: center;
+  }
+}

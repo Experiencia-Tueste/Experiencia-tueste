@@ -1,5 +1,9 @@
+import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { getChannel, getTrack, nextInQueue, RADIO_CHANNELS, TRACKS } from '../index';
+import { getChannel, getTrack, nextInQueue, RADIO_CHANNELS, TRACK_SRC, TRACKS } from '../index';
+
+/** public/ de la raíz del proyecto, relativo a este archivo de test. */
+const PUBLIC_URL = new URL('../../../../public/', import.meta.url);
 
 describe('feature audio', () => {
   it('expone el catálogo de pistas con frecuencias rituales', () => {
@@ -7,10 +11,33 @@ describe('feature audio', () => {
     expect(TRACKS.map((t) => t.hz)).toEqual([111, 222, 432, 432, 528]);
   });
 
-  it('las pistas no embeben audio en base64 (src vacío hasta CDN)', () => {
+  it('mapea cada pista a su ruta literal exacta en public/audio', () => {
+    expect(TRACK_SRC).toEqual({
+      'origen-111': '/audio/01-origen-111-hz.mp3',
+      'raiz-222': '/audio/02-raiz-222-hz.mp3',
+      'expansion-432': '/audio/03-expansion-432-hz.mp3',
+      'coherencia-432': '/audio/04-coherencia-432-hz.mp3',
+      'despertar-528': '/audio/05-despertar-528-hz.mp3',
+    });
     for (const t of TRACKS) {
-      expect(t.src).toBe('');
+      expect(t.src).toBe(TRACK_SRC[t.id]);
+    }
+  });
+
+  it('las rutas no contienen base64 ni URLs externas', () => {
+    for (const t of TRACKS) {
       expect(t.src.startsWith('data:')).toBe(false);
+      expect(t.src).not.toContain('base64');
+      expect(t.src).not.toMatch(/^https?:\/\//);
+      expect(t.src.startsWith('/audio/')).toBe(true);
+      expect(t.duration).toBe(75.05);
+    }
+  });
+
+  it('cada ruta corresponde a un archivo existente en public/audio', () => {
+    for (const t of TRACKS) {
+      const file = new URL(t.src.replace(/^\/audio\//, 'audio/'), PUBLIC_URL);
+      expect(existsSync(file), `falta el archivo ${t.src}`).toBe(true);
     }
   });
 

@@ -1,57 +1,104 @@
 'use client';
 
 import { TRACKS } from '@/features/audio';
-import type { TrackId } from '@/lib/audio';
+import type { AudioPlayerResult } from '@/hooks/useAudioPlayer';
 import Deck from './Deck';
+import RadioDemo from './RadioDemo';
 import TrackList from './TrackList';
 import styles from './AudioPlayer.module.css';
 
 export interface AudioPlayerProps {
-  /** Pista seleccionada actualmente (compartida con la sección Origen). */
-  selectedId: TrackId;
-  /** Cambia la pista seleccionada. */
-  onSelect: (id: TrackId) => void;
-  /** Se dispara al pulsar el botón principal del deck. */
-  onPlay: () => void;
-  /** Mensaje accesible a anunciar (aria-live), p. ej. «Audio disponible próximamente». */
-  mensaje: string | null;
+  /** Estado y controles del reproductor (hook useAudioPlayer). */
+  player: AudioPlayerResult;
+}
+
+/** Formatea segundos como m:ss (0:00 si no hay duración). */
+function fmt(t: number): string {
+  if (!Number.isFinite(t) || t <= 0) return '0:00';
+  const m = Math.floor(t / 60);
+  const s = Math.floor(t % 60);
+  return `${m}:${String(s).padStart(2, '0')}`;
 }
 
 /**
- * Reproductor visual de Origen Tostado. Componente controlado: recibe la
- * pista seleccionada por props desde ListeningExperience (que comparte el
- * estado con la sección Origen). No carga ni embebe audio real:
- * TRACKS.src está vacío hasta activar el CDN. Si el usuario intenta
- * reproducir, el padre anuncia un mensaje en un área aria-live; no se
- * simula reproducción.
+ * Reproductor de Origen Tostado. Componente controlado por el hook
+ * useAudioPlayer (único HTMLAudioElement + grafo de audio): el deck
+ * alterna play/pausa, la lista selecciona pista, el demo de radio elige
+ * señal encadenada y el scrub busca dentro del preview. El área aria-live
+ * anuncia errores y mensajes del hook.
  */
-export default function AudioPlayer({ selectedId, onSelect, onPlay, mensaje }: AudioPlayerProps) {
-  const selected = TRACKS.find((t) => t.id === selectedId);
+export default function AudioPlayer({ player }: AudioPlayerProps) {
+  const {
+    trackId,
+    playing,
+    loading,
+    error,
+    currentTime,
+    duration,
+    analyser,
+    channelId,
+    mensaje,
+    hasInteracted,
+    togglePlay,
+    select,
+    seek,
+    selectChannel,
+  } = player;
+
+  const selected = TRACKS.find((t) => t.id === trackId);
+  const max = duration > 0 ? duration : 1;
+  const value = Math.min(currentTime, max);
 
   return (
     <div className={styles.player}>
-      <Deck track={selected} onPlay={onPlay} />
+      <Deck
+        track={selected}
+        playing={playing}
+        loading={loading}
+        analyser={analyser}
+        hasInteracted={hasInteracted}
+        onTogglePlay={togglePlay}
+      />
 
       <div className={styles.col}>
         <div className={styles.now}>Reproduciendo ahora</div>
-        <TrackList tracks={TRACKS} selectedId={selectedId} onSelect={onSelect} />
+        <TrackList tracks={TRACKS} selectedId={trackId} playing={playing} onSelect={select} />
 
-        <div className={styles.scrub} aria-hidden="true">
-          <div className={styles.bar}>
-            <div className={styles.fill} />
+        <p className={styles.note} data-note>
+          Fragmentos de 75 s · las piezas completas viven en{' '}
+          <a href="#lanzamientos">la discografía</a> y en tus plataformas.
+        </p>
+
+        <RadioDemo channelId={channelId} onSelectChannel={selectChannel} mensaje={mensaje} />
+
+        <div className={styles.scrub} data-scrub>
+          <div className={styles.bar} aria-hidden="true">
+            <div
+              className={styles.fill}
+              style={{
+                inset: `0 ${100 - (duration > 0 ? (currentTime / duration) * 100 : 0)}% 0 0`,
+              }}
+            />
           </div>
+          <input
+            type="range"
+            className={styles.range}
+            min={0}
+            max={max}
+            step={0.1}
+            value={value}
+            onChange={(e) => seek(Number(e.target.value))}
+            aria-label="Progreso de la pista"
+            disabled={duration <= 0}
+          />
           <div className={styles.times}>
-            <span>0:00</span>
-            <span>—</span>
+            <span>{fmt(currentTime)}</span>
+            <span>{duration > 0 ? fmt(duration) : '—'}</span>
           </div>
         </div>
 
-        <p className={styles.note}>
-          Fragmentos de 75 s · las piezas completas viven en la discografía y en tus plataformas.
-        </p>
-
-        <p className={styles.liveNote} role="status" aria-live="polite">
-          {mensaje ?? '\u00A0'}
+        <p className={styles.liveNote} data-live role="status" aria-live="polite">
+          {error ?? mensaje ?? '\u00A0'}
         </p>
       </div>
     </div>

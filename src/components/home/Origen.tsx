@@ -5,6 +5,8 @@ import { getTrack } from '@/features/audio';
 import { ORIGEN_PASOS } from '@/features/origen';
 import type { TrackId } from '@/lib/audio';
 import OrigenStep from './OrigenStep';
+import Reveal from './Reveal';
+import SectionGhost from './SectionGhost';
 import styles from './Origen.module.css';
 
 export interface OrigenProps {
@@ -55,59 +57,75 @@ export default function Origen({ selectedId, onSelect }: OrigenProps) {
 
   return (
     <section id="origen" className={styles.section} aria-labelledby="origen-titulo">
-      <div className={styles.sechead}>
-        <span className={styles.secnum}>02 / EL ORIGEN</span>
-      </div>
-      <h2 id="origen-titulo" className={styles.title}>
-        Todo empieza en <em>la tierra</em>
-      </h2>
-      <p className={styles.lead}>
-        Finca Tres Esquinas, montañas del Quindío. Antes de ser música, cada pieza fue lluvia sobre
-        las hojas, cerezas madurando despacio y manos que conocen la montaña. Este es el territorio
-        que suena — y así se convierte en frecuencia.
-      </p>
-      <p className={styles.coords}>
-        4°32′ N · 75°39′ O &nbsp;·&nbsp; 1.450–1.800 m s. n. m. &nbsp;·&nbsp; Eje Cafetero, Colombia
-      </p>
+      <SectionGhost number="02" />
+      <Reveal>
+        <div className={styles.sechead}>
+          <span className={styles.secnum}>02 / EL ORIGEN</span>
+        </div>
+      </Reveal>
+      <Reveal>
+        <h2 id="origen-titulo" className={styles.title}>
+          Todo empieza en <em>la tierra</em>
+        </h2>
+      </Reveal>
+      <Reveal>
+        <p className={styles.lead}>
+          Finca Tres Esquinas, montañas del Quindío. Antes de ser música, cada pieza fue lluvia
+          sobre las hojas, cerezas madurando despacio y manos que conocen la montaña. Este es el
+          territorio que suena — y así se convierte en frecuencia.
+        </p>
+      </Reveal>
+      <Reveal>
+        <p className={styles.coords}>
+          4°32′ N · 75°39′ O &nbsp;·&nbsp; 1.450–1.800 m s. n. m. &nbsp;·&nbsp; Eje Cafetero,
+          Colombia
+        </p>
+      </Reveal>
 
-      <div className={styles.proc}>
-        {ORIGEN_PASOS.map((paso) => (
-          <OrigenStep
-            key={paso.id}
-            paso={paso}
-            seleccionado={selectedId === paso.trackId}
-            onSelect={handleSelect}
-          />
-        ))}
-      </div>
+      <Reveal>
+        <div className={styles.proc}>
+          {ORIGEN_PASOS.map((paso) => (
+            <OrigenStep
+              key={paso.id}
+              paso={paso}
+              seleccionado={selectedId === paso.trackId}
+              onSelect={handleSelect}
+            />
+          ))}
+        </div>
+      </Reveal>
 
       <p className={styles.live} role="status" aria-live="polite">
         {anuncio ?? '\u00A0'}
       </p>
 
-      <div className={styles.media}>
-        <figure className={styles.frame}>
-          <Topografia />
-          <figcaption className={styles.cap}>
-            Finca Tres Esquinas · material del territorio en camino
-          </figcaption>
-        </figure>
-        <figure className={styles.frame}>
-          <Topografia />
-          <figcaption className={styles.cap}>Los guardianes del origen · próximamente</figcaption>
-        </figure>
-      </div>
+      <Reveal>
+        <div className={styles.media}>
+          <figure className={styles.frame}>
+            <Topografia />
+            <figcaption className={styles.cap}>
+              Finca Tres Esquinas · material del territorio en camino
+            </figcaption>
+          </figure>
+          <figure className={styles.frame}>
+            <Topografia />
+            <figcaption className={styles.cap}>Los guardianes del origen · próximamente</figcaption>
+          </figure>
+        </div>
+      </Reveal>
 
-      <div className={styles.voces}>
-        <p>
-          “Aquí el café no se cultiva en silencio: la montaña suena todo el día. Nosotros solo
-          aprendimos a escucharla.”
-        </p>
-        <span>
-          Voces del origen · los nombres y rostros de quienes cultivan este sonido llegan pronto a
-          este capítulo
-        </span>
-      </div>
+      <Reveal>
+        <div className={styles.voces}>
+          <p>
+            “Aquí el café no se cultiva en silencio: la montaña suena todo el día. Nosotros solo
+            aprendimos a escucharla.”
+          </p>
+          <span>
+            Voces del origen · los nombres y rostros de quienes cultivan este sonido llegan pronto a
+            este capítulo
+          </span>
+        </div>
+      </Reveal>
     </section>
   );
 }

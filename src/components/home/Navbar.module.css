@@ -27,14 +27,14 @@
 .brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .wordmark {
   position: relative;
   display: inline-block;
-  height: 22px;
-  width: 70px;
+  height: 26px;
+  width: 84px;
   flex-shrink: 0;
 }
 

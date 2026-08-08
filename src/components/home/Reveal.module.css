@@ -1,0 +1,37 @@
+/* Animación de entrada por scroll (paridad con el master: `.reveal`/`.in`).
+   El bloque es visible por defecto; solo se oculta cuando el documento
+   tiene JS (`html.js`, añadido por el layout antes del primer paint), de
+   modo que sin JavaScript el contenido nunca queda oculto. */
+
+.reveal {
+  opacity: 1;
+  transform: none;
+}
+
+:global(html.js) .reveal:not(.in) {
+  opacity: 0;
+  transform: translateY(40px);
+  transition:
+    opacity 1s cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 1s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.in {
+  opacity: 1;
+  transform: none;
+}
+
+/* Foco: si el usuario tabula hacia un bloque aún oculto, se muestra. */
+:global(html.js) .reveal:focus-within {
+  opacity: 1;
+  transform: none;
+}
+
+/* Reduced motion: todo visible, sin transición. */
+@media (prefers-reduced-motion: reduce) {
+  :global(html.js) .reveal:not(.in) {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}

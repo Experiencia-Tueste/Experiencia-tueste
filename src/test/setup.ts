@@ -39,6 +39,41 @@ if (typeof window !== 'undefined') {
       },
     },
   });
+
+  // jsdom no implementa la reproducción de media: sin estos mocks,
+  // el hook useAudioPlayer (y la página que lo usa) emiten
+  // «Not implemented: HTMLMediaElement.prototype.play/pause» en cada
+  // render y unmount. Los tests del hook los reemplazan por caso.
+  HTMLMediaElement.prototype.play = () => Promise.resolve();
+  HTMLMediaElement.prototype.pause = () => {};
+
+  // jsdom tampoco implementa el contexto 2D: sin este stub, cualquier
+  // render del Deck (p. ej. la página completa) imprime
+  // «Not implemented: HTMLCanvasElement.prototype.getContext». El stub
+  // es un contexto no-op; los tests del Deck lo reemplazan por caso.
+  const noop = () => {};
+  const gradient = { addColorStop: noop };
+  const canvasCtx2d = {
+    setTransform: noop,
+    clearRect: noop,
+    save: noop,
+    restore: noop,
+    beginPath: noop,
+    arc: noop,
+    stroke: noop,
+    fill: noop,
+    moveTo: noop,
+    lineTo: noop,
+    createLinearGradient: () => gradient,
+    createRadialGradient: () => gradient,
+    lineWidth: 1,
+    lineCap: 'round',
+    globalAlpha: 1,
+    strokeStyle: '',
+    fillStyle: '',
+  };
+  HTMLCanvasElement.prototype.getContext = ((kind: string) =>
+    kind === '2d' ? canvasCtx2d : null) as typeof HTMLCanvasElement.prototype.getContext;
 }
 
 // Aislamiento entre pruebas: sin DOM residual (cleanup de Testing

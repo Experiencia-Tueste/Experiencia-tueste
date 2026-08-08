@@ -20,6 +20,7 @@
 
 .scrub {
   margin-top: 24px;
+  position: relative;
 }
 
 .bar {
@@ -34,6 +35,25 @@
   position: absolute;
   inset: 0 100% 0 0;
   background: linear-gradient(90deg, var(--teal), var(--amber));
+}
+
+/* Input range invisible sobre la barra: interacción accesible sin romper el look. */
+.range {
+  position: absolute;
+  inset: -6px 0;
+  width: 100%;
+  opacity: 0;
+  cursor: pointer;
+  margin: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.range:focus-visible {
+  opacity: 1;
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 .times {
@@ -51,6 +71,12 @@
   color: rgba(var(--cream-rgb), 0.58);
   margin-top: 22px;
   line-height: 1.6;
+}
+
+.note a {
+  color: var(--amber);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .liveNote {

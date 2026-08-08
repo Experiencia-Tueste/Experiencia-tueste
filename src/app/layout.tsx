@@ -51,6 +51,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href={FONT_HREF} rel="stylesheet" />
+        {/* Marca de JS antes del primer paint: habilita la animación de
+            entrada por scroll (Reveal) sin ocultar contenido sin JS. */}
+        <script
+          dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }}
+        />
       </head>
       <body>{children}</body>
     </html>

@@ -1,0 +1,88 @@
+/* Bloque «Llévatelo a donde escuches» (paridad con el master .subblock).
+   Tarjetas editoriales de vidrio oscuro: solo la tarjeta de Spotify es
+   interactiva (enlace real); las demás no fingen enlaces. */
+
+.block {
+  max-width: 900px;
+  margin: 46px auto 0;
+}
+
+.subhead {
+  font-family: var(--font-serif);
+  font-size: clamp(1.5rem, 3vw, 2.1rem);
+  font-weight: 600;
+  margin-bottom: 26px;
+  text-align: center;
+}
+
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+}
+
+.plat {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 18px 26px;
+  border-radius: 16px;
+  border: 1px solid rgba(var(--cream-rgb), 0.14);
+  background: rgba(var(--cream-rgb), 0.03);
+  min-width: 200px;
+  color: var(--cream);
+  text-decoration: none;
+}
+
+.plat svg {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  fill: var(--accent);
+}
+
+.plat svg[stroke] {
+  fill: none;
+  stroke: var(--accent);
+}
+
+.pt {
+  text-align: left;
+}
+
+.pt b {
+  display: block;
+  font-size: 0.98rem;
+}
+
+.pt span {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  color: rgba(var(--cream-rgb), 0.55);
+}
+
+/* Solo el enlace real (Spotify) reacciona; las tarjetas sin URL no
+   fingen interactividad. */
+a.plat:hover {
+  transform: translateY(-5px);
+  border-color: var(--accent);
+  box-shadow: 0 18px 40px -20px var(--accent);
+}
+
+a.plat:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* Modo día */
+:global(body.day) .plat {
+  border-color: rgba(46, 42, 36, 0.16);
+  background: rgba(46, 42, 36, 0.04);
+  color: var(--ink);
+}
+
+:global(body.day) .pt span {
+  color: rgba(46, 42, 36, 0.55);
+}

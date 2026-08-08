@@ -24,6 +24,19 @@ function renderShell() {
 }
 
 describe('Navbar (menú móvil accesible)', () => {
+  it('muestra el lockup oficial de marca con aria-label claro', () => {
+    renderShell();
+
+    const brand = screen.getByRole('link', { name: 'Tueste, ir al inicio' });
+    const wordmark = brand.querySelector('img[src="/brand/wordmark-crema.png"]');
+    const solNight = brand.querySelector('img[src="/brand/sol-crema.png"]');
+    const solDay = brand.querySelector('img[src="/brand/sol-carbon.png"]');
+
+    expect(wordmark).not.toBeNull();
+    expect(solNight).not.toBeNull();
+    expect(solDay).not.toBeNull();
+  });
+
   it('al abrir el menú: diálogo modal, inert en contenido y skip-link, foco al primer enlace', async () => {
     const user = userEvent.setup();
     renderShell();

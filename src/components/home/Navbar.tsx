@@ -106,13 +106,25 @@ export default function Navbar() {
   return (
     <>
       <nav className={`${styles.nav}${scrolled ? ` ${styles.scrolled}` : ''}`}>
-        <a href="#top" className={styles.brand}>
-          <span className={styles.brandchip}>
-            <Sun size={26} />
-          </span>
-          <span className={styles.brandword}>
-            <b>Tueste</b>
-            <small>Origen Tostado</small>
+        <a href="#top" className={styles.brand} aria-label="Tueste, ir al inicio">
+          <Sun size={30} />
+          <span className={styles.wordmark}>
+            {/* eslint-disable-next-line @next/next/no-img-element -- wordmark local estático del kit oficial; next/image transformaría el src y rompería el test de lockup. */}
+            <img
+              className={styles.wordmarkNight}
+              src="/brand/wordmark-crema.png"
+              alt=""
+              width={760}
+              height={239}
+            />
+            {/* eslint-disable-next-line @next/next/no-img-element -- wordmark local estático del kit oficial; next/image transformaría el src y rompería el test de lockup. */}
+            <img
+              className={styles.wordmarkDay}
+              src="/brand/wordmark-carbon.png"
+              alt=""
+              width={760}
+              height={239}
+            />
           </span>
         </a>
 

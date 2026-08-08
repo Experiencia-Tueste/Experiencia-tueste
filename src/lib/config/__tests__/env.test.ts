@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { loadPublicConfig } from '../env';
+import { loadPublicConfig, loadSiteUrl } from '../env';
 
 /**
  * Pruebas del contrato de configuración pública. Nunca dependen del
@@ -51,5 +51,23 @@ describe('config env (contrato público)', () => {
         NEXT_PUBLIC_SUPABASE_ANON_KEY: 'anon-key-demo',
       }),
     ).toThrow(/URL válida/);
+  });
+});
+
+describe('loadSiteUrl (URL canónica del sitio)', () => {
+  it('usa el fallback local de desarrollo/build si SITE_URL está ausente o vacía', () => {
+    expect(loadSiteUrl({})).toBe('http://localhost:3000');
+    expect(loadSiteUrl({ SITE_URL: '' })).toBe('http://localhost:3000');
+    expect(loadSiteUrl({ SITE_URL: '   ' })).toBe('http://localhost:3000');
+  });
+
+  it('devuelve la URL absoluta válida configurada', () => {
+    expect(loadSiteUrl({ SITE_URL: 'https://tueste.ejemplo.com' })).toBe(
+      'https://tueste.ejemplo.com',
+    );
+  });
+
+  it('falla con error claro si SITE_URL no es una URL absoluta válida', () => {
+    expect(() => loadSiteUrl({ SITE_URL: 'no-es-una-url' })).toThrow(/SITE_URL/);
   });
 });

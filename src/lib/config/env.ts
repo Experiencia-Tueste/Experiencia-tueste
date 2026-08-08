@@ -14,6 +14,7 @@ import { z } from 'zod';
  */
 
 const SUPABASE_URL_SCHEMA = z.string().url();
+const SITE_URL_SCHEMA = z.string().url();
 
 export interface SupabasePublicConfig {
   supabaseUrl: string;
@@ -64,4 +65,35 @@ export function loadPublicConfig(env: PublicEnv = process.env): SupabasePublicCo
   }
 
   return { supabaseUrl: parsedUrl.data, supabaseAnonKey: anonKey as string };
+}
+
+/**
+ * URL canónica del sitio (server-only por uso: solo la consume el
+ * Server Component del layout para `metadataBase`; no se exporta a
+ * componentes cliente).
+ *
+ * Lee únicamente `SITE_URL` (no es secreto; sirve para canonical URL,
+ * Open Graph y Twitter). Si está ausente o vacía, usa
+ * `http://localhost:3000` exclusivamente como fallback local de
+ * desarrollo/build. Si está presente pero no es una URL absoluta
+ * válida, lanza un error claro.
+ *
+ * Antes de producción se configura `SITE_URL` con el dominio público
+ * HTTPS real (p. ej. en Railway); no se hardcodea ningún dominio.
+ */
+export function loadSiteUrl(env: PublicEnv = process.env): string {
+  const raw = env.SITE_URL;
+
+  if (typeof raw !== 'string' || raw.trim() === '') {
+    return 'http://localhost:3000';
+  }
+
+  const parsed = SITE_URL_SCHEMA.safeParse(raw.trim());
+  if (!parsed.success) {
+    throw new Error(
+      `SITE_URL no es una URL absoluta válida: «${raw}». Usa el dominio público HTTPS real (p. ej. https://tueste.up.railway.app) o deja la variable vacía para el fallback local.`,
+    );
+  }
+
+  return parsed.data;
 }

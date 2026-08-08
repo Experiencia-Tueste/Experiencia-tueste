@@ -1,7 +1,44 @@
+/* Sol Tueste · asset oficial.
+   Contenedor raíz: tamaño, layout y posicionamiento (sin animación).
+   Elemento interno `.spin`: únicamente la rotación, para que nunca
+   pise un `transform` externo aplicado al raíz (p. ej. `.herosun`).
+   Crema en modo noche; carbón en body.day (imagen inactiva con
+   opacity 0). */
+
 .sun {
-  color: var(--amber);
-  animation: spin 40s linear infinite;
+  position: relative;
+  display: inline-block;
   flex-shrink: 0;
+}
+
+.spin {
+  position: absolute;
+  inset: 0;
+  animation: spin 40s linear infinite;
+}
+
+.spin img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.night {
+  opacity: 1;
+}
+
+.day {
+  opacity: 0;
+}
+
+:global(body.day) .night {
+  opacity: 0;
+}
+
+:global(body.day) .day {
+  opacity: 1;
 }
 
 @keyframes spin {
@@ -10,15 +47,9 @@
   }
 }
 
-/* En modo día el sol se oscurece para mantener contraste sobre fondo claro. */
-:global(body.day) .sun {
-  color: var(--amber-deep);
-}
-
-/* Motion reducido: quietud total (los tokens globales ya lo cubren, pero
-   reforzamos aquí para que el sol no gire en absoluto). */
+/* Motion reducido: el sol no gira en absoluto. */
 @media (prefers-reduced-motion: reduce) {
-  .sun {
+  .spin {
     animation: none;
   }
 }

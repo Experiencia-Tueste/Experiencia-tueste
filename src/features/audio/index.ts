@@ -68,7 +68,7 @@ const TRACK_SEED: Array<Omit<Track, 'src' | 'duration'>> = [
   {
     id: 'coherencia-432',
     title: 'Coherencia 432 Hz',
-    description: 'Equilibrio · keyboard',
+    description: 'Equilibrio',
     hz: 432,
     mode: 'house',
   },

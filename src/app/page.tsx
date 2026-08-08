@@ -2,6 +2,7 @@ import Atmosphere from '@/components/home/Atmosphere';
 import Footer from '@/components/home/Footer';
 import Hero from '@/components/home/Hero';
 import ListeningExperience from '@/components/home/ListeningExperience';
+import Manifiesto from '@/components/home/Manifiesto';
 import Navbar from '@/components/home/Navbar';
 import SkipLink from '@/components/SkipLink';
 
@@ -25,6 +26,7 @@ export default function Home() {
         <Atmosphere />
         <main id="contenido" tabIndex={-1}>
           <Hero />
+          <Manifiesto />
           <ListeningExperience />
         </main>
         <Footer />

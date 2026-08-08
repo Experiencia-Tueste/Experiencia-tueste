@@ -1,0 +1,111 @@
+/* Manifiesto de marca: proporción editorial del documento maestro.
+   Centrado vertical y horizontal, sin overflow a 375px, válido en
+   modo día/noche y con reduced motion respetado. */
+
+.manifiesto {
+  min-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: 120px clamp(20px, 6vw, 80px);
+  text-align: center;
+}
+
+@media (max-width: 760px) {
+  .manifiesto {
+    min-height: 70vh;
+  }
+}
+
+/* Kicker: DM Mono, pequeño, uppercase, tracking amplio, ámbar. */
+.kicker {
+  margin: 0 0 var(--space-6);
+  font: 500 var(--text-sm) var(--font-mono);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+
+/* Primeras dos líneas: Fraunces itálica, escala fluida. */
+.line {
+  margin: 0;
+  max-width: 100%;
+  font: italic 400 clamp(1.5rem, 3.6vw, 2.6rem) var(--font-serif);
+  color: rgba(var(--cream-rgb), 0.85);
+  line-height: 1.3;
+}
+
+/* «El café no acompaña…»: más tenue. */
+.lineDim {
+  margin: 0;
+  max-width: 100%;
+  font: italic 400 clamp(1.5rem, 3.6vw, 2.6rem) var(--font-serif);
+  color: rgba(var(--cream-rgb), 0.45);
+  line-height: 1.3;
+}
+
+.lineDim del {
+  color: rgba(var(--cream-rgb), 0.3);
+  text-decoration-thickness: 1.5px;
+}
+
+/* Línea final: protagonismo claro. */
+.lineFinal {
+  margin: var(--space-4) 0 0;
+  max-width: 100%;
+  font: italic 600 clamp(2.4rem, 7vw, 5.4rem) var(--font-serif);
+  color: var(--cream);
+  line-height: 1.05;
+}
+
+/* «nace» con gradiente ámbar/coral como en la referencia. */
+.lineFinal em {
+  font-style: italic;
+  background: linear-gradient(90deg, var(--amber), var(--coral));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Firma tenue en DM Mono. */
+.signature {
+  margin: var(--space-8) 0 0;
+  font: 500 var(--text-sm) var(--font-mono);
+  letter-spacing: var(--tracking-wide);
+  color: rgba(var(--cream-rgb), 0.5);
+  text-transform: uppercase;
+}
+
+/* Modo día: texto oscuro sobre fondo claro. */
+:global(body.day) .kicker {
+  color: var(--amber-deep);
+}
+
+:global(body.day) .line {
+  color: rgba(46, 42, 36, 0.85);
+}
+
+:global(body.day) .lineDim {
+  color: rgba(46, 42, 36, 0.45);
+}
+
+:global(body.day) .lineDim del {
+  color: rgba(46, 42, 36, 0.3);
+}
+
+:global(body.day) .lineFinal {
+  color: var(--ink);
+}
+
+:global(body.day) .lineFinal em {
+  background: linear-gradient(90deg, var(--amber-deep), var(--coral-deep));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+:global(body.day) .signature {
+  color: rgba(46, 42, 36, 0.5);
+}

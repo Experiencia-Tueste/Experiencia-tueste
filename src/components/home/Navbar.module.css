@@ -23,74 +23,43 @@
   border-bottom: 1px solid rgba(var(--cream-rgb), 0.08);
 }
 
-/* ── Marca ─────────────────────────────────────────────── */
+/* ── Marca (lockup oficial: sol + wordmark) ───────────── */
 .brand {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.brandchip {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+.wordmark {
   position: relative;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.012);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  display: inline-block;
+  height: 22px;
+  width: 70px;
+  flex-shrink: 0;
 }
 
-.brandchip::before {
-  content: '';
+.wordmark img {
   position: absolute;
   inset: 0;
-  border-radius: inherit;
-  padding: 1.4px;
-  pointer-events: none;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 244, 224, 0.45) 0%,
-    rgba(255, 244, 224, 0.15) 20%,
-    rgba(255, 244, 224, 0) 40%,
-    rgba(255, 244, 224, 0) 60%,
-    rgba(255, 244, 224, 0.15) 80%,
-    rgba(255, 244, 224, 0.45) 100%
-  );
-  -webkit-mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
-.brandsun {
-  width: 26px;
-  height: 26px;
+.wordmarkNight {
+  opacity: 1;
 }
 
-.brandword b {
-  font-family: var(--font-serif);
-  font-weight: 600;
-  font-size: 1.05rem;
-  letter-spacing: 0.04em;
-  display: block;
-  line-height: 1;
+.wordmarkDay {
+  opacity: 0;
 }
 
-.brandword small {
-  display: block;
-  font-family: var(--font-mono);
-  font-size: 0.58rem;
-  letter-spacing: 0.32em;
-  color: var(--teal-bright);
-  text-transform: uppercase;
-  margin-top: 3px;
+:global(body.day) .wordmarkNight {
+  opacity: 0;
+}
+
+:global(body.day) .wordmarkDay {
+  opacity: 1;
 }
 
 /* ── Enlaces de escritorio ─────────────────────────────── */
@@ -315,11 +284,6 @@
 :global(body.day) .scrolled {
   background: rgba(250, 240, 220, 0.85);
   border-bottom-color: rgba(46, 42, 36, 0.1);
-}
-
-:global(body.day) .brandchip {
-  background: rgba(46, 42, 36, 0.05);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.6);
 }
 
 :global(body.day) .mmenu {

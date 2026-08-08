@@ -446,7 +446,7 @@
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  color: rgba(251, 169, 34, 0.14);
+  opacity: 0.14;
   z-index: 0;
   pointer-events: none;
   max-width: 78vw;
@@ -565,7 +565,7 @@
 }
 
 :global(body.day) .herosun {
-  color: rgba(214, 138, 19, 0.18);
+  opacity: 0.18;
 }
 
 /* ── Motion reducido ───────────────────────────────────── */

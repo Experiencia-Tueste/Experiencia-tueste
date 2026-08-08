@@ -1,31 +1,20 @@
 import styles from './Sun.module.css';
 
 /**
- * Rayos del sol · coordenadas estáticas precalculadas (radio interior 13,
- * exterior 19, cada 30°). Fuera del componente para que el render sea
- * 100% determinista y no registre errores de hydration.
- */
-const RAYOS: ReadonlyArray<readonly [number, number, number, number]> = [
-  [37, 24, 43, 24],
-  [35.3, 30.5, 40.5, 33.5],
-  [30.5, 35.3, 33.5, 40.5],
-  [24, 37, 24, 43],
-  [17.5, 35.3, 14.5, 40.5],
-  [12.7, 30.5, 7.5, 33.5],
-  [11, 24, 5, 24],
-  [12.7, 17.5, 7.5, 14.5],
-  [17.5, 12.7, 14.5, 7.5],
-  [24, 11, 24, 5],
-  [30.5, 12.7, 33.5, 7.5],
-  [35.3, 17.5, 40.5, 14.5],
-];
-
-/**
- * Sol Tueste · ícono de marca propio (SVG, sin base64).
- * Círculo central + 12 rayos estáticos, con rotación lenta controlada
- * por CSS. `decorative` oculta el SVG de lectores de pantalla cuando el
- * texto adyacente ya describe la marca. El tamaño se controla con `size`
- * (inline) para que los consumidores no dependan de la cascada CSS.
+ * Sol Tueste · asset oficial de marca (PNG del kit del cliente, sin
+ * base64 ni imágenes externas).
+ *
+ * Estructura separada a propósito:
+ * - contenedor raíz: tamaño, layout y posicionamiento (className del
+ *   consumidor, p. ej. `.herosun` con translate(-50%, -50%));
+ * - elemento interno `.spin`: únicamente la rotación `spin 40s linear
+ *   infinite`. La animación nunca vive en el elemento que recibe un
+ *   `transform` externo, para que ambos no se pisen.
+ *
+ * Modo noche: sol crema; en `body.day`: sol carbón (dos imágenes, la
+ * inactiva con opacity 0 — funciona en SSR sin JavaScript). Sin
+ * rotación con prefers-reduced-motion. API pública conservada:
+ * `className`, `decorative` y `size`.
  */
 export default function Sun({
   className,
@@ -37,28 +26,17 @@ export default function Sun({
   size?: number;
 }) {
   return (
-    <svg
+    <span
       className={`${styles.sun}${className ? ` ${className}` : ''}`}
-      viewBox="0 0 48 48"
-      width={size}
-      height={size}
-      fill="none"
+      style={{ width: size, height: size }}
       aria-hidden={decorative || undefined}
-      focusable="false"
     >
-      <circle cx="24" cy="24" r="9" fill="currentColor" />
-      {RAYOS.map(([x1, y1, x2, y2]) => (
-        <line
-          key={`${x1}-${y1}-${x2}-${y2}`}
-          x1={x1}
-          y1={y1}
-          x2={x2}
-          y2={y2}
-          stroke="currentColor"
-          strokeWidth="2.4"
-          strokeLinecap="round"
-        />
-      ))}
-    </svg>
+      <span className={styles.spin}>
+        {/* eslint-disable-next-line @next/next/no-img-element -- asset local estático del kit oficial; next/image transformaría el src y rompería el test de lockup. */}
+        <img className={styles.night} src="/brand/sol-crema.png" alt="" width={245} height={230} />
+        {/* eslint-disable-next-line @next/next/no-img-element -- asset local estático del kit oficial; next/image transformaría el src y rompería el test de lockup. */}
+        <img className={styles.day} src="/brand/sol-carbon.png" alt="" width={245} height={230} />
+      </span>
+    </span>
   );
 }

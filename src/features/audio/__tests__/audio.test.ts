@@ -14,6 +14,11 @@ describe('feature audio', () => {
     }
   });
 
+  it('el catálogo no contiene el texto accidental "keyboard"', () => {
+    const catalogText = TRACKS.map((t) => `${t.title} ${t.description}`).join(' ');
+    expect(catalogText.toLowerCase()).not.toContain('keyboard');
+  });
+
   it('busca una pista por id', () => {
     expect(getTrack('despertar-528')?.title).toBe('Despertar 528 Hz');
     expect(getTrack('no-existe')).toBeUndefined();

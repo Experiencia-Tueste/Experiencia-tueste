@@ -1,10 +1,39 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
+import { loadSiteUrl } from '@/lib/config/env';
 import './globals.css';
 
+const BRAND_DESCRIPTION =
+  'Tueste · Origen Tostado. Café, música y ritual nacidos en el Eje Cafetero colombiano.';
+
 export const metadata: Metadata = {
+  // URL canónica del contrato de configuración (SITE_URL o fallback
+  // local de desarrollo/build). Requerida por Next para URLs absolutas
+  // de Open Graph/Twitter sin falsificar dominios.
+  metadataBase: new URL(loadSiteUrl()),
   title: 'Tueste · Origen Tostado',
-  description: 'Base técnica de la aplicación Tueste. Origen tostado, sonido y café.',
+  description: BRAND_DESCRIPTION,
+  openGraph: {
+    type: 'website',
+    locale: 'es_CO',
+    siteName: 'Tueste',
+    title: 'Tueste · Origen Tostado',
+    description: BRAND_DESCRIPTION,
+    images: [
+      {
+        url: '/brand/original-logo-completo-fondo-blanco.png',
+        alt: 'Logo de Tueste · Origen Tostado',
+        width: 1092,
+        height: 1092,
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Tueste · Origen Tostado',
+    description: BRAND_DESCRIPTION,
+    images: ['/brand/original-logo-completo-fondo-blanco.png'],
+  },
 };
 
 /**

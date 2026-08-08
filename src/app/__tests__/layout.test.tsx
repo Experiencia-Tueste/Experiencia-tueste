@@ -1,14 +1,13 @@
-import { render } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import RootLayout from '../layout';
 
 describe('RootLayout (SSR sin hydration mismatch)', () => {
   /**
-   * SSR real con renderToStaticMarkup: renderizar el layout en el DOM
-   * de testing-library (jsdom) descarta `<html>` y `<head>` porque van
-   * dentro de un `<div>`; el markup estático reproduce exactamente lo
-   * que el servidor enviaría al navegador.
+   * SSR real con renderToStaticMarkup: reproduce exactamente lo que el
+   * servidor enviaría al navegador. No se usa Testing Library (render)
+   * porque monta el layout en un <div>, anidando <html> inválidamente
+   * y generando un warning falso de hidratación.
    */
   const markup = renderToStaticMarkup(
     <RootLayout>
@@ -35,15 +34,11 @@ describe('RootLayout (SSR sin hydration mismatch)', () => {
   it('el hijo se renderiza dentro del body', () => {
     expect(markup).toContain('contenido');
     expect(markup).toContain('data-testid="child"');
-  });
-
-  it('en el DOM de testing-library el hijo es accesible', () => {
-    const { getByTestId } = render(
-      <RootLayout>
-        <div data-testid="child">contenido</div>
-      </RootLayout>,
-    );
-
-    expect(getByTestId('child').textContent).toBe('contenido');
+    // El hijo debe estar entre <body> y </body>.
+    const bodyStart = markup.indexOf('<body>');
+    const bodyEnd = markup.indexOf('</body>');
+    const childPos = markup.indexOf('data-testid="child"');
+    expect(childPos).toBeGreaterThan(bodyStart);
+    expect(childPos).toBeLessThan(bodyEnd);
   });
 });

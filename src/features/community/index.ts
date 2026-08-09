@@ -112,28 +112,3 @@ export function toggleLike(posts: ForumPost[], postId: string): ForumPost[] {
     return { ...p, likedByMe: liked, likes: p.likes + (liked ? 1 : -1) };
   });
 }
-
-/** Crea un post nuevo (el texto se escapa en la capa de presentación). */
-export function createPost(
-  posts: ForumPost[],
-  input: {
-    author: string;
-    authorAvatar?: string;
-    category: ForumCategory;
-    title: string;
-    body: string;
-  },
-): ForumPost[] {
-  const post: ForumPost = {
-    id: `p-${Date.now()}`,
-    author: input.author,
-    authorAvatar: input.authorAvatar,
-    category: input.category,
-    title: input.title,
-    body: input.body,
-    likes: 0,
-    mine: true,
-    createdAt: new Date().toISOString(),
-  };
-  return [post, ...posts];
-}

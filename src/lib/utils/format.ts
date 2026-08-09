@@ -1,7 +1,7 @@
 /**
- * Utilidades compartidas de la app Tueste.
- * Funciones puras, sin dependencias de navegador, para poder probarlas
- * con Vitest en Node.
+ * Utilidades compartidas de la app Tueste — funciones puras,
+ * deterministas, sin dependencias de navegador ni efectos laterales,
+ * para poder probarlas con Vitest en Node.
  */
 
 /** Formatea un número como moneda colombiana: 185000 -> "COP 185.000". */
@@ -26,23 +26,6 @@ export function normalize(text: string): string {
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase();
-}
-
-/** Genera un código corto legible (ej: "K7Q2"). Solo para demo/MVP. */
-export function shortCode(length = 4): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let out = '';
-  for (let i = 0; i < length; i++) {
-    out += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return out;
-}
-
-/** Código de comprobante de pedido estilo "OT-2108-K7Q2". */
-export function orderCode(): string {
-  const d = new Date();
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `OT-${p(d.getDate())}${p(d.getMonth() + 1)}-${shortCode(4)}`;
 }
 
 /** Convierte un número de WhatsApp a formato internacional (57 3xx -> 573xx). */

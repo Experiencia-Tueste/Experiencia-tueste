@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { COMUNIDAD_CTA, comunidadMensaje, createPost, SEED_POSTS, toggleLike } from '../index';
+import { COMUNIDAD_CTA, comunidadMensaje, SEED_POSTS, toggleLike } from '../index';
 
 describe('feature community', () => {
   it('alterna el like de forma idempotente', () => {
@@ -16,18 +16,6 @@ describe('feature community', () => {
     const result = toggleLike(SEED_POSTS, 'p2');
     expect(result[0].likes).toBe(14);
     expect(result[1].likes).toBe(10);
-  });
-
-  it('crea un post nuevo al inicio de la lista', () => {
-    const posts = createPost(SEED_POSTS, {
-      author: 'María',
-      category: 'Café',
-      title: 'Hola',
-      body: 'Un saludo a la comunidad',
-    });
-    expect(posts).toHaveLength(SEED_POSTS.length + 1);
-    expect(posts[0].title).toBe('Hola');
-    expect(posts[0].mine).toBe(true);
   });
 
   it('expone el contenido estático del CTA público de comunidad', () => {

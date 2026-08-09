@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { loadSiteUrl } from '@/lib/config/env';
+import CustomCursor from '@/components/CustomCursor';
 import './globals.css';
 
 const BRAND_DESCRIPTION =
@@ -62,7 +63,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <style>{'[data-reveal]{opacity:1!important;transform:none!important}'}</style>
         </noscript>
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <CustomCursor />
+      </body>
     </html>
   );
 }

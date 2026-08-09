@@ -1,0 +1,48 @@
+/* Cursor decorativo de Tueste — paridad visual con el Master Debugg.
+   Estado base: punto crema de 14 px con mix-blend-mode: difference.
+   Sobre interactivos crece a 36 px ámbar. La clase cursor-none oculta
+   el cursor nativo (se aplica desde useEffect, nunca en SSR). */
+
+.dot {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--cream);
+  pointer-events: none;
+  z-index: var(--z-cursor);
+  mix-blend-mode: difference;
+  transform: translate(-50%, -50%);
+  /* Oculta el punto hasta el primer pointermove (evita destello en 0,0). */
+  opacity: 0;
+  transition:
+    width 0.18s ease,
+    height 0.18s ease,
+    background 0.18s ease;
+}
+
+.visible {
+  opacity: 1;
+}
+
+.big {
+  width: 36px;
+  height: 36px;
+  background: var(--amber);
+}
+
+/* Transición desactivada si el usuario prefiere movimiento reducido. */
+@media (prefers-reduced-motion: reduce) {
+  .dot {
+    transition: none;
+  }
+}
+
+/* Oculta el cursor nativo en toda la interfaz cuando el componente está
+   activo. Se aplica exclusivamente en cliente (useEffect). */
+:global(html.cursor-none),
+:global(html.cursor-none) * {
+  cursor: none !important;
+}

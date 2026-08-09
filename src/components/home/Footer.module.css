@@ -40,7 +40,7 @@
   flex-wrap: wrap;
 }
 
-.col h5 {
+.col h2 {
   font-family: var(--font-mono);
   font-size: 0.64rem;
   letter-spacing: 0.2em;

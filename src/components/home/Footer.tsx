@@ -34,7 +34,7 @@ export default function Footer() {
         <nav className={styles.cols} aria-label="Navegación del pie de página">
           {FOOTER_GROUPS.map((col) => (
             <div className={styles.col} key={col.titulo}>
-              <h5>{col.titulo}</h5>
+              <h2>{col.titulo}</h2>
               <ul>
                 {col.sectionIds.map((id) => {
                   const seccion = getSection(id);

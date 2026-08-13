@@ -1,37 +1,48 @@
-import Atmosphere from '@/components/home/Atmosphere';
-import EditorialTicker from '@/components/home/EditorialTicker';
-import Footer from '@/components/home/Footer';
-import Hero from '@/components/home/Hero';
-import ListeningExperience from '@/components/home/ListeningExperience';
-import Manifiesto from '@/components/home/Manifiesto';
-import Navbar from '@/components/home/Navbar';
+import type { Metadata } from 'next';
 import SkipLink from '@/components/SkipLink';
+import PortalBackdrop from '@/features/portal/components/PortalBackdrop';
+import PortalFooter from '@/features/portal/components/PortalFooter';
+import PortalHeader from '@/features/portal/components/PortalHeader';
+import PortalHero from '@/features/portal/components/PortalHero';
+import ExperienceCard from '@/features/portal/components/ExperienceCard';
+import ShopCard from '@/features/portal/components/ShopCard';
+import styles from '@/features/portal/portal.module.css';
 
 /**
- * Página pública de Tueste · primera capa visual.
- * Navegación, atmósfera global, hero y todas las secciones públicas ya
- * implementadas (Escucha, Origen, Música, Barista, En Vivo, Adopta,
- * Tienda, Negocios, Mercado de Origen y Comunidad), replicando el mockup
- * de referencia, más el footer público que cierra la experiencia.
+ * Metadata específica del portal: la base global (metadataBase, OG y
+ * Twitter image del layout) se conserva; aquí solo se reemplazan
+ * title y description.
+ */
+export const metadata: Metadata = {
+  title: 'Tueste · Elige tu camino',
+  description:
+    'Tienda Tueste Co y Experiencia Origen Tostado: dos caminos nacidos del mismo origen.',
+};
+
+/**
+ * Portal de entrada Tueste: dos caminos, un origen.
+ * La experiencia completa (audio, manifiesto, tienda, etc.) vive en
+ * /experiencia; esta página es solo el portal editorial que la presenta
+ * junto a la tienda Shopify (URL configurable, sin enlace roto si no
+ * está definida).
  *
- * El SkipLink va ANTES del Navbar: es el primer elemento alcanzable con
- * Tab. Navbar lo marca inert (junto con `contenido-principal`) mientras
- * el menú móvil está abierto, para que el foco permanezca en el diálogo.
+ * El SkipLink va antes del encabezado: primer foco del documento.
  */
 export default function Home() {
   return (
     <>
       <SkipLink />
-      <Navbar />
+      <PortalBackdrop />
+      <PortalHeader />
       <div id="contenido-principal">
-        <Atmosphere />
         <main id="contenido" tabIndex={-1}>
-          <Hero />
-          <Manifiesto />
-          <EditorialTicker variant="amber" />
-          <ListeningExperience />
+          <PortalHero />
+          <div className={styles.cards}>
+            <ShopCard />
+            <ExperienceCard />
+          </div>
         </main>
-        <Footer />
+        <PortalFooter />
       </div>
     </>
   );

@@ -19,12 +19,16 @@ accesibilidad.
   públicas de Supabase, sin valores reales). Copia a `.env.local`
   cuando actives la persistencia; el modo demo funciona sin ellas.
 - Contrato de configuración: `src/lib/config/env.ts` es la única fuente
-  de verdad para `NEXT_PUBLIC_SUPABASE_URL` y
-  `NEXT_PUBLIC_SUPABASE_ANON_KEY`. Con ambas vacías devuelve `null`
-  (modo demo); con configuración parcial o URL inválida lanza un error
-  claro. Los clientes de Supabase (`src/lib/supabase/`) consumen
-  exclusivamente ese contrato, sin lecturas duplicadas de
-  `process.env`.
+  de verdad para `NEXT_PUBLIC_SUPABASE_URL`,
+  `NEXT_PUBLIC_SUPABASE_ANON_KEY` y `SHOPIFY_STORE_URL`. Con las dos
+  primeras vacías devuelve `null` (modo demo); con configuración parcial
+  o URL inválida lanza un error claro. Los clientes de Supabase
+  (`src/lib/supabase/`) consumen exclusivamente ese contrato, sin
+  lecturas duplicadas de `process.env`.
+- `SHOPIFY_STORE_URL` es la URL pública de la tienda Tueste Co para el
+  portal de entrada. Debe ser una URL absoluta `https://`; si está vacía
+  o ausente, la tarjeta Tienda muestra «Tienda próximamente» (sin enlace
+  roto). La URL final será la de Shopify cuando se active la tienda.
 - CI (`.github/workflows/ci.yml`) valida en cada `push` y `pull_request`
   con la versión de `.nvmrc`, caché de npm y `npm ci`, ejecutando en
   orden: `lint`, `format:check`, `typecheck`, `test` y `build`.

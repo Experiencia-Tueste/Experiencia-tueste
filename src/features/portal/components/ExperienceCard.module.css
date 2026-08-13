@@ -1,0 +1,198 @@
+/* Tarjeta Experiencia — pieza editorial inmersiva turquesa/violeta */
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 40px 30px 34px;
+  border-radius: var(--radius-2xl);
+  border: 1px solid rgba(25, 201, 184, 0.24);
+  background:
+    radial-gradient(120% 90% at 80% 0%, rgba(138, 139, 208, 0.11), transparent 55%),
+    rgba(var(--void-rgb), 0.6);
+  text-decoration: none;
+  transition:
+    transform var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
+  min-width: 0;
+}
+
+.card:hover,
+.card:focus-within {
+  transform: translateY(-4px);
+  border-color: rgba(25, 201, 184, 0.5);
+  box-shadow: 0 26px 64px -30px rgba(25, 201, 184, 0.42);
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--teal-bright);
+  outline-offset: 4px;
+}
+
+/* Medallón teal que sobresale del borde superior */
+.medallion {
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--void);
+  border: 1px solid rgba(25, 201, 184, 0.5);
+  color: var(--teal-bright);
+  box-shadow: 0 6px 24px -8px rgba(25, 201, 184, 0.5);
+  z-index: 2;
+}
+
+.medallion svg {
+  width: 26px;
+  height: 26px;
+}
+
+/* Arte superior en proporción editorial 4:3 */
+.visual {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  margin-bottom: 2px;
+}
+
+.art {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform var(--dur-slow) var(--ease-out);
+}
+
+/* Halo radial suave sobre el centro del vinilo (CSS puro). */
+.halo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 44%;
+  aspect-ratio: 1;
+  margin: -22% 0 0 -22%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(251, 169, 34, 0.14) 0%,
+    rgba(25, 201, 184, 0.06) 45%,
+    transparent 70%
+  );
+  animation: haloBreath 4.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes haloBreath {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+/* Hover/foco: brillo, glow y escala leve (máx 1.025), sin deformar. */
+.card:hover .art,
+.card:focus-within .art {
+  transform: scale(1.025);
+  filter: brightness(1.08);
+}
+
+.card:hover .halo,
+.card:focus-within .halo {
+  opacity: 1;
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-size: 1.7rem;
+  font-weight: 500;
+  color: var(--cream);
+  margin: 0;
+}
+
+.desc {
+  color: rgba(var(--cream-rgb), 0.68);
+  margin: 0 0 12px;
+  line-height: 1.55;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  align-self: flex-start;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cream);
+  border: 1px solid rgba(25, 201, 184, 0.45);
+  border-radius: var(--radius-pill);
+  padding: 13px 22px;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.card:hover .cta,
+.card:focus-within .cta {
+  background: var(--teal-bright);
+  color: var(--ink);
+  border-color: var(--teal-bright);
+}
+
+.arrow {
+  font-size: 0.9rem;
+}
+
+:global(body.day) .title {
+  color: var(--ink);
+}
+
+:global(body.day) .desc {
+  color: rgba(46, 42, 36, 0.7);
+}
+
+:global(body.day) .cta {
+  color: var(--ink);
+}
+
+:global(body.day) .medallion {
+  background: #fff4e0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+
+  .card:hover,
+  .card:focus-within {
+    transform: none;
+  }
+
+  .halo {
+    animation: none;
+  }
+
+  .art {
+    transition: none;
+  }
+
+  .card:hover .art,
+  .card:focus-within .art {
+    transform: none;
+  }
+}

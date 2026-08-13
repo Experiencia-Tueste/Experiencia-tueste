@@ -1,0 +1,83 @@
+.hero {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 64px var(--space-gutter) 40px;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.kicker {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin: 0 0 26px;
+}
+
+/* Titular panorámico: una sola línea en escritorio, salto natural en móvil. */
+.title {
+  font-family: var(--font-serif);
+  font-size: clamp(2.3rem, 5.4vw, 4.2rem);
+  line-height: 1.08;
+  font-weight: 500;
+  color: var(--cream);
+  margin: 0 0 30px;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+/* Divisor decorativo: línea → sol → línea */
+.divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: 0 auto 30px;
+  max-width: 420px;
+}
+
+.line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(var(--cream-rgb), 0.4));
+}
+
+.line:last-child {
+  background: linear-gradient(90deg, rgba(var(--cream-rgb), 0.4), transparent);
+}
+
+.dividerSun {
+  color: var(--amber);
+  flex-shrink: 0;
+}
+
+.subtitle {
+  font-size: 1.08rem;
+  color: rgba(var(--cream-rgb), 0.68);
+  margin: 0;
+  line-height: 1.6;
+}
+
+:global(body.day) .title {
+  color: var(--ink);
+}
+
+:global(body.day) .subtitle {
+  color: rgba(46, 42, 36, 0.7);
+}
+
+:global(body.day) .line {
+  background: linear-gradient(90deg, transparent, rgba(46, 42, 36, 0.35));
+}
+
+:global(body.day) .line:last-child {
+  background: linear-gradient(90deg, rgba(46, 42, 36, 0.35), transparent);
+}
+
+@media (max-width: 560px) {
+  .hero {
+    padding-top: 44px;
+  }
+}

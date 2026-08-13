@@ -1,0 +1,164 @@
+/* Tarjeta Tienda — pieza editorial cálida ámbar/coral */
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 40px 30px 34px;
+  border-radius: var(--radius-2xl);
+  border: 1px solid rgba(251, 169, 34, 0.24);
+  background:
+    radial-gradient(120% 90% at 20% 0%, rgba(251, 169, 34, 0.09), transparent 55%),
+    rgba(var(--void-rgb), 0.6);
+  transition:
+    transform var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
+  min-width: 0;
+}
+
+.card:hover,
+.card:focus-within {
+  transform: translateY(-4px);
+  border-color: rgba(255, 111, 134, 0.5);
+  box-shadow: 0 26px 64px -30px rgba(251, 169, 34, 0.4);
+}
+
+/* Medallón que sobresale del borde superior */
+.medallion {
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--void);
+  border: 1px solid rgba(251, 169, 34, 0.5);
+  color: var(--amber);
+  box-shadow: 0 6px 24px -8px rgba(251, 169, 34, 0.5);
+  z-index: 2;
+}
+
+.medallion svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Arte superior en proporción editorial 4:3 */
+.visual {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  margin-bottom: 2px;
+}
+
+.art {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-size: 1.7rem;
+  font-weight: 500;
+  color: var(--cream);
+  margin: 0;
+}
+
+.desc {
+  color: rgba(var(--cream-rgb), 0.68);
+  margin: 0 0 12px;
+  line-height: 1.55;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  align-self: flex-start;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: var(--amber);
+  border-radius: var(--radius-pill);
+  padding: 13px 22px;
+  text-decoration: none;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.cta:hover {
+  background: var(--coral);
+  transform: translateY(-1px);
+}
+
+.cta:focus-visible {
+  outline: 2px solid var(--teal-bright);
+  outline-offset: 3px;
+}
+
+.arrow {
+  font-size: 0.9rem;
+}
+
+.ctaDisabled {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 6px;
+  align-self: flex-start;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(var(--cream-rgb), 0.5);
+  border: 1px dashed rgba(var(--cream-rgb), 0.3);
+  border-radius: var(--radius-pill);
+  padding: 13px 22px;
+}
+
+.hint {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  letter-spacing: 0;
+  text-transform: none;
+  color: rgba(var(--cream-rgb), 0.55);
+}
+
+:global(body.day) .title {
+  color: var(--ink);
+}
+
+:global(body.day) .desc,
+:global(body.day) .hint {
+  color: rgba(46, 42, 36, 0.7);
+}
+
+:global(body.day) .ctaDisabled {
+  color: rgba(46, 42, 36, 0.55);
+  border-color: rgba(46, 42, 36, 0.3);
+}
+
+:global(body.day) .medallion {
+  background: #fff4e0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+
+  .card:hover,
+  .card:focus-within {
+    transform: none;
+  }
+}

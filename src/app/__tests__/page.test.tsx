@@ -1,15 +1,19 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import Home from '../page';
+import Home, { metadata } from '../page';
 
-/**
- * Integración mínima de la composición real de `src/app/page.tsx`:
- * con el menú cerrado, el primer Tab del documento enfoca el SkipLink
- * (primer elemento del DOM, antes del Navbar).
- */
-describe('Página pública (orden de foco por teclado)', () => {
-  it('con el menú cerrado, el primer Tab enfoca el SkipLink', async () => {
+describe('Portal de entrada (metadata)', () => {
+  it('expone la metadata específica del portal', () => {
+    expect(metadata.title).toBe('Tueste · Elige tu camino');
+    expect(metadata.description).toBe(
+      'Tienda Tueste Co y Experiencia Origen Tostado: dos caminos nacidos del mismo origen.',
+    );
+  });
+});
+
+describe('Portal de entrada (orden de foco por teclado)', () => {
+  it('el primer Tab enfoca el SkipLink', async () => {
     const user = userEvent.setup();
     render(<Home />);
 
@@ -19,216 +23,77 @@ describe('Página pública (orden de foco por teclado)', () => {
   });
 });
 
-describe('Página pública (Manifiesto)', () => {
-  it('expone el ancla #manifiesto y se inserta después del hero y antes de la escucha', () => {
+describe('Portal de entrada (contenido)', () => {
+  it('presenta el kicker, el titular y el subtítulo del hero', () => {
     render(<Home />);
 
-    expect(document.getElementById('manifiesto')).not.toBeNull();
-
-    const headings = screen.getAllByRole('heading');
-    const heroIndex = headings.findIndex((h) => h.textContent === 'OrigenTostado');
-    const manifiestoIndex = headings.findIndex((h) => h.textContent === 'Manifiesto');
-    const escuchaIndex = headings.findIndex((h) => h.textContent === 'Escucha el origen');
-
-    expect(heroIndex).toBeGreaterThanOrEqual(0);
-    expect(manifiestoIndex).toBeGreaterThan(heroIndex);
-    expect(escuchaIndex).toBeGreaterThan(manifiestoIndex);
+    expect(screen.getByText('TUESTE · DOS CAMINOS, UN ORIGEN')).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'El café también se escucha.' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Dos caminos nacidos del mismo origen.')).toBeInTheDocument();
   });
 
-  it('mantiene el contenido exacto del documento maestro', () => {
+  it('presenta las dos tarjetas con su contenido', () => {
     render(<Home />);
 
-    // Matcher por textContent completo: los párrafos con <del>/<em>
-    // dividen el texto en varios nodos y getByText busca por nodo.
-    // Se excluyen los wrappers de animación (data-reveal), que repiten
-    // el textContent de su hijo.
-    const byText = (text: string) => (_c: string, element?: Element | null) =>
-      element?.textContent === text && !element.hasAttribute('data-reveal');
-
-    expect(screen.getByText('La música nace del territorio.')).toBeInTheDocument();
-    expect(screen.getByText('Las frecuencias nacen del sonido de la finca.')).toBeInTheDocument();
-    expect(screen.getByText(byText('El café no acompaña a la música.'))).toBeInTheDocument();
-    expect(screen.getByText(byText('La música nace del café.'))).toBeInTheDocument();
-    expect(screen.getByText('— Origen Tostado · Eje Cafetero, Colombia')).toBeInTheDocument();
-  });
-});
-
-describe('Página pública (ritmo editorial del master)', () => {
-  const sigueA = (a: Element, b: Element) =>
-    (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
-
-  it('inserta las tres cintas editoriales en sus variantes', () => {
-    render(<Home />);
-
-    const tickers = Array.from(document.querySelectorAll('[data-variant]'));
-    expect(tickers).toHaveLength(3);
-    expect(tickers.filter((t) => t.getAttribute('data-variant') === 'amber')).toHaveLength(2);
-    expect(tickers.filter((t) => t.getAttribute('data-variant') === 'dim')).toHaveLength(1);
+    expect(screen.getByRole('heading', { level: 2, name: 'Tienda Tueste Co' })).toBeInTheDocument();
+    expect(
+      screen.getByText('Café, objetos y rituales para llevar el origen contigo.'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Experiencia Origen Tostado' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Música, frecuencias y territorio para escuchar el café.'),
+    ).toBeInTheDocument();
   });
 
-  it('mantiene el orden Hero → Manifiesto → cinta ámbar → Frecuencias', () => {
+  it('la tarjeta Experiencia enlaza a /experiencia', () => {
     render(<Home />);
 
-    const hero = screen.getAllByRole('heading').find((h) => h.textContent === 'OrigenTostado')!;
-    const manifiesto = document.getElementById('manifiesto')!;
-    const frecuencias = document.getElementById('frecuencias')!;
-    const cintaAmbar = document.querySelector('[data-variant="amber"]')!;
-
-    expect(sigueA(hero, manifiesto)).toBe(true);
-    expect(sigueA(manifiesto, cintaAmbar)).toBe(true);
-    expect(sigueA(cintaAmbar, frecuencias)).toBe(true);
+    const link = screen.getByRole('link', { name: /Experiencia Origen Tostado/ });
+    expect(link).toHaveAttribute('href', '/experiencia');
   });
 
-  it('inserta la cinta tenue entre Barista (#recetario) y Eventos (#eventos)', () => {
+  it('sin SHOPIFY_STORE_URL muestra «Tienda próximamente» sin enlace roto', () => {
     render(<Home />);
 
-    const recetario = document.getElementById('recetario')!;
-    const eventos = document.getElementById('eventos')!;
-    const cintaTenue = document.querySelector('[data-variant="dim"]')!;
-
-    expect(sigueA(recetario, cintaTenue)).toBe(true);
-    expect(sigueA(cintaTenue, eventos)).toBe(true);
+    expect(screen.getByText('Tienda próximamente')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Entrar a la tienda/ })).not.toBeInTheDocument();
   });
 
-  it('inserta la cinta ámbar final entre Tienda (#merch) y el bloque Para negocios (#negocios)', () => {
+  it('cierra con la línea editorial del portal', () => {
     render(<Home />);
 
-    const merch = document.getElementById('merch')!;
-    const negocios = document.getElementById('negocios')!;
-    const cintas = Array.from(document.querySelectorAll('[data-variant="amber"]'));
-    const cintaFinal = cintas[cintas.length - 1];
-
-    expect(sigueA(merch, cintaFinal)).toBe(true);
-    expect(sigueA(cintaFinal, negocios)).toBe(true);
+    expect(screen.getByText('UN SOLO ORIGEN · DOS FORMAS DE VIVIRLO')).toBeInTheDocument();
   });
 
-  it('integra las cinco plataformas dentro de la sección Lanzamientos', () => {
+  it('no renderiza el footer ni secciones de la experiencia', () => {
     render(<Home />);
 
-    const lanzamientos = document.getElementById('lanzamientos')!;
-    const plataformas = document.getElementById('plataformas')!;
-    expect(sigueA(lanzamientos, plataformas)).toBe(true);
-
-    for (const nombre of ['Spotify', 'Apple Music', 'Beatport', 'YouTube', 'SoundCloud']) {
-      expect(
-        screen.getByText(nombre),
-        `plataforma ${nombre} dentro de Lanzamientos`,
-      ).toBeInTheDocument();
-    }
-  });
-});
-
-describe('Página pública (números fantasma de sección)', () => {
-  it('inserta exactamente diez SectionGhosts con sus números', () => {
-    render(<Home />);
-
-    const ghosts = Array.from(document.querySelectorAll('[data-section-ghost]'));
-    expect(ghosts).toHaveLength(10);
-    expect(ghosts.map((g) => g.getAttribute('data-section-ghost'))).toEqual([
-      '01',
-      '02',
-      '03',
-      '04',
-      '05',
-      '06',
-      '07',
-      '08',
-      '09',
-      '10',
-    ]);
+    expect(document.getElementById('manifiesto')).toBeNull();
+    expect(screen.queryByRole('navigation', { name: 'Navegación del pie de página' })).toBeNull();
   });
 
-  it('cada sección numerada contiene su fantasma y ninguno vive en #negocios ni #plataformas', () => {
-    render(<Home />);
+  it('el arte de las tarjetas es decorativo (alt vacío) y usa los paths locales', () => {
+    const { container } = render(<Home />);
 
-    const esperados: Array<[string, string]> = [
-      ['frecuencias', '01'],
-      ['origen', '02'],
-      ['lanzamientos', '03'],
-      ['recetario', '04'],
-      ['eventos', '05'],
-      ['tueste-tree', '06'],
-      ['merch', '07'],
-      ['radio', '08'],
-      ['mercado', '09'],
-      ['comunidad', '10'],
-    ];
+    const images = container.querySelectorAll('img');
+    // next/image codifica el src en el loader (/_next/image?url=...):
+    // se decodifica para comparar con el path local real.
+    const srcs = Array.from(images).map((img) => decodeURIComponent(img.getAttribute('src') ?? ''));
+    expect(srcs.some((s) => s.includes('/images/portal/portal-tienda-artwork-v1.webp'))).toBe(true);
+    expect(srcs.some((s) => s.includes('/images/portal/portal-experiencia-artwork-v1.webp'))).toBe(
+      true,
+    );
 
-    for (const [id, numero] of esperados) {
-      const seccion = document.getElementById(id)!;
-      const ghost = seccion.querySelector(`[data-section-ghost="${numero}"]`);
-      expect(ghost, `#${id} debe contener el fantasma ${numero}`).not.toBeNull();
-    }
-
-    const negocios = document.getElementById('negocios')!;
-    const plataformas = document.getElementById('plataformas')!;
-    expect(negocios.querySelector('[data-section-ghost]')).toBeNull();
-    expect(plataformas.querySelector('[data-section-ghost]')).toBeNull();
-  });
-
-  it('el fantasma de Comunidad está alineado a la izquierda', () => {
-    render(<Home />);
-
-    const comunidad = document.getElementById('comunidad')!;
-    const ghost = comunidad.querySelector('[data-section-ghost="10"]')!;
-    expect(ghost.className).toContain('start');
-  });
-});
-
-describe('Página pública (animación de entrada por scroll)', () => {
-  it('envuelve los bloques principales de cada sección en Reveal (data-reveal)', () => {
-    render(<Home />);
-
-    const secciones: string[] = [
-      'top',
-      'manifiesto',
-      'frecuencias',
-      'origen',
-      'lanzamientos',
-      'plataformas',
-      'recetario',
-      'eventos',
-      'tueste-tree',
-      'merch',
-      'negocios',
-      'radio',
-      'mercado',
-      'comunidad',
-    ];
-
-    for (const id of secciones) {
-      const bloque = document.getElementById(id)!;
-      expect(
-        bloque.querySelector('[data-reveal]'),
-        `#${id} debe contener al menos un bloque con data-reveal`,
-      ).not.toBeNull();
-    }
-  });
-
-  it('el hero anima el titular, la tagline, los CTAs y las stats', () => {
-    render(<Home />);
-
-    const hero = document.getElementById('top')!;
-    const titulo = hero.querySelector('h1')!;
-    const tagline = Array.from(hero.querySelectorAll('p')).find((p) =>
-      p.textContent?.includes('El café también se escucha'),
-    )!;
-    const ctas = hero.querySelector('a[href="#frecuencias"]')!;
-    const stats = hero.querySelector('a[href="#lanzamientos"]')!;
-
-    expect(titulo.closest('[data-reveal]')).not.toBeNull();
-    expect(tagline.closest('[data-reveal]')).not.toBeNull();
-    expect(ctas.closest('[data-reveal]')).not.toBeNull();
-    expect(stats.closest('[data-reveal]')).not.toBeNull();
-  });
-
-  it('no envuelve los anuncios aria-live en bloques de animación', () => {
-    render(<Home />);
-
-    const lives = Array.from(document.querySelectorAll('[role="status"]'));
-    expect(lives.length).toBeGreaterThan(0);
-    for (const live of lives) {
-      expect(live.closest('[data-reveal]'), 'aria-live no debe ocultarse').toBeNull();
+    for (const img of images) {
+      const src = decodeURIComponent(img.getAttribute('src') ?? '');
+      if (src.includes('/images/portal/')) {
+        expect(img.getAttribute('alt')).toBe('');
+        expect(img.closest('[aria-hidden="true"]')).not.toBeNull();
+      }
     }
   });
 });

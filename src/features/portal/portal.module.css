@@ -1,0 +1,18 @@
+/* Layout del portal de entrada (grid de tarjetas + envoltorios). */
+
+.cards {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  max-width: 1180px;
+  margin: 48px auto 0;
+  padding: 0 var(--space-gutter);
+}
+
+@media (max-width: 780px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+}

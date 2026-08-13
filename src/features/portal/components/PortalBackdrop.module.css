@@ -1,0 +1,33 @@
+/* Fondo editorial del portal: arte local WebP + capa de contraste. */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background-image: url('/images/portal/portal-background-v1.webp');
+  background-size: cover;
+  background-position: center;
+}
+
+/* Capa oscura mínima para preservar contraste de texto (noche). */
+.scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(29, 5, 38, 0.55), rgba(13, 2, 16, 0.72)),
+    radial-gradient(120% 100% at 50% 0%, transparent 40%, rgba(13, 2, 16, 0.5));
+}
+
+/* Modo día: capa clara equivalente, más ligera. */
+:global(body.day) .scrim {
+  background: linear-gradient(180deg, rgba(255, 244, 224, 0.5), rgba(255, 244, 224, 0.72));
+}
+
+@media (max-width: 640px) {
+  .backdrop {
+    background-size: auto 100%;
+    background-position: center;
+  }
+}

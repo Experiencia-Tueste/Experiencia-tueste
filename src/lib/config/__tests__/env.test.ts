@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { loadPublicConfig, loadSiteUrl } from '../env';
+import { loadPublicConfig, loadShopifyStoreUrl, loadSiteUrl } from '../env';
 
 /**
  * Pruebas del contrato de configuración pública. Nunca dependen del
@@ -69,5 +69,28 @@ describe('loadSiteUrl (URL canónica del sitio)', () => {
 
   it('falla con error claro si SITE_URL no es una URL absoluta válida', () => {
     expect(() => loadSiteUrl({ SITE_URL: 'no-es-una-url' })).toThrow(/SITE_URL/);
+  });
+});
+
+describe('loadShopifyStoreUrl (URL pública de la tienda)', () => {
+  it('devuelve null si SHOPIFY_STORE_URL está ausente o vacía', () => {
+    expect(loadShopifyStoreUrl({})).toBeNull();
+    expect(loadShopifyStoreUrl({ SHOPIFY_STORE_URL: '' })).toBeNull();
+    expect(loadShopifyStoreUrl({ SHOPIFY_STORE_URL: '   ' })).toBeNull();
+  });
+
+  it('devuelve la URL https:// válida configurada', () => {
+    expect(loadShopifyStoreUrl({ SHOPIFY_STORE_URL: 'https://tueste.myshopify.com' })).toBe(
+      'https://tueste.myshopify.com',
+    );
+  });
+
+  it('falla con error claro si la URL no es absoluta https://', () => {
+    expect(() => loadShopifyStoreUrl({ SHOPIFY_STORE_URL: 'no-es-una-url' })).toThrow(
+      /SHOPIFY_STORE_URL/,
+    );
+    expect(() => loadShopifyStoreUrl({ SHOPIFY_STORE_URL: 'http://tueste.com' })).toThrow(
+      /SHOPIFY_STORE_URL/,
+    );
   });
 });

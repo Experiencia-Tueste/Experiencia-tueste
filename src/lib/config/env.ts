@@ -15,6 +15,12 @@ import { z } from 'zod';
 
 const SUPABASE_URL_SCHEMA = z.string().url();
 const SITE_URL_SCHEMA = z.string().url();
+const SHOPIFY_URL_SCHEMA = z
+  .string()
+  .url()
+  .refine((value) => value.startsWith('https://'), {
+    message: 'la URL debe usar https://',
+  });
 
 export interface SupabasePublicConfig {
   supabaseUrl: string;
@@ -92,6 +98,32 @@ export function loadSiteUrl(env: PublicEnv = process.env): string {
   if (!parsed.success) {
     throw new Error(
       `SITE_URL no es una URL absoluta válida: «${raw}». Usa el dominio público HTTPS real (p. ej. https://tueste.up.railway.app) o deja la variable vacía para el fallback local.`,
+    );
+  }
+
+  return parsed.data;
+}
+
+/**
+ * URL pública de la tienda Tueste Co (Shopify) para el portal de entrada.
+ *
+ * Lee únicamente `SHOPIFY_STORE_URL` (no es secreto; es el enlace
+ * público de la tienda). Si está ausente o vacía devuelve `null`: la
+ * tarjeta Tienda muestra «Tienda próximamente» en lugar de un enlace
+ * roto. Si está presente, debe ser una URL absoluta `https://`; en caso
+ * contrario lanza un error claro que menciona `SHOPIFY_STORE_URL`.
+ */
+export function loadShopifyStoreUrl(env: PublicEnv = process.env): string | null {
+  const raw = env.SHOPIFY_STORE_URL;
+
+  if (typeof raw !== 'string' || raw.trim() === '') {
+    return null;
+  }
+
+  const parsed = SHOPIFY_URL_SCHEMA.safeParse(raw.trim());
+  if (!parsed.success) {
+    throw new Error(
+      `SHOPIFY_STORE_URL no es una URL absoluta https:// válida: «${raw}». Define la URL pública de la tienda (p. ej. https://tueste.myshopify.com) o deja la variable vacía para mostrar «Tienda próximamente».`,
     );
   }
 

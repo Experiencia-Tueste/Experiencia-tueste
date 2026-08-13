@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import {
   AVISO_DEMO,
   AVISO_LEGAL,
@@ -12,7 +13,7 @@ import {
   PRECIO_ADOPCION,
 } from '@/features/adoption';
 import type { Beneficio } from '@/features/adoption';
-import { Arbol, LotePaisaje } from './LoteVisual';
+import { Arbol, LoteThumb } from './LoteVisual';
 import Reveal from './Reveal';
 import SectionGhost from './SectionGhost';
 import styles from './TuesteTree.module.css';
@@ -122,7 +123,16 @@ export default function TuesteTree() {
 
             <div className={styles.grid}>
               <div className={styles.visual}>
-                <LotePaisaje className={styles.visualSvg} />
+                <div className={styles.visualMedia} aria-hidden="true">
+                  <Image
+                    src="/images/tueste-tree/lote-000-cafetal-v1.png"
+                    alt=""
+                    fill
+                    priority={false}
+                    sizes="(max-width: 900px) 100vw, 50vw"
+                    className={styles.lotePhoto}
+                  />
+                </div>
                 <span className={styles.vtag}>{LOTE_FUNDADOR.nombre}</span>
                 <div className={styles.vfoot}>
                   {LOTE_FUNDADOR.coordenadas} · {LOTE_FUNDADOR.ubicacion} · {LOTE_FUNDADOR.altitud}
@@ -323,7 +333,7 @@ export default function TuesteTree() {
                     key={`${l.cuando}-${i}`}
                   >
                     <div className={styles.thumb}>
-                      {l.hecho ? <LotePaisaje className={styles.thumbSvg} /> : null}
+                      {l.hecho ? <LoteThumb className={styles.thumbSvg} /> : null}
                     </div>
                     <div className={styles.ld}>
                       <span className={styles.when}>{l.cuando}</span>

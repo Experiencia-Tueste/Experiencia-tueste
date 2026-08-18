@@ -1,0 +1,23 @@
+# Copia este archivo a `terraform.tfvars` (local, ignorado por Git) y
+# completa los valores cuando se apruebe la infraestructura.
+# NUNCA subir terraform.tfvars con valores reales al repositorio.
+
+aws_region   = "us-east-1"
+project_name = "tueste"
+environment  = "staging"
+
+# Dominio y URL pública (dejar vacío mientras no exista el dominio)
+domain_name = ""
+site_url    = "https://staging.tueste.co"
+
+# Imagen a desplegar (tag del commit, p. ej. el SHA corto)
+image_tag = "latest"
+
+# WAF: límite inicial en modo observación (COUNT). A VALIDAR en staging.
+waf_rate_limit = 2000
+
+# Red
+vpc_cidr = "10.0.0.0/16"
+
+# Logs
+log_retention_days = 30

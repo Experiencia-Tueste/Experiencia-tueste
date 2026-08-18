@@ -1,0 +1,12 @@
+# Nunca versionar variables reales, estado local ni planes.
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+.terraform/
+*.tfstate
+*.tfstate.*
+*.backup
+crash.log
+
+# El lockfile SÍ se versiona (lo genera `tofu init` y fija las versiones
+# de los providers): NO ignorarlo.

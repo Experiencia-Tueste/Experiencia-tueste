@@ -1,9 +1,12 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { loadPublicConfig, loadShopifyStoreUrl, loadSiteUrl } from '../env';
+import { loadPublicConfig } from '../env-public';
+import { loadShopifyStoreUrl, loadSiteUrl } from '../env-server';
 
 /**
- * Pruebas del contrato de configuración pública. Nunca dependen del
- * entorno real de la máquina: el entorno se inyecta explícitamente.
+ * Pruebas del contrato de configuración. Nunca dependen del entorno
+ * real de la máquina: el entorno se inyecta explícitamente.
  */
 describe('config env (contrato público)', () => {
   it('devuelve null si ambas variables están ausentes (modo demo)', () => {
@@ -92,5 +95,30 @@ describe('loadShopifyStoreUrl (URL pública de la tienda)', () => {
     expect(() => loadShopifyStoreUrl({ SHOPIFY_STORE_URL: 'http://tueste.com' })).toThrow(
       /SHOPIFY_STORE_URL/,
     );
+  });
+});
+
+describe('aislamiento server-only / público', () => {
+  const serverSrc = readFileSync(resolve(__dirname, '../env-server.ts'), 'utf-8');
+  const publicSrc = readFileSync(resolve(__dirname, '../env-public.ts'), 'utf-8');
+
+  /** Código sin comentarios: los checks no chocan con el JSDoc. */
+  const strip = (src: string) => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+
+  it('env-server está protegido con import server-only', () => {
+    expect(strip(serverSrc)).toContain("import 'server-only';");
+  });
+
+  it('env-public no importa server-only y solo declara NEXT_PUBLIC_*', () => {
+    expect(strip(publicSrc)).not.toContain('server-only');
+    expect(publicSrc).toContain('NEXT_PUBLIC_SUPABASE_URL');
+    expect(publicSrc).toContain('NEXT_PUBLIC_SUPABASE_ANON_KEY');
+    // No debe leer variables de servidor.
+    expect(strip(publicSrc)).not.toContain('SITE_URL');
+    expect(strip(publicSrc)).not.toContain('SHOPIFY_STORE_URL');
+  });
+
+  it('env-server no lee NEXT_PUBLIC_*', () => {
+    expect(serverSrc).not.toContain('NEXT_PUBLIC_');
   });
 });

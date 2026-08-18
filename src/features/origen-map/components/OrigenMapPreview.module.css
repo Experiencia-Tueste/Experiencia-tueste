@@ -1,0 +1,38 @@
+.wrap {
+  position: absolute;
+  inset: 0;
+}
+
+.map {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+/* El canvas del mapa no interfiere con el cursor personalizado de
+   Tueste (que ya es pointer-events: none) ni bloquea el foco. */
+.map :global(.maplibregl-canvas) {
+  outline: none;
+}
+
+.etiqueta {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 2;
+  pointer-events: none;
+  font-family: var(--font-mono);
+  font-size: 0.54rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--cream);
+  background: rgba(var(--void-rgb), 0.55);
+  padding: 6px 10px;
+  border-radius: 20px;
+  backdrop-filter: blur(4px);
+}
+
+:global(body.day) .etiqueta {
+  color: var(--ink);
+  background: rgba(255, 244, 224, 0.7);
+}

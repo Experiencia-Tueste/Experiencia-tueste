@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
-import { loadSiteUrl } from '@/lib/config/env';
+import { loadSiteUrl } from '@/lib/config/env-server';
 import CustomCursor from '@/components/CustomCursor';
 import './globals.css';
 

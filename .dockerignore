@@ -1,0 +1,47 @@
+# ── Contexto de build de Docker ──
+# Solo lo necesario para construir la imagen de producción. Nada de
+# secretos, referencias externas al proyecto ni artefactos locales.
+
+# Dependencias y artefactos de build
+node_modules
+.next
+out
+build
+coverage
+dist
+
+# Entorno: NINGÚN archivo .env* entra a la imagen (los secretos llegan
+# por Secrets Manager; SITE_URL se pasa como build arg público).
+.env*
+.env.example
+
+# Infraestructura como código: nunca dentro del contexto de la imagen.
+infra
+
+# Sistema y editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs y temporales
+*.log
+npm-debug.log*
+*.tsbuildinfo
+
+# Git y CI
+.git
+.github
+
+# Documentación ajena a la app y capturas
+docs/
+screenshots
+
+# Pruebas (no se ejecutan en la imagen)
+src/**/__tests__
+
+# Referencias de proyecto (fuera de la app; por si el contexto cambia)
+plan master
+Master Debugg
+iconos
+PLAN-ARQUITECTURA-PROFESIONAL-TUESTE.md

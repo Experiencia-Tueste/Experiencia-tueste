@@ -16,6 +16,10 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      // En pruebas no existe la separación de paquetes de Next: el stub
+      // permite importar los módulos server-only sin que el paquete
+      // oficial lance su error de límite cliente/servidor.
+      'server-only': fileURLToPath(new URL('./src/test/server-only.stub.ts', import.meta.url)),
     },
   },
   test: {

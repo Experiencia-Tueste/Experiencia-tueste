@@ -1,0 +1,23 @@
+# Copia este archivo a `terraform.tfvars` (local, ignorado por Git) y
+# completa los valores cuando se apruebe la salida a producción.
+# NUNCA subir terraform.tfvars con valores reales al repositorio.
+
+aws_region   = "us-east-1"
+project_name = "tueste"
+environment  = "production"
+
+# Dominio y URL pública definitivos (habilitan Route 53 + ACM)
+domain_name = "tueste.co"
+site_url    = "https://tueste.co"
+
+# Imagen a desplegar: SHA del commit aprobado en staging, nunca "latest".
+image_tag = "REEMPLAZAR-CON-SHA-DEL-COMMIT"
+
+# WAF: valores finales tras validar en staging (empezar en observación).
+waf_rate_limit = 2000
+
+# Red
+vpc_cidr = "10.0.0.0/16"
+
+# Logs
+log_retention_days = 30

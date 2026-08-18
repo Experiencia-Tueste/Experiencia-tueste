@@ -1,16 +1,22 @@
+import 'server-only';
+
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { loadPublicConfig } from '@/lib/config/env';
+import { loadPublicConfig } from '@/lib/config/env-public';
 
 /**
  * Cliente Supabase para rutas de servidor (Server Components, Route
  * Handlers, Server Actions). Usa cookies para mantener la sesión.
  *
+ * Protegido con `import 'server-only'`: si un componente cliente
+ * intenta importarlo, el build falla con un error claro.
+ *
  * Regla del plan: el navegador presenta, el servidor decide. Las
  * operaciones privilegiadas (saldo, pujas, roles, cupones) se ejecutan
  * exclusivamente aquí, nunca en el cliente. La configuración se lee
- * exclusivamente del contrato de `src/lib/config/env.ts`: sin variables,
- * devuelve `null` y la app funciona en modo demo sin servicios.
+ * exclusivamente del contrato de `src/lib/config/env-public.ts`: sin
+ * variables, devuelve `null` y la app funciona en modo demo sin
+ * servicios.
  */
 export async function createServerSupabase() {
   const config = loadPublicConfig();

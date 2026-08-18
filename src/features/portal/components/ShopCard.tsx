@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { loadShopifyStoreUrl } from '@/lib/config/env';
+import { loadShopifyStoreUrl } from '@/lib/config/env-server';
 import styles from './ShopCard.module.css';
 
 export interface ShopCardProps {

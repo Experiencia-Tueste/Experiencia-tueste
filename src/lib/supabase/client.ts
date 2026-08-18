@@ -1,5 +1,5 @@
 import { createBrowserClient } from '@supabase/ssr';
-import { loadPublicConfig } from '@/lib/config/env';
+import { loadPublicConfig } from '@/lib/config/env-public';
 
 /**
  * Cliente Supabase para el navegador.
@@ -7,7 +7,7 @@ import { loadPublicConfig } from '@/lib/config/env';
  * La base técnica está lista, pero la persistencia real (auth, perfiles,
  * puntos, subastas) se activa por fases según el plan de arquitectura.
  * La configuración se lee exclusivamente del contrato de
- * `src/lib/config/env.ts`: si no hay variables, `loadPublicConfig`
+ * `src/lib/config/env-public.ts`: si no hay variables, `loadPublicConfig`
  * devuelve `null` y la app funciona en modo demo sin servicios.
  */
 export function createClient() {

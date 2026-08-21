@@ -21,8 +21,8 @@ export const metadata: Metadata = {
 /**
  * Página pública de Tueste · primera capa visual.
  * Navegación, atmósfera global, hero y todas las secciones públicas ya
- * implementadas (Escucha, Origen, Música, Barista, En Vivo, Adopta,
- * Tienda, Negocios, Mercado de Origen y Comunidad), replicando el mockup
+ * implementadas (Escucha, Origen, Música, Barista, En Vivo, Tienda,
+ * Negocios, Mercado de Origen y Comunidad), replicando el mockup
  * de referencia, más el footer público que cierra la experiencia.
  *
  * El SkipLink va ANTES del Navbar: es el primer elemento alcanzable con

@@ -128,18 +128,17 @@ describe('Página pública (ritmo editorial del master)', () => {
 });
 
 describe('Página pública (números fantasma de sección)', () => {
-  it('inserta exactamente diez SectionGhosts con sus números', () => {
+  it('inserta exactamente nueve SectionGhosts con sus números', () => {
     render(<Home />);
 
     const ghosts = Array.from(document.querySelectorAll('[data-section-ghost]'));
-    expect(ghosts).toHaveLength(10);
+    expect(ghosts).toHaveLength(9);
     expect(ghosts.map((g) => g.getAttribute('data-section-ghost'))).toEqual([
       '01',
       '02',
       '03',
       '04',
       '05',
-      '06',
       '07',
       '08',
       '09',
@@ -156,7 +155,6 @@ describe('Página pública (números fantasma de sección)', () => {
       ['lanzamientos', '03'],
       ['recetario', '04'],
       ['eventos', '05'],
-      ['tueste-tree', '06'],
       ['merch', '07'],
       ['radio', '08'],
       ['mercado', '09'],
@@ -197,7 +195,6 @@ describe('Página pública (animación de entrada por scroll)', () => {
       'plataformas',
       'recetario',
       'eventos',
-      'tueste-tree',
       'merch',
       'negocios',
       'radio',

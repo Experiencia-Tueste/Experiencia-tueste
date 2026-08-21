@@ -3,8 +3,6 @@
 import { useState } from 'react';
 import { getTrack } from '@/features/audio';
 import { ORIGEN_PASOS } from '@/features/origen';
-import OrigenMapPreview from '@/features/origen-map/components/OrigenMapPreview';
-import { getPuntoMapa } from '@/features/origen-map/data/puntos';
 import type { TrackId } from '@/lib/audio';
 import OrigenStep from './OrigenStep';
 import Reveal from './Reveal';
@@ -77,29 +75,6 @@ export default function Origen({ selectedId, onSelect }: OrigenProps) {
       <p className={styles.live} role="status" aria-live="polite">
         {anuncio ?? '\u00A0'}
       </p>
-
-      <Reveal>
-        <div className={styles.media}>
-          <figure className={styles.frame}>
-            <OrigenMapPreview
-              punto={getPuntoMapa('finca-tres-esquinas')!}
-              etiqueta="Ubicación aproximada · demostración"
-              className={styles.mapFrame}
-            />
-            <figcaption className={styles.cap}>
-              Finca Tres Esquinas · material del territorio en camino
-            </figcaption>
-          </figure>
-          <figure className={styles.frame}>
-            <OrigenMapPreview
-              punto={getPuntoMapa('guardianes-origen')!}
-              etiqueta="Punto editorial · próximamente"
-              className={styles.mapFrame}
-            />
-            <figcaption className={styles.cap}>Los guardianes del origen · próximamente</figcaption>
-          </figure>
-        </div>
-      </Reveal>
 
       <Reveal>
         <div className={styles.voces}>

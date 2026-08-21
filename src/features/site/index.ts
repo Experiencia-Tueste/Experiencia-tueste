@@ -15,7 +15,6 @@ export const SECTION_IDS = {
   musica: '#lanzamientos',
   barista: '#recetario',
   enVivo: '#eventos',
-  adopta: '#tueste-tree',
   tienda: '#merch',
   negocios: '#negocios',
   mercado: '#mercado',
@@ -49,7 +48,6 @@ export const PUBLIC_SECTIONS = [
   { id: SECTION_IDS.musica, label: 'Música', num: '03', places: ['desktop', 'mobile', 'footer'] },
   { id: SECTION_IDS.barista, label: 'Barista', num: '04', places: ['desktop', 'mobile', 'footer'] },
   { id: SECTION_IDS.enVivo, label: 'En Vivo', num: '05', places: ['desktop', 'mobile'] },
-  { id: SECTION_IDS.adopta, label: 'Adopta', num: '06', places: ['desktop', 'mobile', 'footer'] },
   { id: SECTION_IDS.tienda, label: 'Tienda', num: '07', places: ['desktop', 'mobile', 'footer'] },
   {
     id: SECTION_IDS.negocios,
@@ -95,7 +93,7 @@ export const FOOTER_GROUPS = [
   },
   {
     titulo: 'Ecosistema',
-    sectionIds: [SECTION_IDS.adopta, SECTION_IDS.mercado, SECTION_IDS.negocios],
+    sectionIds: [SECTION_IDS.mercado, SECTION_IDS.negocios],
   },
   {
     titulo: 'Tienda y comunidad',

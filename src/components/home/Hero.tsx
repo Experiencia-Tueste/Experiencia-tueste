@@ -15,11 +15,6 @@ export default function Hero() {
         Frecuencia
       </div>
 
-      <div className={styles.badge}>
-        <b>Nuevo</b>
-        <span>Ritual de Adopción 001 · 30 cupos · Finca Tres Esquinas</span>
-      </div>
-
       <p className={styles.kicker}>
         <span className={styles.dot} aria-hidden="true" />
         Origen Tostado · Eje Cafetero

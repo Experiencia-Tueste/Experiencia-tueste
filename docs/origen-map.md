@@ -37,17 +37,20 @@ No representan ubicaciones exactas, confirmadas ni físicas de personas. Los dat
 
 ## Tiles temporales y red
 
-El proveedor temporal es **OpenFreeMap Dark**, sin token:
+El proveedor temporal es **MapTiler**, a través de sus tiles ráster de calles
+renderizados en un estilo mínimo de MapLibre:
 
 ```text
-https://tiles.openfreemap.org/styles/dark
+https://api.maptiler.com/maps/streets-v4/{z}/{x}/{y}.png?key=NEXT_PUBLIC_MAPTILER_KEY
 ```
 
-Las únicas llamadas externas introducidas por esta fase se limitan a `https://tiles.openfreemap.org`. La atribución de MapLibre, OpenFreeMap, OpenMapTiles y OpenStreetMap permanece visible.
+`NEXT_PUBLIC_MAPTILER_KEY` es una clave de navegador visible por diseño, no un secreto. Se configura solo en `.env.local` o en el entorno de despliegue y debe limitarse por dominio/referer en MapTiler. Si falta, MapLibre no se importa y el fallback editorial queda visible.
+
+Las únicas llamadas externas introducidas por esta fase se limitan a `https://api.maptiler.com`. La atribución de MapLibre, MapTiler y OpenStreetMap permanece visible. El mapa conserva pan y zoom sobre los tiles ráster.
 
 La CSP `Content-Security-Policy-Report-Only` ya contempla el proveedor de tiles en `connect-src` e `img-src`, además de `worker-src blob:` y `child-src blob:` requeridos por los workers de MapLibre.
 
-**OpenFreeMap no es la decisión de producción.** Antes del lanzamiento se seleccionará un proveedor con capacidad, términos de servicio, coste y restricción por dominio adecuados (por ejemplo, Amazon Location Service o MapTiler). Esa decisión no debe introducir claves privadas en el repositorio ni en el bundle del navegador.
+**MapTiler sigue siendo una decisión provisional de visualización.** Antes del lanzamiento se confirmarán capacidad, coste, términos y restricciones por dominio. No se deben introducir claves privadas, de servidor o credenciales AWS en el repositorio ni en el bundle.
 
 ## Política de privacidad geográfica
 
@@ -60,7 +63,7 @@ La CSP `Content-Security-Policy-Report-Only` ya contempla el proveedor de tiles 
 
 - [x] `maplibre-gl` instalado, con sus tipos incluidos.
 - [x] Dos mini-mapas interactivos provisionales con fallback textual.
-- [x] OpenFreeMap Dark temporal sin token.
+- [x] MapTiler temporal con clave pública restringida por dominio.
 - [x] CSP Report-Only preparada para tiles y workers de MapLibre.
 - [x] WebGL ausente, carga, error previo/posterior a `load`, desmontaje y accesibilidad cubiertos por pruebas.
 - [x] Sin secretos, endpoints propios, APIs, persistencia ni coordenadas exactas.

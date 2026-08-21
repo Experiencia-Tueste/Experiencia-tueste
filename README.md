@@ -15,16 +15,19 @@ accesibilidad.
 - `.nvmrc` fija la versión de Node (línea 20 estable). Desde una
   instalación limpia: `nvm install` (instala la versión del `.nvmrc`) y
   luego `nvm use` (la activa en el shell).
-- Las variables de entorno se documentan en `.env.example` (solo las
-  públicas de Supabase, sin valores reales). Copia a `.env.local`
-  cuando actives la persistencia; el modo demo funciona sin ellas.
-- Contrato de configuración: `src/lib/config/env.ts` es la única fuente
-  de verdad para `NEXT_PUBLIC_SUPABASE_URL`,
-  `NEXT_PUBLIC_SUPABASE_ANON_KEY` y `SHOPIFY_STORE_URL`. Con las dos
-  primeras vacías devuelve `null` (modo demo); con configuración parcial
-  o URL inválida lanza un error claro. Los clientes de Supabase
+- Las variables de entorno se documentan en `.env.example`, sin valores
+  reales. Copia el archivo a `.env.local` cuando actives un servicio; el
+  modo demo funciona sin Supabase ni MapTiler.
+- Contratos de configuración: `src/lib/config/env-public.ts` concentra
+  `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` y la clave
+  pública opcional `NEXT_PUBLIC_MAPTILER_KEY`; `env-server.ts` concentra
+  `SITE_URL` y `SHOPIFY_STORE_URL`. Los clientes de Supabase
   (`src/lib/supabase/`) consumen exclusivamente ese contrato, sin
   lecturas duplicadas de `process.env`.
+- `NEXT_PUBLIC_MAPTILER_KEY` permite mostrar los mini-mapas editoriales.
+  No es un secreto: se ve en el navegador y debe restringirse por
+  dominio/referer en MapTiler. Si no existe, se conserva el fallback
+  accesible del mapa sin cargar MapLibre.
 - `SHOPIFY_STORE_URL` es la URL pública de la tienda Tueste Co para el
   portal de entrada. Debe ser una URL absoluta `https://`; si está vacía
   o ausente, la tarjeta Tienda muestra «Tienda próximamente» (sin enlace

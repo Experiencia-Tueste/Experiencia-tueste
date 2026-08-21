@@ -16,7 +16,7 @@ vi.mock('maplibre-gl', () => maplibre);
 const SOURCE = readFileSync(resolve(__dirname, '../components/OrigenMapPreview.tsx'), 'utf-8');
 const finca = getPuntoMapa('finca-tres-esquinas')!;
 
-let listeners: Partial<Record<'load' | 'error', () => void>>;
+let listeners: Partial<Record<'load' | 'style.load' | 'error', () => void>>;
 let removeSpy: ReturnType<typeof vi.fn>;
 let addControlSpy: ReturnType<typeof vi.fn>;
 
@@ -40,6 +40,7 @@ function fallback() {
 }
 
 beforeEach(() => {
+  vi.stubEnv('NEXT_PUBLIC_MAPTILER_KEY', 'public-test-key');
   listeners = {};
   removeSpy = vi.fn();
   addControlSpy = vi.fn();
@@ -47,7 +48,7 @@ beforeEach(() => {
   const mapInstance = {
     addControl: addControlSpy,
     on: vi.fn((event: string, listener: () => void) => {
-      if (event === 'load' || event === 'error') {
+      if (event === 'load' || event === 'style.load' || event === 'error') {
         listeners[event] = listener;
       }
     }),
@@ -69,6 +70,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  vi.unstubAllEnvs();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
@@ -100,6 +102,19 @@ describe('OrigenMapPreview (mini-mapas provisionales)', () => {
 
     await act(async () => {
       listeners.load?.();
+    });
+
+    expect(fallback()).toHaveAttribute('aria-hidden', 'true');
+    expect(screen.getByText('Ubicación aproximada · demostración')).toBeInTheDocument();
+  });
+
+  it('tras style.load muestra el mapa sin esperar todos los tiles', async () => {
+    enableWebGL2();
+    renderPreview();
+    await waitForMap();
+
+    await act(async () => {
+      listeners['style.load']?.();
     });
 
     expect(fallback()).toHaveAttribute('aria-hidden', 'true');
@@ -154,7 +169,7 @@ describe('OrigenMapPreview (mini-mapas provisionales)', () => {
     expect(region.closest('[aria-hidden="true"]')).toBeNull();
   });
 
-  it('usa el estilo temporal y el punto local del contrato', async () => {
+  it('usa MapTiler y el punto local del contrato', async () => {
     enableWebGL2();
     renderPreview();
     await waitForMap();
@@ -163,9 +178,11 @@ describe('OrigenMapPreview (mini-mapas provisionales)', () => {
       center: [number, number];
       dragRotate: boolean;
       pitchWithRotate: boolean;
-      style: string;
+      style: { sources: { maptiler: { tiles: string[] } } };
     };
-    expect(options.style).toBe('https://tiles.openfreemap.org/styles/dark');
+    expect(options.style.sources.maptiler.tiles).toEqual([
+      'https://api.maptiler.com/maps/streets-v4/{z}/{x}/{y}.png?key=public-test-key',
+    ]);
     expect(options.center).toEqual([-75.6667, 4.5333]);
     expect(options.dragRotate).toBe(false);
     expect(options.pitchWithRotate).toBe(false);

@@ -18,6 +18,11 @@ export interface SupabasePublicConfig {
   supabaseAnonKey: string;
 }
 
+/** Clave pública de MapTiler, restringida por dominio en su panel. */
+export interface MapTilerPublicConfig {
+  mapTilerKey: string;
+}
+
 /** Entorno de variables públicas (inyectable para pruebas). */
 export type PublicEnv = Record<string, string | undefined>;
 
@@ -31,8 +36,14 @@ export type PublicEnv = Record<string, string | undefined>;
  *   parcial o la URL no es válida.
  */
 export function loadPublicConfig(env: PublicEnv = process.env): SupabasePublicConfig | null {
-  const url = env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  // El acceso literal a `process.env.NEXT_PUBLIC_*` es imprescindible:
+  // Turbopack/Webpack solo inlinean en el bundle del navegador las
+  // referencias DIRECTAS a `process.env.NEXT_PUBLIC_*`. Un lookup
+  // dinámico como `env.NEXT_PUBLIC_*` NO se reemplaza y llegaría vacío
+  // al cliente. El parámetro `env` (inyectado por las pruebas) conserva
+  // prioridad para que los tests no dependan del entorno real.
+  const url = env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   const urlPresent = typeof url === 'string' && url.trim() !== '';
   const keyPresent = typeof anonKey === 'string' && anonKey.trim() !== '';
@@ -62,4 +73,24 @@ export function loadPublicConfig(env: PublicEnv = process.env): SupabasePublicCo
   }
 
   return { supabaseUrl: parsedUrl.data, supabaseAnonKey: anonKey as string };
+}
+
+/**
+ * Lee la clave pública de MapTiler para la cartografía editorial.
+ *
+ * No es una clave secreta: MapTiler la usa desde el navegador. Debe
+ * restringirse por referer/origen en el panel de MapTiler y nunca
+ * sustituirse por una clave de servidor o una credencial de AWS.
+ */
+export function loadMapTilerPublicConfig(
+  env: PublicEnv = process.env,
+): MapTilerPublicConfig | null {
+  // Ídem loadPublicConfig: el acceso literal a `process.env.NEXT_PUBLIC_*`
+  // es el único que el bundler inlinea en el navegador. Sin él, la clave
+  // nunca llegaría al cliente y el fallback del mapa quedaría visible.
+  const mapTilerKey = (
+    env.NEXT_PUBLIC_MAPTILER_KEY ?? process.env.NEXT_PUBLIC_MAPTILER_KEY
+  )?.trim();
+
+  return mapTilerKey ? { mapTilerKey } : null;
 }

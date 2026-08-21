@@ -39,11 +39,11 @@ describe('cabeceras de seguridad (next.config.mjs)', () => {
         key: 'Content-Security-Policy-Report-Only',
         value:
           "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; " +
-          "form-action 'self'; img-src 'self' data: blob: https://tiles.openfreemap.org; " +
+          "form-action 'self'; img-src 'self' data: blob: https://api.maptiler.com; " +
           "media-src 'self'; font-src 'self' https://fonts.gstatic.com; " +
           "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
           "script-src 'self' 'unsafe-inline'; " +
-          "connect-src 'self' https://tiles.openfreemap.org; " +
+          "connect-src 'self' https://api.maptiler.com; " +
           'worker-src blob:; child-src blob:',
       },
     ]);
@@ -83,8 +83,8 @@ describe('cabeceras de seguridad (next.config.mjs)', () => {
 
     expect(csp.value).toContain('worker-src blob:');
     expect(csp.value).toContain('child-src blob:');
-    expect(csp.value).toContain("connect-src 'self' https://tiles.openfreemap.org");
-    expect(csp.value).toContain("img-src 'self' data: blob: https://tiles.openfreemap.org");
+    expect(csp.value).toContain("connect-src 'self' https://api.maptiler.com");
+    expect(csp.value).toContain("img-src 'self' data: blob: https://api.maptiler.com");
     // Sin comodines en los orígenes del proveedor.
     expect(csp.value).not.toContain('https://*');
   });

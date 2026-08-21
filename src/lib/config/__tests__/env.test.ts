@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { loadPublicConfig } from '../env-public';
+import { loadMapTilerPublicConfig, loadPublicConfig } from '../env-public';
 import { loadShopifyStoreUrl, loadSiteUrl } from '../env-server';
 
 /**
@@ -54,6 +54,19 @@ describe('config env (contrato público)', () => {
         NEXT_PUBLIC_SUPABASE_ANON_KEY: 'anon-key-demo',
       }),
     ).toThrow(/URL válida/);
+  });
+});
+
+describe('loadMapTilerPublicConfig (cartografía editorial)', () => {
+  it('devuelve null sin clave para conservar el fallback del mapa', () => {
+    expect(loadMapTilerPublicConfig({})).toBeNull();
+    expect(loadMapTilerPublicConfig({ NEXT_PUBLIC_MAPTILER_KEY: '   ' })).toBeNull();
+  });
+
+  it('devuelve una clave pública recortada', () => {
+    expect(loadMapTilerPublicConfig({ NEXT_PUBLIC_MAPTILER_KEY: ' public-test-key ' })).toEqual({
+      mapTilerKey: 'public-test-key',
+    });
   });
 });
 
@@ -113,6 +126,7 @@ describe('aislamiento server-only / público', () => {
     expect(strip(publicSrc)).not.toContain('server-only');
     expect(publicSrc).toContain('NEXT_PUBLIC_SUPABASE_URL');
     expect(publicSrc).toContain('NEXT_PUBLIC_SUPABASE_ANON_KEY');
+    expect(publicSrc).toContain('NEXT_PUBLIC_MAPTILER_KEY');
     // No debe leer variables de servidor.
     expect(strip(publicSrc)).not.toContain('SITE_URL');
     expect(strip(publicSrc)).not.toContain('SHOPIFY_STORE_URL');

@@ -9,10 +9,10 @@
 
 import type { TrackId } from '../../lib/audio';
 
-/** Estado de disponibilidad del lanzamiento. */
-export type ReleaseStatus = 'out' | 'soon';
+/** Estado de disponibilidad de la compra (Mercado Pago aún no existe). */
+export type PurchaseStatus = 'unavailable' | 'available';
 
-/** Temporada visual de la portada (gradiente determinista). */
+/** Temporada visual de la portada (gradiente determinista, fallback). */
 export type ReleaseSeason = 'cosecha' | 'floracion' | 'germinacion' | 'tostion';
 
 export interface Release {
@@ -24,7 +24,7 @@ export interface Release {
   kind: string;
   /** Año de publicación o estado («2026», «Próximamente»). */
   date: string;
-  /** Temporada visual de la portada. */
+  /** Temporada visual de la portada (fallback editorial mientras no exista el asset). */
   season: ReleaseSeason;
   /** Formatos disponibles. */
   formats: string;
@@ -32,10 +32,18 @@ export interface Release {
   trackId: TrackId;
   /** Precio visible opcional (vacío para lanzamientos próximos). */
   price: string;
-  /** Disponibilidad. */
-  status: ReleaseStatus;
-  /** URL de Spotify opcional (vacía si aún no existe). */
-  spotify: string;
+  /**
+   * Portada local bajo `public/images/releases/` (p. ej.
+   * `/images/releases/from-coffee-to-frequencies-v1.webp`). Vacío = asset
+   * pendiente: el componente usa el fallback editorial de temporada.
+   */
+  coverImage: string;
+  /** URL de Spotify opcional (se abre en pestaña nueva, rel=noreferrer). */
+  spotifyUrl?: string;
+  /** URL de compra futura (Mercado Pago u otro canal autorizado). */
+  purchaseUrl?: string;
+  /** Disponibilidad de compra: hasta que exista canal, siempre «unavailable». */
+  purchaseStatus: PurchaseStatus;
 }
 
 export const RELEASES: readonly Release[] = [
@@ -48,8 +56,9 @@ export const RELEASES: readonly Release[] = [
     formats: 'Digital · Beatport',
     trackId: 'coherencia-432',
     price: 'COP 18.000',
-    status: 'out',
-    spotify: 'https://open.spotify.com/album/2LB9Dh1bQtIygRPqPMalRe',
+    coverImage: '/images/releases/from-coffee-to-frequencies.webp',
+    spotifyUrl: 'https://open.spotify.com/album/2LB9Dh1bQtIygRPqPMalRe',
+    purchaseStatus: 'unavailable',
   },
   {
     id: 'coffee-in-frequencies',
@@ -60,8 +69,9 @@ export const RELEASES: readonly Release[] = [
     formats: 'Digital · Vinilo translúcido',
     trackId: 'expansion-432',
     price: 'COP 18.000',
-    status: 'out',
-    spotify: 'https://open.spotify.com/album/3QORX6JtWw22nwDNMy9jLp',
+    coverImage: '/images/releases/coffee-in-frequencies.webp',
+    spotifyUrl: 'https://open.spotify.com/album/3QORX6JtWw22nwDNMy9jLp',
+    purchaseStatus: 'unavailable',
   },
   {
     id: 'tueste-selection',
@@ -72,8 +82,9 @@ export const RELEASES: readonly Release[] = [
     formats: 'Digital',
     trackId: 'raiz-222',
     price: 'COP 18.000',
-    status: 'out',
-    spotify: 'https://open.spotify.com/album/33rpXDbvGX7XtJbfzXvxct',
+    coverImage: '/images/releases/tueste-selection.webp',
+    spotifyUrl: 'https://open.spotify.com/album/33rpXDbvGX7XtJbfzXvxct',
+    purchaseStatus: 'unavailable',
   },
   {
     id: 'tostion',
@@ -84,8 +95,8 @@ export const RELEASES: readonly Release[] = [
     formats: 'Grabado en finca',
     trackId: 'despertar-528',
     price: '',
-    status: 'soon',
-    spotify: '',
+    coverImage: '/images/releases/tostion.webp',
+    purchaseStatus: 'unavailable',
   },
 ];
 

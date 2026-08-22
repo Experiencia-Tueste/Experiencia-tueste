@@ -25,6 +25,12 @@ export interface MercadoItem {
   /** Precio en COP (entero). */
   precio: number;
   descripcion: string;
+  /**
+   * Asset local bajo `public/images/mercado/` (p. ej.
+   * `/images/mercado/finca-la-aurora.webp`). Vacío = asset pendiente:
+   * el componente conserva su fallback editorial SVG.
+   */
+  imageSrc?: string;
   /** Los ítems del catálogo son demostrativos (vendedor de ejemplo). */
   demo: boolean;
 }
@@ -92,6 +98,7 @@ export const MERCADO_PASOS: MercadoPaso[] = [
 export const MERCADO_ITEMS: MercadoItem[] = [
   {
     marca: 'Finca La Aurora',
+    imageSrc: '/images/mercado/finca-la-aurora.webp',
     tipo: 'Café tostado',
     origen: 'Huila',
     precio: 42000,
@@ -100,6 +107,7 @@ export const MERCADO_ITEMS: MercadoItem[] = [
   },
   {
     marca: 'Verde Andino',
+    imageSrc: '/images/mercado/verde-andino.webp',
     tipo: 'Café en verde',
     origen: 'Nariño',
     precio: 980000,
@@ -108,6 +116,7 @@ export const MERCADO_ITEMS: MercadoItem[] = [
   },
   {
     marca: 'Molino Cauca',
+    imageSrc: '/images/mercado/molino-cauca.webp',
     tipo: 'Métodos & accesorios',
     origen: 'Cauca',
     precio: 155000,

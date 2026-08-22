@@ -28,6 +28,8 @@ export interface AudioPlayerResult {
   togglePlay: () => void;
   /** Selección manual (TrackList, Origen, Barista, Lanzamientos): desactiva el canal. */
   select: (id: TrackId) => void;
+  /** Reproduce una pista desde el comienzo (nueva pista, aunque esté pausado). */
+  play: (id: TrackId) => void;
   seek: (t: number) => void;
   /** Elige una señal de Radio Demo (o «Escucha libre»). */
   selectChannel: (option: RadioDemoOption) => void;
@@ -111,6 +113,10 @@ export function useAudioPlayer(): AudioPlayerResult {
       const track = getTrack(id);
       const audio = audioRef.current;
       if (!track || !audio) return;
+      // Interacción humana explícita (clic/tecla): el deck y el
+      // visualizador abandonan el estado «esperando señal». Solo se
+      // llega aquí desde acciones reales del usuario (nunca autoplay).
+      setHasInteracted(true);
       ensureAudioGraph();
       trackIdRef.current = id;
       setTrackId(id);
@@ -315,6 +321,7 @@ export function useAudioPlayer(): AudioPlayerResult {
     hasInteracted,
     togglePlay,
     select,
+    play: playTrack,
     seek,
     selectChannel,
   };

@@ -69,6 +69,22 @@ describe('useAudioPlayer (ciclo de vida del navegador)', () => {
     expect(result.current.playing).toBe(false);
   });
 
+  it('play(id) marca interacción humana y reproduce desde el comienzo', async () => {
+    const { result } = renderHook(() => useAudioPlayer());
+
+    expect(result.current.hasInteracted).toBe(false);
+
+    await act(async () => {
+      result.current.play('raiz-222');
+    });
+
+    expect(result.current.hasInteracted).toBe(true);
+    expect(result.current.trackId).toBe('raiz-222');
+    expect(result.current.playing).toBe(true);
+    expect(result.current.currentTime).toBe(0);
+    expect(audioEl.src).toContain('/audio/02-raiz-222-hz.mp3');
+  });
+
   it('togglePlay crea el grafo de audio en la primera interacción', async () => {
     const ctx = new FakeAudioContext();
     vi.stubGlobal(

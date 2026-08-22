@@ -14,9 +14,9 @@ import {
 import type { SectionId } from '../index';
 
 describe('feature site · contrato de secciones', () => {
-  it('SECTION_IDS centraliza los diez hashes públicos sin duplicados', () => {
+  it('SECTION_IDS centraliza los nueve hashes públicos sin duplicados', () => {
     const valores = Object.values(SECTION_IDS);
-    expect(valores).toHaveLength(10);
+    expect(valores).toHaveLength(9);
     expect(new Set(valores).size).toBe(valores.length);
     for (const v of valores) {
       expect(v).toMatch(/^#[a-z-]+$/);
@@ -55,7 +55,6 @@ describe('feature site · contrato de secciones', () => {
       'Música',
       'Barista',
       'En Vivo',
-      'Adopta',
       'Tienda',
       'Negocios',
       'Comunidad',
@@ -66,7 +65,6 @@ describe('feature site · contrato de secciones', () => {
       SECTION_IDS.musica,
       SECTION_IDS.barista,
       SECTION_IDS.enVivo,
-      SECTION_IDS.adopta,
       SECTION_IDS.tienda,
       SECTION_IDS.negocios,
       SECTION_IDS.comunidad,
@@ -78,14 +76,13 @@ describe('feature site · contrato de secciones', () => {
 
   it('el menú móvil conserva la numeración 01–07 y 10', () => {
     const mobile = sectionsIn('mobile');
-    expect(mobile.map((s) => s.num)).toEqual(['01', '02', '03', '04', '05', '06', '07', '·', '10']);
+    expect(mobile.map((s) => s.num)).toEqual(['01', '02', '03', '04', '05', '07', '·', '10']);
     expect(mobile.map((s) => s.label)).toEqual([
       'Escucha',
       'Origen',
       'Música',
       'Barista',
       'En Vivo',
-      'Adopta',
       'Tienda',
       'Negocios',
       'Comunidad',
@@ -107,7 +104,7 @@ describe('feature site · contrato de secciones', () => {
   it('FOOTER_ALLOWED_HASHES se deriva de la fuente y cubre el footer', () => {
     const hashesFooter = FOOTER_GROUPS.flatMap((g) => g.sectionIds);
     expect(new Set(FOOTER_ALLOWED_HASHES)).toEqual(new Set(hashesFooter));
-    expect(FOOTER_ALLOWED_HASHES).toHaveLength(8);
+    expect(FOOTER_ALLOWED_HASHES).toHaveLength(7);
     for (const h of FOOTER_ALLOWED_HASHES) {
       expect(esHashInterno(h)).toBe(true);
       expect(getSection(h)).toBeDefined();

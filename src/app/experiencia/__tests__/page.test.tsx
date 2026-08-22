@@ -128,18 +128,17 @@ describe('Página pública (ritmo editorial del master)', () => {
 });
 
 describe('Página pública (números fantasma de sección)', () => {
-  it('inserta exactamente diez SectionGhosts con sus números', () => {
+  it('inserta exactamente nueve SectionGhosts con sus números', () => {
     render(<Home />);
 
     const ghosts = Array.from(document.querySelectorAll('[data-section-ghost]'));
-    expect(ghosts).toHaveLength(10);
+    expect(ghosts).toHaveLength(9);
     expect(ghosts.map((g) => g.getAttribute('data-section-ghost'))).toEqual([
       '01',
       '02',
       '03',
       '04',
       '05',
-      '06',
       '07',
       '08',
       '09',
@@ -156,7 +155,6 @@ describe('Página pública (números fantasma de sección)', () => {
       ['lanzamientos', '03'],
       ['recetario', '04'],
       ['eventos', '05'],
-      ['tueste-tree', '06'],
       ['merch', '07'],
       ['radio', '08'],
       ['mercado', '09'],
@@ -197,7 +195,6 @@ describe('Página pública (animación de entrada por scroll)', () => {
       'plataformas',
       'recetario',
       'eventos',
-      'tueste-tree',
       'merch',
       'negocios',
       'radio',
@@ -231,6 +228,18 @@ describe('Página pública (animación de entrada por scroll)', () => {
     expect(stats.closest('[data-reveal]')).not.toBeNull();
   });
 
+  it('el hero ya no muestra el texto gigante decorativo de fondo', () => {
+    render(<Home />);
+
+    const hero = document.getElementById('top')!;
+    // El fantasma eliminado era el único elemento cuyo texto exacto era «Frecuencia».
+    expect(hero.querySelector('[class*="ghost"]')).toBeNull();
+    const textosExactos = Array.from(hero.querySelectorAll('*')).map((el) =>
+      el.textContent?.trim(),
+    );
+    expect(textosExactos).not.toContain('Frecuencia');
+  });
+
   it('no envuelve los anuncios aria-live en bloques de animación', () => {
     render(<Home />);
 
@@ -238,6 +247,25 @@ describe('Página pública (animación de entrada por scroll)', () => {
     expect(lives.length).toBeGreaterThan(0);
     for (const live of lives) {
       expect(live.closest('[data-reveal]'), 'aria-live no debe ocultarse').toBeNull();
+    }
+  });
+
+  it('tienda, mercado y lanzamientos usan los assets locales integrados', () => {
+    render(<Home />);
+
+    const imgs = Array.from(
+      document.querySelectorAll('#merch img, #mercado img, #lanzamientos img'),
+    );
+    expect(imgs.length).toBeGreaterThanOrEqual(13);
+
+    for (const img of imgs) {
+      const src = decodeURIComponent(img.getAttribute('src') ?? '');
+      // Rutas locales bajo public/images (nunca externas ni data:).
+      expect(src.startsWith('http://')).toBe(false);
+      expect(src.startsWith('https://')).toBe(false);
+      expect(src.startsWith('data:')).toBe(false);
+      expect(src).toMatch(/\/images\/(store|mercado|releases)\//);
+      expect(img.getAttribute('alt')?.length).toBeGreaterThan(0);
     }
   });
 });

@@ -126,7 +126,11 @@ export default function MercadoOrigen() {
               style={{ '--mc': MERCADO_ACCENT[item.tipo] } as React.CSSProperties}
             >
               <div className={styles.media}>
-                <MercadoVisual marca={item.marca} accent={MERCADO_ACCENT[item.tipo]} />
+                <MercadoVisual
+                  marca={item.marca}
+                  accent={MERCADO_ACCENT[item.tipo]}
+                  imageSrc={item.imageSrc}
+                />
               </div>
               <div className={styles.top}>
                 <span className={styles.type}>{item.tipo}</span>

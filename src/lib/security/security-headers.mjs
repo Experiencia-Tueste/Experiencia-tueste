@@ -21,10 +21,8 @@
  *   ajenos; X-Frame-Options queda en DENY como respaldo para clientes
  *   que no lean CSP.
  * - Los orígenes permitidos son exactamente los que la app usa hoy:
- *   self (assets locales), Google Fonts (stylesheet + font files) y
- *   OpenFreeMap (tiles del mapa de origen — proveedor PROVISIONAL sin
- *   SLA, se sustituirá antes del lanzamiento). No se añaden dominios
- *   por anticipación ni comodines.
+ *   self (assets locales) y Google Fonts (stylesheet + font files). No
+ *   se añaden dominios por anticipación ni comodines.
  */
 
 const CSP_POLICY = [
@@ -33,14 +31,12 @@ const CSP_POLICY = [
   "object-src 'none'",
   "frame-ancestors 'none'",
   "form-action 'self'",
-  "img-src 'self' data: blob: https://tiles.openfreemap.org",
+  "img-src 'self' data: blob:",
   "media-src 'self'",
   "font-src 'self' https://fonts.gstatic.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "script-src 'self' 'unsafe-inline'",
-  "connect-src 'self' https://tiles.openfreemap.org",
-  'worker-src blob:',
-  'child-src blob:',
+  "connect-src 'self'",
 ].join('; ');
 
 export const SECURITY_HEADERS = [

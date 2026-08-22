@@ -10,93 +10,7 @@
   overflow: hidden;
 }
 
-/* ── Texto fantasma de fondo ───────────────────────────── */
-.ghost {
-  position: absolute;
-  left: 50%;
-  top: 49%;
-  transform: translate(-50%, -50%);
-  z-index: 0;
-  pointer-events: none;
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-weight: 700;
-  text-transform: uppercase;
-  white-space: nowrap;
-  font-size: clamp(6rem, 21vw, 19rem);
-  line-height: 1;
-  color: transparent;
-  -webkit-text-stroke: 1.5px rgba(var(--cream-rgb), 0.07);
-  animation: ghostfloat 11s ease-in-out infinite;
-}
-
-@keyframes ghostfloat {
-  0%,
-  100% {
-    transform: translate(-50%, -50%) scale(1);
-  }
-  50% {
-    transform: translate(-50%, -53%) scale(1.03);
-  }
-}
-
-/* ── Badge ─────────────────────────────────────────────── */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 11px;
-  border-radius: 9999px;
-  padding: 5px 16px 5px 5px;
-  margin-bottom: 26px;
-  position: relative;
-  overflow: hidden;
-  border: none;
-  background: rgba(255, 255, 255, 0.012);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
-  opacity: 0;
-  animation: rise 1s 0.25s forwards;
-}
-
-.badge::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1.4px;
-  pointer-events: none;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 244, 224, 0.45) 0%,
-    rgba(255, 244, 224, 0.15) 20%,
-    rgba(255, 244, 224, 0) 40%,
-    rgba(255, 244, 224, 0) 60%,
-    rgba(255, 244, 224, 0.15) 80%,
-    rgba(255, 244, 224, 0.45) 100%
-  );
-  -webkit-mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-}
-
-.badge b {
-  background: var(--cream);
-  color: var(--ink);
-  border-radius: 9999px;
-  padding: 5px 13px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-
-.badge span {
-  font-size: 0.8rem;
-  color: rgba(var(--cream-rgb), 0.92);
-  font-weight: 500;
-}
+/* ── Kicker ─────────────────────────────────────────────── */
 
 /* ── Kicker ────────────────────────────────────────────── */
 .kicker {
@@ -441,16 +355,16 @@
 }
 
 /* ── Sol principal ─────────────────────────────────────── */
-.herosun {
+.heroSun {
   position: absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  opacity: 0.14;
+  max-width: min(48vw, 280px);
+  max-height: min(48vw, 280px);
+  opacity: 0.13;
   z-index: 0;
   pointer-events: none;
-  max-width: 78vw;
-  max-height: 78vw;
 }
 
 /* ── Scroll hint ───────────────────────────────────────── */
@@ -498,27 +412,18 @@
 
 /* ── Responsive ────────────────────────────────────────── */
 @media (max-width: 760px) {
-  .ghost {
-    font-size: 30vw;
-  }
   .seal {
     display: none;
   }
 }
 
 /* ── Modo día ──────────────────────────────────────────── */
-:global(body.day) .ghost {
-  -webkit-text-stroke-color: rgba(46, 42, 36, 0.12);
-}
-
-:global(body.day) .badge,
 :global(body.day) .btnGlass,
 :global(body.day) .stat {
   background: rgba(46, 42, 36, 0.05);
   box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.6);
 }
 
-:global(body.day) .badge::before,
 :global(body.day) .btnGlass::before,
 :global(body.day) .stat::before {
   background: linear-gradient(
@@ -564,15 +469,14 @@
   color: #2e2a24;
 }
 
-:global(body.day) .herosun {
+:global(body.day) .heroSun {
   opacity: 0.18;
 }
 
 /* ── Motion reducido ───────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  .ghost,
   .seal svg,
-  .herosun,
+  .heroSun,
   .dot,
   .scrollhint i {
     animation: none;

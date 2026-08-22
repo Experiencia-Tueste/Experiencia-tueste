@@ -30,6 +30,16 @@
   transition: transform var(--dur-slow) var(--ease-out);
 }
 
+/* Portada local (next/image) con el mismo tratamiento que el fallback. */
+.artImage {
+  object-fit: cover;
+  transition: transform var(--dur-slow) var(--ease-out);
+}
+
+.card:hover .artImage {
+  transform: scale(1.03);
+}
+
 .card:hover .art {
   transform: scale(1.06) rotate(-1deg);
 }
@@ -226,6 +236,7 @@
   transition: color var(--dur-fast) var(--ease-out);
   padding: 8px 2px;
   white-space: nowrap;
+  text-decoration: none;
 }
 
 .buy:hover {
@@ -244,6 +255,11 @@
 
 .buy.soon:hover {
   color: var(--purple-soft);
+}
+
+.buy.soon:disabled {
+  cursor: not-allowed;
+  opacity: 0.9;
 }
 
 :global(body.day) .card {

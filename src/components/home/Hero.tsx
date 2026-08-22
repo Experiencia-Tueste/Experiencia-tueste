@@ -11,15 +11,6 @@ import styles from './Hero.module.css';
 export default function Hero() {
   return (
     <header id="top" className={styles.hero}>
-      <div className={styles.ghost} aria-hidden="true">
-        Frecuencia
-      </div>
-
-      <div className={styles.badge}>
-        <b>Nuevo</b>
-        <span>Ritual de Adopción 001 · 30 cupos · Finca Tres Esquinas</span>
-      </div>
-
       <p className={styles.kicker}>
         <span className={styles.dot} aria-hidden="true" />
         Origen Tostado · Eje Cafetero
@@ -94,8 +85,8 @@ export default function Hero() {
         <i />
       </div>
 
-      {/* Sol principal decorativo del hero */}
-      <Sun size={320} className={styles.herosun} />
+      {/* Emblema orgánico oficial del kit de marca, usado como fondo del hero. */}
+      <Sun size={280} className={styles.heroSun} />
     </header>
   );
 }

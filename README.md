@@ -105,6 +105,16 @@ docker run --rm -p 3000:3000 tueste-web
 - Estados de error y 404 locales (`error.tsx`, `global-error.tsx` y
   `not-found.tsx`), sin monitoreo externo todavía.
 
+## Verificación local
+
+Mientras GitHub Actions está desactivado por el bloqueo de facturación
+de la cuenta, la calidad se valida localmente (detalles en
+[`docs/ci-local.md`](docs/ci-local.md)):
+
+```bash
+npm run verify
+```
+
 ## Seguridad
 
 Cabeceras HTTP base aplicadas a todas las rutas desde `next.config.mjs`

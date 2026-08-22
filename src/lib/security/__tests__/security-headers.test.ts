@@ -39,12 +39,11 @@ describe('cabeceras de seguridad (next.config.mjs)', () => {
         key: 'Content-Security-Policy-Report-Only',
         value:
           "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; " +
-          "form-action 'self'; img-src 'self' data: blob: https://tiles.openfreemap.org; " +
+          "form-action 'self'; img-src 'self' data: blob:; " +
           "media-src 'self'; font-src 'self' https://fonts.gstatic.com; " +
           "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
           "script-src 'self' 'unsafe-inline'; " +
-          "connect-src 'self' https://tiles.openfreemap.org; " +
-          'worker-src blob:; child-src blob:',
+          "connect-src 'self'",
       },
     ]);
   });
@@ -77,15 +76,17 @@ describe('cabeceras de seguridad (next.config.mjs)', () => {
     expect(rules[0].headers.some((h) => h.key === 'Strict-Transport-Security')).toBe(false);
   });
 
-  it('incluye las directivas mínimas de MapLibre y del proveedor temporal de tiles', async () => {
+  it('no conserva orígenes ni directivas del mapa retirado', async () => {
     const rules = await getRules();
     const csp = rules[0].headers.find((h) => h.key.startsWith('Content-Security-Policy'))!;
 
-    expect(csp.value).toContain('worker-src blob:');
-    expect(csp.value).toContain('child-src blob:');
-    expect(csp.value).toContain("connect-src 'self' https://tiles.openfreemap.org");
-    expect(csp.value).toContain("img-src 'self' data: blob: https://tiles.openfreemap.org");
-    // Sin comodines en los orígenes del proveedor.
+    expect(csp.value).not.toContain('worker-src blob:');
+    expect(csp.value).not.toContain('child-src blob:');
+    expect(csp.value).not.toContain('tiles.openfreemap.org');
+    expect(csp.value).not.toContain('maptiler');
+    expect(csp.value).toContain("connect-src 'self'");
+    expect(csp.value).toContain("img-src 'self' data: blob:");
+    // Sin comodines en los orígenes.
     expect(csp.value).not.toContain('https://*');
   });
 });

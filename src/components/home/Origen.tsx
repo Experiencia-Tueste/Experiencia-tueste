@@ -3,35 +3,44 @@
 import { useState } from 'react';
 import { getTrack } from '@/features/audio';
 import { ORIGEN_PASOS } from '@/features/origen';
-import OrigenMapPreview from '@/features/origen-map/components/OrigenMapPreview';
-import { getPuntoMapa } from '@/features/origen-map/data/puntos';
-import type { TrackId } from '@/lib/audio';
+import type { AudioPlayerResult } from '@/hooks/useAudioPlayer';
 import OrigenStep from './OrigenStep';
 import Reveal from './Reveal';
 import SectionGhost from './SectionGhost';
 import styles from './Origen.module.css';
 
 export interface OrigenProps {
-  /** Pista seleccionada actualmente (compartida con el reproductor). */
-  selectedId: TrackId;
-  /** Selecciona la pista de una etapa en el reproductor. */
-  onSelect: (id: TrackId) => void;
+  /** Reproductor global compartido (Frecuencias, Música, Radio…). */
+  player: AudioPlayerResult;
 }
 
 /**
  * Sección «02 / EL ORIGEN» · las cinco etapas del territorio y su
- * conversión en frecuencia. Cada etapa es un botón real con aria-pressed
- * que selecciona su pista en el reproductor de Frecuencias a través del
- * estado compartido de ListeningExperience. Sin imágenes externas: los
- * marcos editoriales usan topografía SVG decorativa.
+ * conversión en frecuencia.
+ *
+ * Cada tarjeta controla su melodía con el reproductor GLOBAL existente
+ * (sin <audio> ni AudioContext adicionales):
+ * - activar una tarjeta distinta reproduce su pista desde el comienzo;
+ * - activar la tarjeta que suena la pausa;
+ * - activar la tarjeta seleccionada pero pausada la reanuda.
+ *
+ * El reproductor permanece sincronizado: mismo trackId, mismo estado
+ * de reproducción que Frecuencias/Música/Radio. Sin autoplay: todo
+ * nace de la acción real del usuario.
  */
-export default function Origen({ selectedId, onSelect }: OrigenProps) {
+export default function Origen({ player }: OrigenProps) {
   const [anuncio, setAnuncio] = useState<string | null>(null);
 
-  const handleSelect = (id: TrackId) => {
+  const handleCard = (id: Parameters<typeof player.play>[0]) => {
+    if (player.trackId === id) {
+      // Misma tarjeta: alterna pausa/reanudación de su melodía.
+      player.togglePlay();
+    } else {
+      // Tarjeta distinta: cambia a esa pista e inicia desde el comienzo.
+      player.play(id);
+    }
     const track = getTrack(id);
     setAnuncio(track ? `Frecuencia seleccionada: ${track.title} · ${track.hz} Hz` : null);
-    onSelect(id);
   };
 
   return (
@@ -67,8 +76,9 @@ export default function Origen({ selectedId, onSelect }: OrigenProps) {
             <OrigenStep
               key={paso.id}
               paso={paso}
-              seleccionado={selectedId === paso.trackId}
-              onSelect={handleSelect}
+              seleccionado={player.trackId === paso.trackId}
+              reproduciendo={player.trackId === paso.trackId && player.playing}
+              onToggle={() => handleCard(paso.trackId)}
             />
           ))}
         </div>
@@ -77,29 +87,6 @@ export default function Origen({ selectedId, onSelect }: OrigenProps) {
       <p className={styles.live} role="status" aria-live="polite">
         {anuncio ?? '\u00A0'}
       </p>
-
-      <Reveal>
-        <div className={styles.media}>
-          <figure className={styles.frame}>
-            <OrigenMapPreview
-              punto={getPuntoMapa('finca-tres-esquinas')!}
-              etiqueta="Ubicación aproximada · demostración"
-              className={styles.mapFrame}
-            />
-            <figcaption className={styles.cap}>
-              Finca Tres Esquinas · material del territorio en camino
-            </figcaption>
-          </figure>
-          <figure className={styles.frame}>
-            <OrigenMapPreview
-              punto={getPuntoMapa('guardianes-origen')!}
-              etiqueta="Punto editorial · próximamente"
-              className={styles.mapFrame}
-            />
-            <figcaption className={styles.cap}>Los guardianes del origen · próximamente</figcaption>
-          </figure>
-        </div>
-      </Reveal>
 
       <Reveal>
         <div className={styles.voces}>

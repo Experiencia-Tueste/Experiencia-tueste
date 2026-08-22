@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   AVISO_MERCADO,
@@ -100,5 +102,26 @@ describe('feature mercado', () => {
     expect(AVISO_MERCADO).toBe(
       'Las publicaciones y la operación comercial se habilitarán cuando el cliente confirme el flujo.',
     );
+  });
+});
+
+describe('feature mercado · assets locales pendientes', () => {
+  it('los tres ítems usan las rutas exactas de assets locales existentes', () => {
+    const esperado: Record<string, string> = {
+      'Finca La Aurora': '/images/mercado/finca-la-aurora.webp',
+      'Verde Andino': '/images/mercado/verde-andino.webp',
+      'Molino Cauca': '/images/mercado/molino-cauca.webp',
+    };
+
+    for (const item of MERCADO_ITEMS) {
+      expect(item.imageSrc).toBe(esperado[item.marca]);
+      expect(item.imageSrc).toMatch(/^\/images\/mercado\//);
+      expect(item.imageSrc).not.toMatch(/^https?:\/\//);
+      expect(item.imageSrc).not.toMatch(/^data:/);
+      expect(
+        existsSync(join(process.cwd(), 'public', item.imageSrc as string)),
+        `asset local faltante: ${item.imageSrc}`,
+      ).toBe(true);
+    }
   });
 });

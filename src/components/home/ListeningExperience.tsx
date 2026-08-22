@@ -11,7 +11,6 @@ import MercadoOrigen from './MercadoOrigen';
 import NegociosRadio from './NegociosRadio';
 import Origen from './Origen';
 import Tienda from './Tienda';
-import TuesteTree from './TuesteTree';
 
 /**
  * Límite de estado cliente de la experiencia de escucha: un único hook
@@ -37,12 +36,11 @@ export default function ListeningExperience() {
   return (
     <>
       <Frecuencias player={player} />
-      <Origen selectedId={player.trackId} onSelect={player.select} />
+      <Origen player={player} />
       <Lanzamientos onSelect={player.select} />
       <BaristaSonoro onSelect={player.select} />
       <EditorialTicker variant="dim" reverse />
       <Eventos />
-      <TuesteTree />
       <Tienda />
       <EditorialTicker variant="amber" reverse alt />
       <NegociosRadio onSelect={player.select} />

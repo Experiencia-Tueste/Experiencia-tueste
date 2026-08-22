@@ -1,0 +1,216 @@
+/* Tarjeta Adopta — pieza editorial verde/ámbar, tercer camino del
+   portal. Mismo patrón visual de Tienda y Experiencia. */
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 40px 30px 34px;
+  border-radius: var(--radius-2xl);
+  border: 1px solid rgba(54, 127, 71, 0.32);
+  background:
+    radial-gradient(120% 90% at 30% 0%, rgba(54, 127, 71, 0.14), transparent 55%),
+    rgba(var(--void-rgb), 0.6);
+  text-decoration: none;
+  transition:
+    transform var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
+  min-width: 0;
+}
+
+.card:hover,
+.card:focus-within {
+  transform: translateY(-4px);
+  border-color: rgba(54, 127, 71, 0.6);
+  box-shadow: 0 26px 64px -30px rgba(54, 127, 71, 0.5);
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--teal-bright);
+  outline-offset: 4px;
+}
+
+/* Medallón verde que sobresale del borde superior (patrón del portal). */
+.medallion {
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--void);
+  border: 1px solid rgba(54, 127, 71, 0.6);
+  color: #57b56d;
+  box-shadow: 0 6px 24px -8px rgba(54, 127, 71, 0.55);
+  z-index: 2;
+}
+
+.medallion svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Arte superior: cafetal abstracto en CSS (4:3 editorial). */
+.visual {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  margin-bottom: 2px;
+  background: linear-gradient(180deg, #241019 0%, #101d16 62%, #0a140d 100%);
+}
+
+.sun {
+  position: absolute;
+  right: 14%;
+  top: 12%;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(251, 169, 34, 0.95) 0%, rgba(251, 169, 34, 0) 70%);
+}
+
+.hillBack {
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  bottom: 24%;
+  height: 46%;
+  border-radius: 50% 50% 0 0;
+  background: rgba(23, 48, 31, 0.9);
+}
+
+.hillFront {
+  position: absolute;
+  left: -14%;
+  right: -14%;
+  bottom: -14%;
+  height: 52%;
+  border-radius: 50% 50% 0 0;
+  background: rgba(11, 26, 19, 0.95);
+}
+
+.treeTrunk {
+  position: absolute;
+  left: 22%;
+  bottom: 26%;
+  width: 3px;
+  height: 22%;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 232, 191, 0.5);
+}
+
+.treeCrownOne {
+  position: absolute;
+  left: 16%;
+  bottom: 40%;
+  width: 13%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: rgba(54, 127, 71, 0.9);
+}
+
+.treeCrownTwo {
+  position: absolute;
+  left: 20%;
+  bottom: 45%;
+  width: 9%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: rgba(46, 111, 62, 1);
+}
+
+.plotRow {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 18%;
+  height: 14px;
+  background-image: radial-gradient(rgba(54, 127, 71, 0.7) 2px, transparent 2.5px);
+  background-size: 22px 14px;
+}
+
+.kicker {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-mono);
+  color: var(--amber);
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-size: 1.7rem;
+  font-weight: 500;
+  color: var(--cream);
+  margin: 0;
+}
+
+.desc {
+  color: rgba(var(--cream-rgb), 0.68);
+  margin: 0 0 12px;
+  line-height: 1.55;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  align-self: flex-start;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cream);
+  border: 1px solid rgba(54, 127, 71, 0.55);
+  border-radius: var(--radius-pill);
+  padding: 13px 22px;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.card:hover .cta,
+.card:focus-within .cta {
+  background: #57b56d;
+  color: var(--ink);
+  border-color: #57b56d;
+}
+
+.arrow {
+  font-size: 0.9rem;
+}
+
+:global(body.day) .title {
+  color: var(--ink);
+}
+
+:global(body.day) .desc {
+  color: rgba(46, 42, 36, 0.7);
+}
+
+:global(body.day) .cta {
+  color: var(--ink);
+}
+
+:global(body.day) .medallion {
+  background: #fff4e0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+
+  .card:hover,
+  .card:focus-within {
+    transform: none;
+  }
+}

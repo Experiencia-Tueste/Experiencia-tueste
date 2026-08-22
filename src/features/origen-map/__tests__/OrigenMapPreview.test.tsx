@@ -13,10 +13,36 @@ const maplibre = vi.hoisted(() => ({
 
 vi.mock('maplibre-gl', () => maplibre);
 
+// Configuración cartográfica mockeada: `getMapStyle` controlable por
+// cada test (con estilo o null), sin depender del entorno real ni de
+// ninguna clave.
+const mapConfig = vi.hoisted(() => ({
+  getMapStyle: vi.fn(),
+  MAP_INITIAL_ZOOM: 11,
+  MAP_MIN_ZOOM: 4,
+  MAP_MAX_ZOOM: 15,
+}));
+
+vi.mock('../config', () => mapConfig);
+
 const SOURCE = readFileSync(resolve(__dirname, '../components/OrigenMapPreview.tsx'), 'utf-8');
 const finca = getPuntoMapa('finca-tres-esquinas')!;
 
-let listeners: Partial<Record<'load' | 'error', () => void>>;
+/** Estilo de prueba: marcador explícito, nunca una clave real. */
+const mockStyle = {
+  version: 8,
+  sources: {
+    maptiler: {
+      type: 'raster',
+      tiles: ['https://api.maptiler.com/maps/streets-v4/{z}/{x}/{y}.png?key=test-only-marker'],
+      tileSize: 512,
+      attribution: '© MapTiler © OpenStreetMap contributors',
+    },
+  },
+  layers: [{ id: 'maptiler-streets', type: 'raster', source: 'maptiler' }],
+};
+
+let listeners: Partial<Record<'load' | 'style.load' | 'error', () => void>>;
 let removeSpy: ReturnType<typeof vi.fn>;
 let addControlSpy: ReturnType<typeof vi.fn>;
 
@@ -39,6 +65,10 @@ function fallback() {
   return screen.getByText('Finca Tres Esquinas').closest('[data-origen-map-fallback]');
 }
 
+function region() {
+  return screen.getByRole('region', { name: /Mapa interactivo provisional: Finca Tres Esquinas/i });
+}
+
 beforeEach(() => {
   listeners = {};
   removeSpy = vi.fn();
@@ -47,7 +77,7 @@ beforeEach(() => {
   const mapInstance = {
     addControl: addControlSpy,
     on: vi.fn((event: string, listener: () => void) => {
-      if (event === 'load' || event === 'error') {
+      if (event === 'load' || event === 'style.load' || event === 'error') {
         listeners[event] = listener;
       }
     }),
@@ -65,6 +95,9 @@ beforeEach(() => {
   maplibre.Map.mockImplementation(() => mapInstance);
   maplibre.Marker.mockImplementation(() => marker);
   maplibre.NavigationControl.mockImplementation(() => ({}));
+
+  mapConfig.getMapStyle.mockReset();
+  mapConfig.getMapStyle.mockReturnValue(mockStyle);
 });
 
 afterEach(() => {
@@ -73,7 +106,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('OrigenMapPreview (mini-mapas provisionales)', () => {
+describe('OrigenMapPreview (mapa MapTiler)', () => {
   it('sin WebGL2 no crea MapLibre y conserva el fallback visible', async () => {
     vi.stubGlobal('WebGL2RenderingContext', undefined);
 
@@ -84,16 +117,28 @@ describe('OrigenMapPreview (mini-mapas provisionales)', () => {
     expect(fallback()).not.toHaveAttribute('aria-hidden');
   });
 
-  it('antes de load mantiene el fallback por encima del mapa', async () => {
+  it('sin configuración de MapTiler conserva el fallback y no crea un mapa defectuoso', async () => {
+    mapConfig.getMapStyle.mockReturnValue(null);
+    enableWebGL2();
+
+    renderPreview();
+    await act(async () => {});
+
+    expect(maplibre.Map).not.toHaveBeenCalled();
+    expect(fallback()).not.toHaveAttribute('aria-hidden');
+  });
+
+  it('antes de load mantiene el fallback visible y aria-busy=true', async () => {
     enableWebGL2();
     renderPreview();
     await waitForMap();
 
     expect(fallback()).not.toHaveAttribute('aria-hidden');
+    expect(region()).toHaveAttribute('aria-busy', 'true');
     expect(screen.queryByText('Ubicación aproximada · demostración')).not.toBeInTheDocument();
   });
 
-  it('tras load oculta visualmente el fallback y muestra la etiqueta editorial', async () => {
+  it('tras load oculta el fallback, aria-busy=false y muestra la etiqueta editorial', async () => {
     enableWebGL2();
     renderPreview();
     await waitForMap();
@@ -103,10 +148,24 @@ describe('OrigenMapPreview (mini-mapas provisionales)', () => {
     });
 
     expect(fallback()).toHaveAttribute('aria-hidden', 'true');
+    expect(region()).toHaveAttribute('aria-busy', 'false');
     expect(screen.getByText('Ubicación aproximada · demostración')).toBeInTheDocument();
   });
 
-  it('un error asíncrono antes de load conserva el fallback y limpia esa instancia', async () => {
+  it('tras style.load también deja el mapa listo (raster de MapTiler)', async () => {
+    enableWebGL2();
+    renderPreview();
+    await waitForMap();
+
+    await act(async () => {
+      listeners['style.load']?.();
+    });
+
+    expect(fallback()).toHaveAttribute('aria-hidden', 'true');
+    expect(region()).toHaveAttribute('aria-busy', 'false');
+  });
+
+  it('un error asíncrono antes de load conserva el fallback y limpia esa instancia una vez', async () => {
     enableWebGL2();
     renderPreview();
     await waitForMap();
@@ -134,7 +193,7 @@ describe('OrigenMapPreview (mini-mapas provisionales)', () => {
     expect(screen.getByText('Ubicación aproximada · demostración')).toBeInTheDocument();
   });
 
-  it('desmonta la instancia una sola vez', async () => {
+  it('desmonta la instancia una sola vez (Strict Mode-safe)', async () => {
     enableWebGL2();
     const { unmount } = renderPreview();
     await waitForMap();
@@ -147,14 +206,11 @@ describe('OrigenMapPreview (mini-mapas provisionales)', () => {
   it('mantiene la región del mapa accesible y sin aria-hidden', () => {
     renderPreview();
 
-    const region = screen.getByRole('region', {
-      name: /Mapa interactivo provisional: Finca Tres Esquinas/i,
-    });
-    expect(region).not.toHaveAttribute('aria-hidden');
-    expect(region.closest('[aria-hidden="true"]')).toBeNull();
+    expect(region()).not.toHaveAttribute('aria-hidden');
+    expect(region().closest('[aria-hidden="true"]')).toBeNull();
   });
 
-  it('usa el estilo temporal y el punto local del contrato', async () => {
+  it('usa el estilo de MapTiler construido y el punto local del contrato', async () => {
     enableWebGL2();
     renderPreview();
     await waitForMap();
@@ -163,9 +219,9 @@ describe('OrigenMapPreview (mini-mapas provisionales)', () => {
       center: [number, number];
       dragRotate: boolean;
       pitchWithRotate: boolean;
-      style: string;
+      style: unknown;
     };
-    expect(options.style).toBe('https://tiles.openfreemap.org/styles/dark');
+    expect(options.style).toBe(mockStyle);
     expect(options.center).toEqual([-75.6667, 4.5333]);
     expect(options.dragRotate).toBe(false);
     expect(options.pitchWithRotate).toBe(false);

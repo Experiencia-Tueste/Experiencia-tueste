@@ -48,6 +48,7 @@ export const TRACK_SRC: Record<TrackId, string> = {
   'expansion-432': '/audio/03-expansion-432-hz.mp3',
   'coherencia-432': '/audio/04-coherencia-432-hz.mp3',
   'despertar-528': '/audio/05-despertar-528-hz.mp3',
+  usa: '/audio/USA.mp3',
 };
 
 const TRACK_SEED: Array<Omit<Track, 'src' | 'duration'>> = [
@@ -86,6 +87,13 @@ const TRACK_SEED: Array<Omit<Track, 'src' | 'duration'>> = [
     hz: 528,
     mode: 'house',
   },
+  {
+    id: 'usa',
+    title: 'USA',
+    description: 'Selección musical',
+    hz: 0,
+    mode: 'house',
+  },
 ];
 
 /**
@@ -103,23 +111,23 @@ export const RADIO_CHANNELS: RadioChannel[] = [
   {
     id: 'origen',
     name: 'Señal Origen',
-    queue: ['origen-111', 'expansion-432', 'raiz-222', 'despertar-528', 'coherencia-432'],
+    queue: ['origen-111', 'expansion-432', 'raiz-222', 'despertar-528', 'coherencia-432', 'usa'],
   },
   {
     id: 'cafe',
     name: 'Café de especialidad',
-    queue: ['expansion-432', 'raiz-222', 'coherencia-432', 'origen-111', 'despertar-528'],
+    queue: ['expansion-432', 'raiz-222', 'coherencia-432', 'origen-111', 'despertar-528', 'usa'],
   },
-  { id: 'hotel', name: 'Hotel & spa', queue: ['origen-111', 'raiz-222', 'expansion-432'] },
+  { id: 'hotel', name: 'Hotel & spa', queue: ['origen-111', 'raiz-222', 'expansion-432', 'usa'] },
   {
     id: 'rest',
     name: 'Restaurante',
-    queue: ['coherencia-432', 'despertar-528', 'expansion-432', 'raiz-222'],
+    queue: ['coherencia-432', 'despertar-528', 'expansion-432', 'raiz-222', 'usa'],
   },
   {
     id: 'tienda',
     name: 'Tienda & galería',
-    queue: ['raiz-222', 'expansion-432', 'origen-111', 'despertar-528'],
+    queue: ['raiz-222', 'expansion-432', 'origen-111', 'despertar-528', 'usa'],
   },
 ];
 

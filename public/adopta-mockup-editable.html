@@ -1,0 +1,1296 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Mockup visual editable de la experiencia Adopta tu árbol de Tueste."
+    />
+    <title>Adopta tu árbol · Mockup editable Tueste</title>
+
+    <!--
+      TUESTE · ADOPTA · MOCKUP EDITABLE
+      ==================================
+      Este archivo es una maqueta visual independiente. No modifica la app Next.js.
+
+      Para editarlo con Claude:
+      1. Comparte este HTML.
+      2. Comparte también la carpeta images/adopta que está junto a este archivo.
+      3. El CSS vive íntegramente dentro de <style>.
+      4. La interacción de la línea de tiempo y el tema vive al final, dentro de <script>.
+
+      Los lugares más fáciles de personalizar están marcados como:
+      - 01. TOKENS VISUALES
+      - 02. LAYOUT
+      - 03. COMPONENTES
+      - 04. RESPONSIVE
+      - 05. DATOS EDITABLES
+
+      IMPORTANTE: el mapa usa un iframe público de OpenStreetMap solo como apoyo visual
+      para esta maqueta. La aplicación profesional mantiene MapLibre + MapTiler.
+    -->
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* ================================================================
+         01. TOKENS VISUALES · cambia aquí colores, medidas y tipografías
+         ================================================================ */
+      :root {
+        --void: #0d0210;
+        --void-soft: #17051c;
+        --plum: #2e093c;
+        --cream: #ffe8bf;
+        --cream-soft: #f8edd0;
+        --ink: #2e2a24;
+        --amber: #fba922;
+        --coral: #ff6f86;
+        --teal: #19c9b8;
+        --green: #245e42;
+        --lime: #bfe06a;
+        --cream-rgb: 255, 232, 191;
+        --void-rgb: 13, 2, 16;
+        --font-serif: 'Fraunces', Georgia, serif;
+        --font-sans: 'Hanken Grotesk', system-ui, sans-serif;
+        --font-mono: 'DM Mono', ui-monospace, monospace;
+        --page-width: 1180px;
+        --gutter: clamp(20px, 6vw, 88px);
+        --section-space: clamp(78px, 11vw, 148px);
+        --radius-xl: 28px;
+        --radius-pill: 999px;
+        --border: 1px solid rgba(var(--cream-rgb), 0.14);
+        --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+        overflow-x: clip;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        overflow-x: clip;
+        background: var(--void);
+        color: var(--cream);
+        font-family: var(--font-sans);
+        transition:
+          background 260ms var(--ease),
+          color 260ms var(--ease);
+      }
+
+      body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        z-index: 20;
+        pointer-events: none;
+        opacity: 0.18;
+        background-image:
+          radial-gradient(circle at 15% 24%, rgba(255, 232, 191, 0.18) 0 1px, transparent 1.5px),
+          radial-gradient(circle at 72% 36%, rgba(25, 201, 184, 0.15) 0 1px, transparent 1.7px),
+          radial-gradient(circle at 42% 82%, rgba(251, 169, 34, 0.14) 0 1px, transparent 1.6px);
+        background-size:
+          73px 83px,
+          109px 97px,
+          137px 127px;
+        mix-blend-mode: screen;
+      }
+
+      body.day {
+        --cream: #2e2a24;
+        --cream-soft: #4b4033;
+        --cream-rgb: 46, 42, 36;
+        --void-rgb: 255, 244, 224;
+        background: #fff4e0;
+      }
+
+      ::selection {
+        background: var(--coral);
+        color: var(--void);
+      }
+
+      img {
+        display: block;
+        width: 100%;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      button,
+      a {
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      :where(a, button, [tabindex]):focus-visible {
+        outline: 2px solid var(--amber);
+        outline-offset: 4px;
+      }
+
+      .skip-link {
+        position: fixed;
+        left: 16px;
+        top: 12px;
+        z-index: 100;
+        padding: 12px 18px;
+        border-radius: var(--radius-pill);
+        background: var(--amber);
+        color: var(--void);
+        text-decoration: none;
+        transform: translateY(-150%);
+        transition: transform 180ms var(--ease);
+      }
+
+      .skip-link:focus {
+        transform: none;
+      }
+
+      /* ================================================================
+         02. LAYOUT GENERAL
+         ================================================================ */
+      .page {
+        position: relative;
+        min-height: 100vh;
+        background:
+          radial-gradient(90% 48% at 93% -8%, rgba(36, 94, 66, 0.2), transparent 60%),
+          radial-gradient(80% 40% at 4% 27%, rgba(251, 169, 34, 0.07), transparent 60%), var(--void);
+      }
+
+      body.day .page {
+        background:
+          radial-gradient(90% 48% at 93% -8%, rgba(36, 94, 66, 0.12), transparent 60%),
+          radial-gradient(80% 40% at 4% 27%, rgba(251, 169, 34, 0.09), transparent 60%), #fff4e0;
+      }
+
+      .shell {
+        width: min(var(--page-width), calc(100% - (2 * var(--gutter))));
+        margin-inline: auto;
+      }
+
+      .header {
+        position: relative;
+        z-index: 30;
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        gap: 24px;
+        min-height: 96px;
+      }
+
+      .brand {
+        justify-self: start;
+        font-family: var(--font-serif);
+        font-size: 1.1rem;
+        font-weight: 600;
+        text-decoration: none;
+      }
+
+      .header-tag,
+      .kicker,
+      .section-kicker,
+      .index,
+      .caption,
+      .proposal,
+      .closing-note {
+        font-family: var(--font-mono);
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+      }
+
+      .header-tag {
+        margin: 0;
+        font-size: 0.67rem;
+        color: rgba(var(--cream-rgb), 0.58);
+      }
+
+      .theme-toggle {
+        justify-self: end;
+        width: 52px;
+        height: 52px;
+        display: grid;
+        place-items: center;
+        border: 1px solid rgba(var(--cream-rgb), 0.32);
+        border-radius: 50%;
+        background: rgba(var(--void-rgb), 0.16);
+        color: var(--cream);
+        font-size: 1.35rem;
+        cursor: pointer;
+        transition:
+          transform 200ms var(--ease),
+          border-color 200ms var(--ease);
+      }
+
+      .theme-toggle:hover {
+        transform: rotate(12deg);
+        border-color: var(--amber);
+      }
+
+      .section {
+        padding-block: var(--section-space);
+      }
+
+      .section-kicker,
+      .kicker {
+        margin: 0 0 18px;
+        color: var(--amber);
+        font-size: 0.68rem;
+      }
+
+      .section-title,
+      .hero-title,
+      .closing-title {
+        margin: 0;
+        font-family: var(--font-serif);
+        font-weight: 500;
+        line-height: 1.05;
+      }
+
+      .section-title {
+        max-width: 22ch;
+        font-size: clamp(2.1rem, 5vw, 3.45rem);
+      }
+
+      .section-text {
+        max-width: 58ch;
+        margin: 24px 0 0;
+        color: rgba(var(--cream-rgb), 0.68);
+        font-size: clamp(1rem, 1.7vw, 1.12rem);
+        line-height: 1.65;
+      }
+
+      /* ================================================================
+         03. COMPONENTES VISUALES
+         ================================================================ */
+
+      /* Hero */
+      .hero {
+        min-height: min(790px, calc(100vh - 96px));
+        display: grid;
+        align-items: center;
+        padding-block: clamp(46px, 7vw, 88px) clamp(84px, 10vw, 128px);
+      }
+
+      .hero-grid {
+        display: grid;
+        grid-template-columns: 0.84fr 1.16fr;
+        align-items: center;
+        gap: clamp(34px, 6vw, 84px);
+      }
+
+      .hero-copy {
+        position: relative;
+        z-index: 2;
+      }
+
+      .hero-title {
+        max-width: 12ch;
+        font-size: clamp(3rem, 7.2vw, 5.5rem);
+        letter-spacing: -0.025em;
+      }
+
+      .hero-text {
+        max-width: 48ch;
+        margin: 26px 0 0;
+        color: rgba(var(--cream-rgb), 0.72);
+        font-size: 1.08rem;
+        line-height: 1.68;
+      }
+
+      .cta {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 30px;
+        padding: 15px 25px;
+        border-radius: var(--radius-pill);
+        background: var(--amber);
+        color: var(--void);
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 500;
+        letter-spacing: 0.14em;
+        text-decoration: none;
+        text-transform: uppercase;
+        transition:
+          transform 200ms var(--ease),
+          background 200ms var(--ease);
+      }
+
+      .cta:hover {
+        transform: translateY(-2px);
+        background: var(--coral);
+      }
+
+      .hero-visual {
+        position: relative;
+        min-height: 530px;
+        overflow: hidden;
+        border: var(--border);
+        border-radius: 48% 52% 34% 66% / 52% 40% 60% 48%;
+        box-shadow: 0 42px 100px -38px #000;
+      }
+
+      .hero-visual img {
+        position: absolute;
+        inset: 0;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .hero-visual::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(205deg, rgba(13, 2, 16, 0.52), rgba(13, 2, 16, 0.05) 58%),
+          radial-gradient(circle at 75% 10%, rgba(251, 169, 34, 0.16), transparent 45%);
+      }
+
+      /* Tarjetas de vínculo */
+      .bond-grid {
+        list-style: none;
+        margin: 46px 0 0;
+        padding: 0;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 22px;
+      }
+
+      .bond-card {
+        min-width: 0;
+        overflow: hidden;
+        border: var(--border);
+        border-radius: var(--radius-xl);
+        background: rgba(var(--void-rgb), 0.5);
+        transition:
+          transform 320ms var(--ease),
+          border-color 320ms var(--ease);
+      }
+
+      .bond-card:hover {
+        transform: translateY(-5px);
+        border-color: rgba(var(--cream-rgb), 0.34);
+      }
+
+      .bond-visual {
+        position: relative;
+        aspect-ratio: 4 / 3;
+        overflow: hidden;
+      }
+
+      .bond-visual img {
+        height: 100%;
+        object-fit: cover;
+        transition: transform 700ms var(--ease);
+      }
+
+      .bond-card:hover img {
+        transform: scale(1.035);
+      }
+
+      .bond-visual::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, transparent 48%, rgba(13, 2, 16, 0.6));
+      }
+
+      .bond-body {
+        padding: 24px 24px 28px;
+      }
+
+      .index {
+        color: var(--amber);
+        font-size: 0.66rem;
+      }
+
+      .card-title {
+        margin: 12px 0 0;
+        font-family: var(--font-serif);
+        font-size: 1.45rem;
+        font-weight: 500;
+      }
+
+      .card-text {
+        margin: 12px 0 0;
+        color: rgba(var(--cream-rgb), 0.66);
+        line-height: 1.58;
+      }
+
+      /* Línea de tiempo */
+      .cycle {
+        margin-top: 46px;
+      }
+
+      .cycle-window {
+        position: relative;
+        overflow: hidden;
+        border: var(--border);
+        border-radius: var(--radius-xl);
+        background: rgba(var(--void-rgb), 0.52);
+        box-shadow: 0 34px 90px -48px #000;
+      }
+
+      .cycle-card {
+        display: grid;
+        grid-template-columns: 1.05fr 0.95fr;
+        min-height: 390px;
+      }
+
+      .cycle-card.is-changing-next {
+        animation: enter-next 520ms var(--ease) both;
+      }
+
+      .cycle-card.is-changing-prev {
+        animation: enter-prev 520ms var(--ease) both;
+      }
+
+      @keyframes enter-next {
+        from {
+          opacity: 0;
+          transform: translateX(70px);
+        }
+      }
+
+      @keyframes enter-prev {
+        from {
+          opacity: 0;
+          transform: translateX(-70px);
+        }
+      }
+
+      .cycle-visual {
+        position: relative;
+        min-height: 390px;
+        overflow: hidden;
+      }
+
+      .cycle-visual img {
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .cycle-visual::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, rgba(13, 2, 16, 0.38), transparent 65%);
+      }
+
+      .cycle-copy {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+        padding: clamp(32px, 6vw, 62px);
+      }
+
+      .cycle-name {
+        margin: 16px 0 0;
+        font-family: var(--font-serif);
+        font-size: clamp(2rem, 4vw, 3rem);
+        font-weight: 500;
+      }
+
+      .cycle-phrase {
+        max-width: 29ch;
+        margin: 16px 0 0;
+        color: rgba(var(--cream-rgb), 0.68);
+        font-size: 1.07rem;
+        line-height: 1.65;
+      }
+
+      .cycle-controls {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 18px;
+        margin-top: 24px;
+      }
+
+      .arrow-button {
+        min-height: 46px;
+        padding: 10px 20px;
+        border: 1px solid rgba(var(--cream-rgb), 0.3);
+        border-radius: var(--radius-pill);
+        background: rgba(var(--void-rgb), 0.48);
+        color: var(--cream);
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+
+      .arrow-button:disabled {
+        opacity: 0.36;
+        cursor: not-allowed;
+      }
+
+      .stage-dots {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .stage-dot {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        border: 1px solid transparent;
+        border-radius: var(--radius-pill);
+        background: transparent;
+        color: rgba(var(--cream-rgb), 0.52);
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        cursor: pointer;
+      }
+
+      .stage-dot::before {
+        content: '';
+        width: 8px;
+        height: 8px;
+        border: 1px solid currentColor;
+        border-radius: 50%;
+      }
+
+      .stage-dot[aria-current='step'] {
+        border-color: rgba(251, 169, 34, 0.45);
+        color: var(--amber);
+      }
+
+      .stage-dot[aria-current='step']::before {
+        background: var(--amber);
+      }
+
+      .mobile-progress {
+        display: none;
+        margin: 14px 0 0;
+        text-align: center;
+        color: rgba(var(--cream-rgb), 0.58);
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+
+      /* Mapa editorial */
+      .territory-map {
+        position: relative;
+        min-height: clamp(460px, 58vh, 620px);
+        margin-top: 46px;
+        overflow: hidden;
+        border: var(--border);
+        border-radius: var(--radius-xl);
+        background:
+          radial-gradient(circle at 51% 48%, rgba(251, 169, 34, 0.12), transparent 12%), #101d16;
+        box-shadow: 0 30px 80px -42px #000;
+      }
+
+      .territory-map iframe {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+        filter: saturate(0.65) sepia(0.15) hue-rotate(92deg) brightness(0.56) contrast(1.12);
+      }
+
+      .map-tint {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+          linear-gradient(
+            180deg,
+            rgba(13, 2, 16, 0.25),
+            transparent 28%,
+            transparent 72%,
+            rgba(13, 2, 16, 0.78)
+          ),
+          radial-gradient(circle at center, transparent 34%, rgba(13, 2, 16, 0.32));
+      }
+
+      .map-pin {
+        position: absolute;
+        left: 51%;
+        top: 49%;
+        width: 22px;
+        height: 22px;
+        border: 6px solid var(--cream-soft);
+        border-radius: 50% 50% 50% 0;
+        background: var(--amber);
+        box-shadow: 0 0 0 9px rgba(251, 169, 34, 0.18);
+        transform: translate(-50%, -100%) rotate(-45deg);
+        pointer-events: none;
+      }
+
+      .map-label {
+        position: absolute;
+        left: 24px;
+        bottom: 24px;
+        max-width: calc(100% - 48px);
+        padding: 12px 18px;
+        border: 1px solid rgba(255, 232, 191, 0.2);
+        border-radius: var(--radius-pill);
+        background: rgba(13, 2, 16, 0.78);
+        backdrop-filter: blur(12px);
+        color: #ffe8bf;
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.17em;
+        text-transform: uppercase;
+        pointer-events: none;
+      }
+
+      .caption {
+        margin: 18px 0 0;
+        color: rgba(var(--cream-rgb), 0.56);
+        font-size: 0.65rem;
+      }
+
+      /* Memorias */
+      .proposal {
+        display: inline-block;
+        margin: 24px 0 28px;
+        padding: 8px 14px;
+        border: 1px solid rgba(251, 169, 34, 0.42);
+        border-radius: var(--radius-pill);
+        color: var(--amber);
+        font-size: 0.64rem;
+      }
+
+      .memory-grid {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 22px;
+      }
+
+      .memory-card {
+        position: relative;
+        aspect-ratio: 4 / 3;
+        display: flex;
+        overflow: hidden;
+        border: var(--border);
+        border-radius: var(--radius-xl);
+      }
+
+      .memory-card img {
+        position: absolute;
+        inset: 0;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 800ms var(--ease);
+      }
+
+      .memory-card:hover img {
+        transform: scale(1.035);
+      }
+
+      .memory-card::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          180deg,
+          rgba(13, 2, 16, 0.08),
+          rgba(13, 2, 16, 0.22) 45%,
+          rgba(13, 2, 16, 0.9)
+        );
+      }
+
+      .memory-body {
+        position: relative;
+        z-index: 2;
+        align-self: flex-end;
+        padding: clamp(22px, 4vw, 34px);
+        color: #fff2d9;
+      }
+
+      .memory-body .card-text {
+        max-width: 42ch;
+        color: rgba(255, 242, 217, 0.8);
+      }
+
+      .companion-note {
+        max-width: 60ch;
+        margin: 26px 0 0;
+        color: rgba(var(--cream-rgb), 0.54);
+        line-height: 1.6;
+      }
+
+      /* Cierre */
+      .closing {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        border-top: var(--border);
+      }
+
+      .closing-title {
+        max-width: 18ch;
+        font-size: clamp(2rem, 5vw, 3.6rem);
+      }
+
+      .closing-note {
+        margin: 26px 0 0;
+        color: rgba(var(--cream-rgb), 0.48);
+        font-size: 0.62rem;
+      }
+
+      /* Aparición suave al hacer scroll */
+      .reveal {
+        opacity: 0;
+        transform: translateY(28px);
+        transition:
+          opacity 700ms var(--ease),
+          transform 700ms var(--ease);
+      }
+
+      .reveal.is-visible {
+        opacity: 1;
+        transform: none;
+      }
+
+      /* Modo día */
+      body.day .bond-card,
+      body.day .cycle-window,
+      body.day .arrow-button {
+        background: rgba(255, 244, 224, 0.65);
+      }
+
+      body.day .hero-text,
+      body.day .section-text,
+      body.day .card-text,
+      body.day .cycle-phrase,
+      body.day .companion-note {
+        color: rgba(46, 42, 36, 0.72);
+      }
+
+      /* ================================================================
+         04. RESPONSIVE · ajustes para tablet y móvil
+         ================================================================ */
+      @media (max-width: 880px) {
+        .header {
+          grid-template-columns: 1fr auto;
+        }
+
+        .header-tag {
+          display: none;
+        }
+
+        .hero {
+          min-height: 0;
+          padding-top: 30px;
+        }
+
+        .hero-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .hero-visual {
+          order: -1;
+          min-height: 0;
+          aspect-ratio: 4 / 3;
+          border-radius: 38% 62% 30% 70% / 46% 40% 60% 54%;
+        }
+
+        .bond-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .cycle-card {
+          grid-template-columns: 1fr;
+        }
+
+        .cycle-visual {
+          min-height: 270px;
+        }
+
+        .cycle-controls {
+          grid-template-columns: 1fr 1fr;
+        }
+
+        .stage-dots {
+          grid-column: 1 / -1;
+          grid-row: 2;
+          gap: 4px;
+        }
+
+        .stage-dot {
+          width: 44px;
+          justify-content: center;
+          padding-inline: 6px;
+        }
+
+        .stage-label {
+          display: none;
+        }
+
+        .mobile-progress {
+          display: block;
+        }
+
+        .memory-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .territory-map {
+          min-height: 410px;
+        }
+      }
+
+      @media (max-width: 520px) {
+        .shell {
+          width: min(var(--page-width), calc(100% - 40px));
+        }
+
+        .header {
+          min-height: 82px;
+        }
+
+        .theme-toggle {
+          width: 46px;
+          height: 46px;
+        }
+
+        .hero-title {
+          font-size: clamp(2.65rem, 14vw, 4rem);
+        }
+
+        .cycle-copy {
+          padding: 28px 24px 34px;
+        }
+
+        .arrow-button {
+          padding-inline: 14px;
+          font-size: 0.65rem;
+        }
+
+        .memory-card {
+          aspect-ratio: 3 / 4;
+        }
+
+        .map-label {
+          left: 14px;
+          bottom: 14px;
+          max-width: calc(100% - 28px);
+          border-radius: 18px;
+          line-height: 1.5;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+
+        .reveal {
+          opacity: 1;
+          transform: none;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <a class="skip-link" href="#contenido">Saltar al contenido principal</a>
+
+    <div class="page">
+      <header class="header shell">
+        <a class="brand" href="#inicio" aria-label="Tueste, volver al inicio">Tueste</a>
+        <p class="header-tag">EXPERIENCIA EDITORIAL</p>
+        <button
+          class="theme-toggle"
+          id="theme-toggle"
+          type="button"
+          aria-label="Cambiar a modo día"
+        >
+          <span id="theme-icon" aria-hidden="true">☼</span>
+        </button>
+      </header>
+
+      <main id="contenido" tabindex="-1">
+        <section class="hero" id="inicio" aria-labelledby="hero-title">
+          <div class="hero-grid shell">
+            <div class="hero-copy reveal">
+              <p class="kicker">ADOPTA · FINCA TRES ESQUINAS</p>
+              <h1 class="hero-title" id="hero-title">Un árbol también guarda memoria.</h1>
+              <p class="hero-text">
+                Adoptar un árbol es acompañar un ciclo: tierra, lluvia, flor, cereza y una taza que
+                conserva el origen.
+              </p>
+              <a class="cta" href="#ciclo">Conoce el ciclo <span aria-hidden="true">↓</span></a>
+            </div>
+
+            <figure class="hero-visual reveal">
+              <img
+                src="images/adopta/adopta-hero-cafeto-joven-v1.webp"
+                alt="Cafeto joven creciendo en una finca de montaña al amanecer"
+              />
+            </figure>
+          </div>
+        </section>
+
+        <section class="section shell reveal" id="vinculo" aria-labelledby="bond-title">
+          <p class="section-kicker">01 / ELIGE TU VÍNCULO</p>
+          <h2 class="section-title" id="bond-title">Una forma de estar cerca del origen.</h2>
+          <p class="section-text">
+            Cada vínculo es una manera simbólica de acompañar el tiempo del café. Esta propuesta aún
+            no representa una adopción comercial activa.
+          </p>
+
+          <ul class="bond-grid">
+            <li class="bond-card">
+              <div class="bond-visual">
+                <img
+                  src="images/adopta/vinculo-semilla-v1.webp"
+                  alt="Semilla de café germinando en suelo húmedo"
+                />
+              </div>
+              <div class="bond-body">
+                <span class="index">01</span>
+                <h3 class="card-title">Semilla</h3>
+                <p class="card-text">El comienzo: una intención puesta en la tierra.</p>
+              </div>
+            </li>
+
+            <li class="bond-card">
+              <div class="bond-visual">
+                <img
+                  src="images/adopta/vinculo-arbol-joven-v1.webp"
+                  alt="Cafeto joven cuidado por manos de una persona productora"
+                />
+              </div>
+              <div class="bond-body">
+                <span class="index">02</span>
+                <h3 class="card-title">Árbol joven</h3>
+                <p class="card-text">Un ciclo que empieza a encontrar su propia sombra.</p>
+              </div>
+            </li>
+
+            <li class="bond-card">
+              <div class="bond-visual">
+                <img
+                  src="images/adopta/vinculo-arbol-guardian-v1.webp"
+                  alt="Cafeto adulto cargado de cerezas maduras en la montaña"
+                />
+              </div>
+              <div class="bond-body">
+                <span class="index">03</span>
+                <h3 class="card-title">Árbol guardián</h3>
+                <p class="card-text">Una presencia que acompaña la memoria del lote.</p>
+              </div>
+            </li>
+          </ul>
+        </section>
+
+        <section class="section shell reveal" id="ciclo" aria-labelledby="cycle-title">
+          <p class="section-kicker">02 / EL CICLO DEL ÁRBOL</p>
+          <h2 class="section-title" id="cycle-title">Del silencio de la semilla a tu taza.</h2>
+
+          <div
+            class="cycle"
+            id="cycle-widget"
+            tabindex="0"
+            aria-label="Ciclo del árbol: cinco etapas"
+          >
+            <div class="cycle-window" aria-live="polite">
+              <article class="cycle-card" id="cycle-card">
+                <div class="cycle-visual">
+                  <img id="cycle-image" src="" alt="" />
+                </div>
+                <div class="cycle-copy">
+                  <span class="index" id="cycle-number"></span>
+                  <h3 class="cycle-name" id="cycle-name"></h3>
+                  <p class="cycle-phrase" id="cycle-phrase"></p>
+                </div>
+              </article>
+            </div>
+
+            <nav class="cycle-controls" aria-label="Navegación del ciclo">
+              <button class="arrow-button" id="previous-stage" type="button">← Anterior</button>
+              <div class="stage-dots" id="stage-dots" aria-label="Etapas del ciclo"></div>
+              <button class="arrow-button" id="next-stage" type="button">Siguiente →</button>
+            </nav>
+            <p class="mobile-progress" id="mobile-progress">Etapa 1 de 5</p>
+          </div>
+        </section>
+
+        <section class="section shell reveal" id="territorio" aria-labelledby="territory-title">
+          <p class="section-kicker">03 / TERRITORIO</p>
+          <h2 class="section-title" id="territory-title">
+            El origen se cuida también al nombrarlo.
+          </h2>
+          <p class="section-text">
+            Finca Tres Esquinas vive en el Eje Cafetero. Su presencia aquí es editorial y
+            aproximada: no publicamos coordenadas, linderos ni datos sensibles.
+          </p>
+
+          <div class="territory-map" aria-label="Mapa editorial aproximado del Quindío">
+            <!-- Mapa visual para el HTML editable. No es la integración productiva. -->
+            <iframe
+              title="Mapa general del Quindío"
+              loading="lazy"
+              src="https://www.openstreetmap.org/export/embed.html?bbox=-76.05%2C4.28%2C-75.35%2C4.82&amp;layer=mapnik"
+            ></iframe>
+            <div class="map-tint" aria-hidden="true"></div>
+            <div class="map-pin" aria-hidden="true"></div>
+            <p class="map-label">Finca Tres Esquinas · ubicación editorial aproximada</p>
+          </div>
+          <p class="caption">UBICACIÓN APROXIMADA · QUINDÍO, COLOMBIA</p>
+        </section>
+
+        <section class="section shell reveal" id="memorias" aria-labelledby="memory-title">
+          <p class="section-kicker">04 / LO QUE ACOMPAÑA EL CICLO</p>
+          <h2 class="section-title" id="memory-title">Memorias para volver al origen.</h2>
+          <p class="proposal">PROPUESTA EDITORIAL</p>
+
+          <ul class="memory-grid">
+            <li class="memory-card">
+              <img
+                src="images/adopta/memoria-bitacora-v1.webp"
+                alt="Cuaderno de campo junto a hojas y cerezas de café"
+              />
+              <div class="memory-body">
+                <span class="index">01</span>
+                <h3 class="card-title">Bitácora del ciclo</h3>
+                <p class="card-text">
+                  Registros visuales y notas del crecimiento a lo largo del tiempo.
+                </p>
+              </div>
+            </li>
+
+            <li class="memory-card">
+              <img
+                src="images/adopta/memoria-carta-v1.webp"
+                alt="Manos sosteniendo una carta junto a una rama de café"
+              />
+              <div class="memory-body">
+                <span class="index">02</span>
+                <h3 class="card-title">Carta del origen</h3>
+                <p class="card-text">
+                  Un mensaje editorial nacido en la finca para acompañar la memoria del árbol.
+                </p>
+              </div>
+            </li>
+
+            <li class="memory-card">
+              <img
+                src="images/adopta/memoria-cafe-v1.webp"
+                alt="Taza de café junto a cerezas y granos del origen"
+              />
+              <div class="memory-body">
+                <span class="index">03</span>
+                <h3 class="card-title">Café del lote</h3>
+                <p class="card-text">
+                  Una referencia de la cosecha vinculada al territorio, cuando el proyecto la
+                  defina.
+                </p>
+              </div>
+            </li>
+
+            <li class="memory-card">
+              <img
+                src="images/adopta/memoria-ritual-v1.webp"
+                alt="Sendero entre cafetales de montaña durante la hora dorada"
+              />
+              <div class="memory-body">
+                <span class="index">04</span>
+                <h3 class="card-title">Ritual de escucha</h3>
+                <p class="card-text">
+                  Una pieza sonora para volver al origen desde cualquier lugar.
+                </p>
+              </div>
+            </li>
+          </ul>
+
+          <p class="companion-note">
+            Estos elementos son parte de la propuesta editorial y quedan sujetos a definición
+            conjunta con el cliente.
+          </p>
+        </section>
+
+        <section class="section shell closing reveal" aria-labelledby="closing-title">
+          <h2 class="closing-title" id="closing-title">
+            No adoptas un objeto: acompañas un ciclo.
+          </h2>
+          <a class="cta" href="#inicio">Volver al origen <span aria-hidden="true">↑</span></a>
+          <p class="closing-note">Mockup editorial · pendiente de validación con José.</p>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      /* ================================================================
+         05. DATOS EDITABLES · cambia aquí textos e imágenes del ciclo
+         ================================================================ */
+      const stages = [
+        {
+          number: '01',
+          name: 'Germinación',
+          phrase: 'La raíz encuentra su primer pulso.',
+          image: 'images/adopta/ciclo-germinacion-v1.webp',
+          alt: 'Brote de café emergiendo de la semilla',
+        },
+        {
+          number: '02',
+          name: 'Floración',
+          phrase: 'El cafetal abre su tiempo más frágil.',
+          image: 'images/adopta/ciclo-floracion-v1.webp',
+          alt: 'Flores blancas abiertas en una rama de cafeto',
+        },
+        {
+          number: '03',
+          name: 'Cereza',
+          phrase: 'El color anuncia un origen en maduración.',
+          image: 'images/adopta/ciclo-cereza-v1.webp',
+          alt: 'Cerezas rojas maduras en una rama de café',
+        },
+        {
+          number: '04',
+          name: 'Cosecha',
+          phrase: 'Las manos convierten espera en cuidado.',
+          image: 'images/adopta/ciclo-cosecha-v1.webp',
+          alt: 'Recolección manual de cerezas maduras de café',
+        },
+        {
+          number: '05',
+          name: 'Tu taza',
+          phrase: 'El ciclo llega a la escucha cotidiana.',
+          image: 'images/adopta/ciclo-taza-v1.webp',
+          alt: 'Café servido junto a granos tostados y paisaje de montaña',
+        },
+      ];
+
+      const cycleWidget = document.querySelector('#cycle-widget');
+      const cycleCard = document.querySelector('#cycle-card');
+      const cycleImage = document.querySelector('#cycle-image');
+      const cycleNumber = document.querySelector('#cycle-number');
+      const cycleName = document.querySelector('#cycle-name');
+      const cyclePhrase = document.querySelector('#cycle-phrase');
+      const previousButton = document.querySelector('#previous-stage');
+      const nextButton = document.querySelector('#next-stage');
+      const dotsContainer = document.querySelector('#stage-dots');
+      const mobileProgress = document.querySelector('#mobile-progress');
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+      let activeStage = 0;
+
+      function buildDots() {
+        dotsContainer.innerHTML = '';
+        stages.forEach((stage, index) => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'stage-dot';
+          button.setAttribute('aria-label', `Ir a la etapa ${stage.number}: ${stage.name}`);
+          button.innerHTML = `<span class="stage-label">${stage.name}</span>`;
+          button.addEventListener('click', () => setStage(index));
+          dotsContainer.append(button);
+        });
+      }
+
+      function setStage(nextIndex) {
+        if (nextIndex < 0 || nextIndex >= stages.length || nextIndex === activeStage) return;
+
+        const direction = nextIndex > activeStage ? 'next' : 'prev';
+        activeStage = nextIndex;
+        renderStage(direction);
+      }
+
+      function renderStage(direction = null) {
+        const stage = stages[activeStage];
+        cycleImage.src = stage.image;
+        cycleImage.alt = stage.alt;
+        cycleNumber.textContent = stage.number;
+        cycleName.textContent = stage.name;
+        cyclePhrase.textContent = stage.phrase;
+        mobileProgress.textContent = `Etapa ${activeStage + 1} de ${stages.length}`;
+        previousButton.disabled = activeStage === 0;
+        nextButton.disabled = activeStage === stages.length - 1;
+
+        [...dotsContainer.children].forEach((dot, index) => {
+          if (index === activeStage) dot.setAttribute('aria-current', 'step');
+          else dot.removeAttribute('aria-current');
+        });
+
+        cycleCard.classList.remove('is-changing-next', 'is-changing-prev');
+        if (direction && !prefersReducedMotion.matches) {
+          void cycleCard.offsetWidth;
+          cycleCard.classList.add(`is-changing-${direction}`);
+        }
+      }
+
+      previousButton.addEventListener('click', () => setStage(activeStage - 1));
+      nextButton.addEventListener('click', () => setStage(activeStage + 1));
+      cycleWidget.addEventListener('keydown', (event) => {
+        if (event.key === 'ArrowLeft') {
+          event.preventDefault();
+          setStage(activeStage - 1);
+        }
+        if (event.key === 'ArrowRight') {
+          event.preventDefault();
+          setStage(activeStage + 1);
+        }
+      });
+
+      buildDots();
+      renderStage();
+
+      /* Tema día/noche: solo vive mientras el archivo está abierto. */
+      const themeToggle = document.querySelector('#theme-toggle');
+      const themeIcon = document.querySelector('#theme-icon');
+      themeToggle.addEventListener('click', () => {
+        const isDay = document.body.classList.toggle('day');
+        themeIcon.textContent = isDay ? '☾' : '☼';
+        themeToggle.setAttribute(
+          'aria-label',
+          isDay ? 'Cambiar a modo noche' : 'Cambiar a modo día',
+        );
+      });
+
+      /* Entrada suave de bloques; sin ocultar nada cuando no hay soporte. */
+      const revealElements = document.querySelectorAll('.reveal');
+      if ('IntersectionObserver' in window && !prefersReducedMotion.matches) {
+        const revealObserver = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (!entry.isIntersecting) return;
+              entry.target.classList.add('is-visible');
+              revealObserver.unobserve(entry.target);
+            });
+          },
+          { threshold: 0.12 },
+        );
+        revealElements.forEach((element) => revealObserver.observe(element));
+      } else {
+        revealElements.forEach((element) => element.classList.add('is-visible'));
+      }
+    </script>
+  </body>
+</html>

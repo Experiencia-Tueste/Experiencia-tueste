@@ -1,0 +1,386 @@
+/* Línea de tiempo interactiva del ciclo del árbol.
+   Animación exclusivamente con transform y opacity (450–650 ms). */
+
+.cycle {
+  position: relative;
+}
+
+.cycle:focus-visible {
+  outline: none;
+}
+
+.cycle:focus-visible .viewport {
+  border-color: rgba(var(--cream-rgb), 0.4);
+}
+
+/* Área donde viven la tarjeta saliente (absoluta) y la entrante. */
+.viewport {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-2xl);
+  border: var(--border-soft);
+  background: rgba(var(--void-rgb), 0.5);
+}
+
+.card {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  align-items: stretch;
+  min-width: 0;
+}
+
+/* La tarjeta saliente se superpone y sale del flujo. */
+.cardOut {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.cardIn {
+  z-index: 2;
+}
+
+/* Fotografía de la etapa (4:3 en escritorio, recorte consistente). */
+.cardVisual {
+  position: relative;
+  min-height: 380px;
+  overflow: hidden;
+}
+
+.cardImage {
+  object-fit: cover;
+}
+
+/* Overlay oscuro controlado: integra la foto con los tonos de Tueste
+   y mantiene el detalle verde natural. */
+.cardOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(13, 2, 16, 0.5) 0%,
+    rgba(13, 2, 16, 0.08) 55%,
+    rgba(13, 2, 16, 0) 100%
+  );
+  pointer-events: none;
+}
+
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-10);
+  min-width: 0;
+}
+
+.cardNumber {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-mono);
+  color: var(--amber);
+}
+
+.cardName {
+  font-family: var(--font-serif);
+  font-size: clamp(1.7rem, 3.4vw, 2.6rem);
+  font-weight: 500;
+  color: var(--cream);
+  margin: 0;
+}
+
+.cardPhrase {
+  margin: 0;
+  color: rgba(var(--cream-rgb), 0.66);
+  line-height: 1.6;
+  font-size: var(--text-md);
+  max-width: 30ch;
+}
+
+/* ── Animaciones de entrada/salida (transform + opacity) ── */
+
+@keyframes exitLeft {
+  to {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+}
+
+@keyframes exitRight {
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes enterRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes enterLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+.exitLeft {
+  animation: exitLeft 500ms var(--ease-out) forwards;
+}
+
+.exitRight {
+  animation: exitRight 500ms var(--ease-out) forwards;
+}
+
+.enterRight {
+  animation: enterRight 500ms var(--ease-out) forwards;
+}
+
+.enterLeft {
+  animation: enterLeft 500ms var(--ease-out) forwards;
+}
+
+/* ── Controles ── */
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5);
+  margin-top: var(--space-6);
+}
+
+.arrowButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 46px;
+  padding: 10px 20px;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cream);
+  background: rgba(var(--void-rgb), 0.55);
+  border: 1px solid rgba(var(--cream-rgb), 0.3);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+
+.arrowButton:hover:not(:disabled) {
+  border-color: var(--amber);
+}
+
+.arrowButton:focus-visible {
+  outline: 2px solid var(--teal-bright);
+  outline-offset: 3px;
+}
+
+.arrowButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Indicadores de progreso: botones reales, visibles y pequeños. */
+.indicators {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.indicatorItem {
+  margin: 0;
+}
+
+.indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: 6px 10px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  color: rgba(var(--cream-rgb), 0.55);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-mono);
+}
+
+.indicator:hover {
+  color: var(--cream);
+}
+
+.indicator:focus-visible {
+  outline: 2px solid var(--teal-bright);
+  outline-offset: 2px;
+}
+
+.indicatorDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid rgba(var(--cream-rgb), 0.5);
+  background: transparent;
+  flex-shrink: 0;
+}
+
+.indicator[aria-current='step'] {
+  color: var(--amber);
+  border-color: rgba(251, 169, 34, 0.45);
+}
+
+.indicator[aria-current='step'] .indicatorDot {
+  background: var(--amber);
+  border-color: var(--amber);
+}
+
+/* Progreso compacto: visible solo en móvil. */
+.mobileProgress {
+  display: none;
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-mono);
+  text-transform: uppercase;
+  color: rgba(var(--cream-rgb), 0.55);
+  text-align: center;
+}
+
+/* ── Modo día ── */
+
+:global(body.day) .cardName {
+  color: var(--ink);
+}
+
+:global(body.day) .cardPhrase {
+  color: rgba(46, 42, 36, 0.72);
+}
+
+:global(body.day) .viewport {
+  background: rgba(255, 244, 224, 0.55);
+}
+
+:global(body.day) .arrowButton {
+  color: var(--ink);
+  background: rgba(46, 42, 36, 0.04);
+  border-color: rgba(46, 42, 36, 0.28);
+}
+
+:global(body.day) .indicator {
+  color: rgba(46, 42, 36, 0.55);
+}
+
+:global(body.day) .indicator:hover {
+  color: var(--ink);
+}
+
+:global(body.day) .mobileProgress {
+  color: rgba(46, 42, 36, 0.55);
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 880px) {
+  .card {
+    grid-template-columns: 1fr;
+  }
+
+  .cardVisual {
+    min-height: 260px;
+  }
+
+  .cardBody {
+    padding: var(--space-6);
+  }
+
+  .cardOverlay {
+    background: linear-gradient(180deg, rgba(13, 2, 16, 0.08) 55%, rgba(13, 2, 16, 0.45) 100%);
+  }
+
+  .indicators {
+    /* Variante compacta en móvil: los cinco puntos permanecen visibles
+       como referencia de progreso (sin las etiquetas de texto). */
+    order: 3;
+    flex-basis: 100%;
+    justify-content: center;
+    gap: var(--space-2);
+  }
+
+  .indicator {
+    min-width: 44px;
+    min-height: 44px;
+    justify-content: center;
+    padding: 6px;
+  }
+
+  .indicatorLabel {
+    display: none;
+  }
+
+  .indicatorDot {
+    width: 10px;
+    height: 10px;
+  }
+
+  .mobileProgress {
+    order: 4;
+    flex-basis: 100%;
+    display: block;
+  }
+
+  .nav {
+    flex-wrap: wrap;
+    justify-content: space-between;
+    row-gap: var(--space-4);
+  }
+}
+
+@media (max-width: 480px) {
+  .cardVisual {
+    min-height: 220px;
+  }
+
+  .arrowButton {
+    padding: 10px 16px;
+  }
+
+  .indicator {
+    min-width: 40px;
+    min-height: 40px;
+  }
+}
+
+/* ── Movimiento reducido: cambio inmediato, sin desplazamientos. ── */
+
+@media (prefers-reduced-motion: reduce) {
+  .cardOut,
+  .cardIn {
+    animation: none;
+  }
+
+  .arrowButton {
+    transition: none;
+  }
+}

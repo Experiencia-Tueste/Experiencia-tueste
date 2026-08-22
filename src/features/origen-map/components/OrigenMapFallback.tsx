@@ -9,6 +9,12 @@ export interface OrigenMapFallbackProps {
    * mapa ya cargó; el contenido sigue en el DOM para el caso de error.
    */
   oculto?: boolean;
+  /**
+   * Muestra la descripción del punto (por defecto, true). La ruta
+   * /adopta la desactiva porque su composición editorial no debe
+   * mostrar coordenadas en pantalla. Aditivo: /experiencia no cambia.
+   */
+  mostrarDescripcion?: boolean;
 }
 
 /**
@@ -20,6 +26,7 @@ export default function OrigenMapFallback({
   punto,
   className,
   oculto = false,
+  mostrarDescripcion = true,
 }: OrigenMapFallbackProps) {
   const estadoLabel = punto.estado === 'proximamente' ? 'próximamente' : 'publicado';
   const precisionLabel =
@@ -37,7 +44,7 @@ export default function OrigenMapFallback({
       <span className={styles.meta}>
         {precisionLabel} · {estadoLabel}
       </span>
-      <span className={styles.desc}>{punto.descripcion}</span>
+      {mostrarDescripcion && <span className={styles.desc}>{punto.descripcion}</span>}
     </div>
   );
 }

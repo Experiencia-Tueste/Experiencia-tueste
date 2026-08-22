@@ -1,0 +1,102 @@
+/* Galería editorial de memorias: dos columnas en escritorio, una en
+   móvil, fotografías grandes con overlay degradado. */
+
+.grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-5);
+}
+
+.card {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: var(--radius-2xl);
+  border: var(--border-soft);
+  display: flex;
+  min-width: 0;
+}
+
+.image {
+  object-fit: cover;
+}
+
+/* Overlay oscuro degradado: título crema y descripción legibles. */
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(13, 2, 16, 0.1) 0%,
+    rgba(13, 2, 16, 0.28) 48%,
+    rgba(13, 2, 16, 0.86) 100%
+  );
+  pointer-events: none;
+}
+
+.body {
+  position: relative;
+  z-index: 1;
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-6);
+}
+
+.index {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-mono);
+  color: var(--amber);
+}
+
+.name {
+  font-family: var(--font-serif);
+  font-size: 1.35rem;
+  font-weight: 500;
+  color: #fff2d9;
+  margin: 0;
+  text-shadow: 0 2px 18px rgba(13, 2, 16, 0.7);
+}
+
+.description {
+  margin: 0;
+  color: rgba(255, 242, 217, 0.8);
+  line-height: 1.55;
+  font-size: var(--text-sm);
+  max-width: 40ch;
+  text-shadow: 0 1px 12px rgba(13, 2, 16, 0.6);
+}
+
+/* Hover muy sutil, sin sugerir interacción. */
+@media (hover: hover) {
+  .card:hover {
+    border-color: rgba(255, 232, 191, 0.24);
+  }
+
+  .card:hover .image {
+    filter: brightness(1.04);
+  }
+}
+
+:global(body.day) .card {
+  border-color: rgba(46, 42, 36, 0.18);
+}
+
+@media (max-width: 780px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .card .image {
+    transition: none;
+  }
+}

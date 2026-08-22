@@ -1,0 +1,108 @@
+/* Grid de vínculos: tres piezas editoriales fotográficas, no
+   interactivas. Tres columnas en escritorio, una en móvil. */
+
+.grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-5);
+}
+
+.bond {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--radius-2xl);
+  border: var(--border-soft);
+  background: rgba(var(--void-rgb), 0.5);
+  min-width: 0;
+}
+
+/* Fotografía superior en proporción consistente 4:3. */
+.visual {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+}
+
+.image {
+  object-fit: cover;
+}
+
+/* Overlay degradado: integra la foto con los tonos de Tueste y
+   garantiza legibilidad del contenido bajo el visual. */
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(13, 2, 16, 0.06) 55%, rgba(13, 2, 16, 0.55) 100%);
+  pointer-events: none;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-5) var(--space-6);
+}
+
+.index {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-mono);
+  color: var(--amber);
+}
+
+.name {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--cream);
+  margin: 0;
+}
+
+.text {
+  margin: 0;
+  color: rgba(var(--cream-rgb), 0.65);
+  line-height: 1.55;
+  font-size: var(--text-base);
+}
+
+/* Hover muy discreto, solo donde hay soporte real de hover, y sin
+   sugerir que la tarjeta es clicable (sin transform ni cursor). */
+@media (hover: hover) {
+  .bond:hover {
+    border-color: rgba(255, 232, 191, 0.22);
+  }
+
+  .bond:hover .image {
+    filter: brightness(1.05);
+  }
+}
+
+:global(body.day) .name {
+  color: var(--ink);
+}
+
+:global(body.day) .text {
+  color: rgba(46, 42, 36, 0.72);
+}
+
+:global(body.day) .bond {
+  background: rgba(255, 244, 224, 0.55);
+}
+
+@media (max-width: 780px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bond,
+  .bond .image {
+    transition: none;
+  }
+}

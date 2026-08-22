@@ -7,8 +7,8 @@ const PUBLIC_URL = new URL('../../../../public/', import.meta.url);
 
 describe('feature audio', () => {
   it('expone el catálogo de pistas con frecuencias rituales', () => {
-    expect(TRACKS).toHaveLength(5);
-    expect(TRACKS.map((t) => t.hz)).toEqual([111, 222, 432, 432, 528]);
+    expect(TRACKS).toHaveLength(6);
+    expect(TRACKS.map((t) => t.hz)).toEqual([111, 222, 432, 432, 528, 0]);
   });
 
   it('mapea cada pista a su ruta literal exacta en public/audio', () => {
@@ -18,6 +18,7 @@ describe('feature audio', () => {
       'expansion-432': '/audio/03-expansion-432-hz.mp3',
       'coherencia-432': '/audio/04-coherencia-432-hz.mp3',
       'despertar-528': '/audio/05-despertar-528-hz.mp3',
+      usa: '/audio/USA.mp3',
     });
     for (const t of TRACKS) {
       expect(t.src).toBe(TRACK_SRC[t.id]);

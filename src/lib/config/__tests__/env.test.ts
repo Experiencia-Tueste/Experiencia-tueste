@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { loadPublicConfig } from '../env-public';
+import { loadMapTilerPublicConfig, loadPublicConfig } from '../env-public';
 import { loadShopifyStoreUrl, loadSiteUrl } from '../env-server';
 
 /**
@@ -54,6 +54,21 @@ describe('config env (contrato público)', () => {
         NEXT_PUBLIC_SUPABASE_ANON_KEY: 'anon-key-demo',
       }),
     ).toThrow(/URL válida/);
+  });
+});
+
+describe('loadMapTilerPublicConfig (clave pública del mapa)', () => {
+  it('devuelve null sin clave (modo demo: fallback editorial del mapa)', () => {
+    expect(loadMapTilerPublicConfig({})).toBeNull();
+    expect(loadMapTilerPublicConfig({ NEXT_PUBLIC_MAPTILER_API_KEY: undefined })).toBeNull();
+    expect(loadMapTilerPublicConfig({ NEXT_PUBLIC_MAPTILER_API_KEY: '' })).toBeNull();
+    expect(loadMapTilerPublicConfig({ NEXT_PUBLIC_MAPTILER_API_KEY: '   ' })).toBeNull();
+  });
+
+  it('devuelve la clave pública tipada y sin espacios', () => {
+    expect(
+      loadMapTilerPublicConfig({ NEXT_PUBLIC_MAPTILER_API_KEY: '  public-key-demo  ' }),
+    ).toEqual({ mapTilerKey: 'public-key-demo' });
   });
 });
 

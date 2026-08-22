@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { Map as MlMap } from 'maplibre-gl';
-import { MAP_INITIAL_ZOOM, MAP_MAX_ZOOM, MAP_MIN_ZOOM, TILE_STYLE_URL } from '../config';
+import { getMapStyle, MAP_INITIAL_ZOOM, MAP_MAX_ZOOM, MAP_MIN_ZOOM } from '../config';
 import type { OrigenMapPunto } from '../types';
 import OrigenMapFallback from './OrigenMapFallback';
 import styles from './OrigenMapPreview.module.css';
@@ -13,6 +13,12 @@ export interface OrigenMapPreviewProps {
   /** Etiqueta editorial visible sobre el mapa (p. ej. «Ubicación aproximada · demostración»). */
   etiqueta: string;
   className?: string;
+  /**
+   * Oculta la descripción del fallback (que puede contener coordenadas
+   * editoriales) cuando la composición de la página no debe mostrarlas.
+   * Aditivo: por defecto se muestra igual que antes.
+   */
+  ocultarDescripcionFallback?: boolean;
 }
 
 /**
@@ -50,11 +56,16 @@ function hasWebGL2(): boolean {
  *   activos. Con prefers-reduced-motion no hay animaciones de cámara.
  * - El contenedor del mapa es una región accesible con etiqueta; sin
  *   controles enfocables dentro de ancestros aria-hidden.
- * - La atribución de MapLibre/OpenFreeMap/OpenMapTiles/OSM se mantiene
+ * - La atribución de MapLibre/MapTiler/OpenStreetMap se mantiene
  *   visible (por defecto, nunca se oculta).
  * - Sin Math.random, fechas dinámicas ni datos de red propios.
  */
-export default function OrigenMapPreview({ punto, etiqueta, className }: OrigenMapPreviewProps) {
+export default function OrigenMapPreview({
+  punto,
+  etiqueta,
+  className,
+  ocultarDescripcionFallback = false,
+}: OrigenMapPreviewProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MlMap | null>(null);
   const [mapReady, setMapReady] = useState(false);
@@ -64,9 +75,22 @@ export default function OrigenMapPreview({ punto, etiqueta, className }: OrigenM
     const container = containerRef.current;
     if (!container || mapRef.current) return;
 
+    // Sin clave pública de MapTiler no hay estilo: se conserva el
+    // fallback en lugar de crear un canvas vacío o roto.
+    const mapStyle = getMapStyle();
+
     let cancelled = false;
     let map: MlMap | null = null;
     let didLoad = false;
+
+    const markMapReady = () => {
+      didLoad = true;
+
+      if (!cancelled) {
+        setFailed(false);
+        setMapReady(true);
+      }
+    };
 
     const removeMap = () => {
       if (!map) return;
@@ -88,10 +112,10 @@ export default function OrigenMapPreview({ punto, etiqueta, className }: OrigenM
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     void (async () => {
-      // Sin WebGL2: fallback para siempre, sin importar MapLibre.
-      // (La verificación vive dentro del flujo asíncrono para no
-      // disparar setState síncrono en el cuerpo del effect.)
-      if (!hasWebGL2()) {
+      // Sin estilo de MapTiler o sin WebGL2: fallback para siempre, sin
+      // importar MapLibre. (La verificación vive dentro del flujo
+      // asíncrono para no disparar setState síncrono en el effect.)
+      if (!mapStyle || !hasWebGL2()) {
         if (!cancelled) setFailed(true);
         return;
       }
@@ -102,7 +126,7 @@ export default function OrigenMapPreview({ punto, etiqueta, className }: OrigenM
 
         map = new ml.Map({
           container,
-          style: TILE_STYLE_URL,
+          style: mapStyle,
           center: punto.lngLat,
           zoom: MAP_INITIAL_ZOOM,
           minZoom: MAP_MIN_ZOOM,
@@ -114,19 +138,18 @@ export default function OrigenMapPreview({ punto, etiqueta, className }: OrigenM
           // Sin animaciones de cámara con reduced motion.
           fadeDuration: reduceMotion ? 0 : 300,
           // La atribución permanece visible por defecto (requisito de
-          // los datos de OpenFreeMap/OpenMapTiles/OSM): no se oculta.
+          // los datos de MapTiler/OpenStreetMap): no se oculta.
         });
 
         mapRef.current = map;
 
-        map.on('load', () => {
-          didLoad = true;
-
-          if (!cancelled) {
-            setFailed(false);
-            setMapReady(true);
-          }
-        });
+        // `load` espera también a los recursos de las fuentes. Para una
+        // vista editorial eso puede dejar el fallback innecesariamente
+        // encima de un mapa cuyo estilo ya está disponible. `style.load`
+        // permite mostrar MapTiler tan pronto el estilo sea utilizable;
+        // mantenemos `load` como confirmación normal posterior.
+        map.on('style.load', markMapReady);
+        map.on('load', markMapReady);
 
         map.on('error', () => {
           // Antes de load no hay mapa usable: se conserva el fallback
@@ -170,7 +193,11 @@ export default function OrigenMapPreview({ punto, etiqueta, className }: OrigenM
 
   return (
     <div className={`${styles.wrap}${className ? ` ${className}` : ''}`} data-origen-map-preview>
-      <OrigenMapFallback punto={punto} oculto={fallbackOculto} />
+      <OrigenMapFallback
+        punto={punto}
+        oculto={fallbackOculto}
+        mostrarDescripcion={!ocultarDescripcionFallback}
+      />
       {/* Región accesible del mapa: sin aria-hidden y con etiqueta. */}
       <div
         ref={containerRef}

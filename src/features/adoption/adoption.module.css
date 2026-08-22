@@ -1,0 +1,392 @@
+/* Layout editorial de la experiencia /adopta (rediseño fotográfico).
+   Reutiliza los tokens globales: fondos plum/void, texto cream, acento
+   ámbar, verdes naturales y coral como acento mínimo. */
+
+.page {
+  position: relative;
+  min-height: 100vh;
+  background:
+    radial-gradient(110% 60% at 85% -10%, rgba(31, 90, 60, 0.14), transparent 55%),
+    radial-gradient(90% 50% at 10% 30%, rgba(251, 169, 34, 0.05), transparent 60%), var(--void);
+  color: var(--cream);
+  overflow-x: hidden;
+}
+
+:global(body.day) .page {
+  background:
+    radial-gradient(110% 60% at 85% -10%, rgba(31, 90, 60, 0.1), transparent 55%),
+    radial-gradient(90% 50% at 10% 30%, rgba(251, 169, 34, 0.06), transparent 60%), #fff4e0;
+}
+
+/* ── Encabezado mínimo de la experiencia ── */
+.header {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-gutter);
+}
+
+.brand {
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: var(--cream);
+  text-decoration: none;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.brand:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.headerTag {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-mono);
+  color: rgba(var(--cream-rgb), 0.55);
+  margin: 0;
+  text-align: center;
+  white-space: nowrap;
+}
+
+:global(body.day) .brand {
+  color: var(--ink);
+}
+
+:global(body.day) .headerTag {
+  color: rgba(46, 42, 36, 0.6);
+}
+
+/* ── Hero fotográfico (composición editorial asimétrica) ── */
+.hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.heroGrid {
+  display: grid;
+  grid-template-columns: 45fr 55fr;
+  align-items: center;
+  gap: clamp(32px, 5vw, 72px);
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: var(--space-12) var(--space-gutter) var(--space-16);
+  min-height: min(78vh, 720px);
+}
+
+.heroContent {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-5);
+  min-width: 0;
+}
+
+/* Fotografía: ocupa ~55 % del ancho y domina visualmente. La máscara
+   curva orgánica es CSS puro (border-radius asimétrico), sin SVG. */
+.heroVisual {
+  position: relative;
+  height: 100%;
+  min-height: 420px;
+  overflow: hidden;
+  border-radius: 48% 52% 34% 66% / 52% 40% 60% 48%;
+  border: 1px solid rgba(var(--cream-rgb), 0.14);
+  box-shadow: var(--shadow-card);
+}
+
+.heroImage {
+  object-fit: cover;
+}
+
+/* Overlay oscuro controlado (ciruela de Tueste + luz dorada moderada):
+   conserva el detalle verde natural y las sombras profundas. */
+.heroOverlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      200deg,
+      rgba(13, 2, 16, 0.5) 0%,
+      rgba(13, 2, 16, 0.12) 52%,
+      rgba(46, 9, 60, 0.3) 100%
+    ),
+    radial-gradient(120% 90% at 78% 12%, rgba(251, 169, 34, 0.1), transparent 55%);
+  pointer-events: none;
+}
+
+.kicker {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-mono);
+  color: var(--amber);
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-size: clamp(2.4rem, 6.4vw, 4.8rem);
+  font-weight: 500;
+  line-height: 1.04;
+  letter-spacing: -0.01em;
+  max-width: 15ch;
+  margin: 0;
+  color: var(--cream);
+}
+
+.paragraph {
+  max-width: 52ch;
+  margin: 0;
+  color: rgba(var(--cream-rgb), 0.72);
+  line-height: 1.6;
+  font-size: var(--text-md);
+}
+
+:global(body.day) .title {
+  color: var(--ink);
+}
+
+:global(body.day) .paragraph {
+  color: rgba(46, 42, 36, 0.72);
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: var(--amber);
+  border-radius: var(--radius-pill);
+  padding: 14px 26px;
+  text-decoration: none;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.cta:hover {
+  background: var(--coral);
+  transform: translateY(-1px);
+}
+
+.cta:focus-visible {
+  outline: 2px solid var(--teal-bright);
+  outline-offset: 3px;
+}
+
+.ctaArrow {
+  font-size: 0.9rem;
+}
+
+/* ── Secciones ── */
+.section {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: var(--space-section) var(--space-gutter);
+}
+
+.sectionKicker {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-mono);
+  color: rgba(var(--cream-rgb), 0.5);
+  margin: 0 0 var(--space-4);
+  text-transform: uppercase;
+}
+
+.sectionTitle {
+  font-family: var(--font-serif);
+  font-size: clamp(1.9rem, 4.6vw, 3.2rem);
+  font-weight: 500;
+  line-height: 1.1;
+  max-width: 24ch;
+  margin: 0 0 var(--space-5);
+  color: var(--cream);
+}
+
+.sectionText {
+  max-width: 58ch;
+  margin: 0;
+  color: rgba(var(--cream-rgb), 0.68);
+  line-height: 1.6;
+  font-size: var(--text-md);
+}
+
+:global(body.day) .sectionTitle {
+  color: var(--ink);
+}
+
+:global(body.day) .sectionText {
+  color: rgba(46, 42, 36, 0.72);
+}
+
+/* Introducción: párrafo + grid de vínculos. */
+.introHead {
+  margin-bottom: var(--space-10);
+}
+
+/* ── Territorio: bloque grande de mapa interactivo ── */
+.territoryMap {
+  position: relative;
+  height: clamp(480px, 58vh, 620px);
+  margin-top: var(--space-10);
+  border-radius: var(--radius-2xl);
+  overflow: hidden;
+  border: var(--border-soft);
+  box-shadow: var(--shadow-float);
+  background: #101d16;
+}
+
+.territoryCaption {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-mono);
+  text-transform: uppercase;
+  color: rgba(var(--cream-rgb), 0.55);
+}
+
+:global(body.day) .territoryCaption {
+  color: rgba(46, 42, 36, 0.6);
+}
+
+:global(body.day) .territoryMap {
+  border-color: rgba(46, 42, 36, 0.16);
+}
+
+/* ── Acompañamiento: galería editorial fotográfica ── */
+.companionTag {
+  display: inline-block;
+  margin: 0 0 var(--space-6);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-mono);
+  text-transform: uppercase;
+  color: var(--amber);
+  border: 1px solid rgba(251, 169, 34, 0.4);
+  border-radius: var(--radius-pill);
+  padding: 7px 14px;
+}
+
+.companionNote {
+  max-width: 58ch;
+  margin: var(--space-6) 0 0;
+  color: rgba(var(--cream-rgb), 0.55);
+  line-height: 1.55;
+  font-size: var(--text-sm);
+}
+
+:global(body.day) .companionTag {
+  border-color: rgba(214, 138, 19, 0.4);
+}
+
+:global(body.day) .companionNote {
+  color: rgba(46, 42, 36, 0.6);
+}
+
+/* ── Cierre ── */
+.closing {
+  border-top: var(--border-soft);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-6);
+  padding-top: var(--space-16);
+  padding-bottom: var(--space-16);
+}
+
+.closingPhrase {
+  font-family: var(--font-serif);
+  font-size: clamp(1.7rem, 4.4vw, 3rem);
+  font-weight: 500;
+  line-height: 1.12;
+  max-width: 20ch;
+  margin: 0;
+  color: var(--cream);
+}
+
+.closingNote {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-mono);
+  color: rgba(var(--cream-rgb), 0.45);
+  margin: 0;
+  text-transform: uppercase;
+}
+
+:global(body.day) .closingPhrase {
+  color: var(--ink);
+}
+
+:global(body.day) .closingNote {
+  color: rgba(46, 42, 36, 0.5);
+}
+
+/* ── Responsivo ── */
+@media (max-width: 880px) {
+  .heroGrid {
+    grid-template-columns: 1fr;
+    gap: var(--space-8);
+    padding-top: var(--space-8);
+    min-height: 0;
+  }
+
+  /* Móvil: fotografía arriba, contenido debajo. */
+  .heroVisual {
+    order: -1;
+    height: auto;
+    min-height: 0;
+    aspect-ratio: 4 / 3;
+    border-radius: 38% 62% 30% 70% / 46% 40% 60% 54%;
+  }
+
+  .territoryMap {
+    height: clamp(340px, 52vh, 420px);
+    margin-top: var(--space-8);
+  }
+}
+
+@media (max-width: 560px) {
+  .header {
+    gap: var(--space-3);
+    padding-top: var(--space-4);
+    padding-bottom: var(--space-4);
+  }
+
+  .brand {
+    font-size: 0.95rem;
+  }
+
+  .headerTag {
+    font-size: 0.55rem;
+    letter-spacing: 0.12em;
+  }
+
+  .heroVisual {
+    aspect-ratio: 4 / 3.4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cta {
+    transition: none;
+  }
+
+  .cta:hover {
+    transform: none;
+  }
+}

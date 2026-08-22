@@ -18,6 +18,11 @@ export interface SupabasePublicConfig {
   supabaseAnonKey: string;
 }
 
+/** Clave pública de MapTiler, restringida por dominio en su panel. */
+export interface MapTilerPublicConfig {
+  mapTilerKey: string;
+}
+
 /** Entorno de variables públicas (inyectable para pruebas). */
 export type PublicEnv = Record<string, string | undefined>;
 
@@ -62,4 +67,31 @@ export function loadPublicConfig(env: PublicEnv = process.env): SupabasePublicCo
   }
 
   return { supabaseUrl: parsedUrl.data, supabaseAnonKey: anonKey as string };
+}
+
+/**
+ * Lee la clave pública de MapTiler para la cartografía editorial.
+ *
+ * No es una clave secreta: MapTiler la usa desde el navegador. Debe
+ * restringirse por referer/origen en el panel de MapTiler y nunca
+ * sustituirse por una clave de servidor o una credencial de AWS.
+ *
+ * @param env Entorno a leer (por defecto `process.env`); inyectable
+ *   para pruebas sin depender del entorno real de la máquina.
+ * @returns `null` sin clave (modo demo: fallback editorial del mapa).
+ */
+export function loadMapTilerPublicConfig(
+  env: PublicEnv = process.env,
+): MapTilerPublicConfig | null {
+  // El acceso literal a `process.env.NEXT_PUBLIC_*` es imprescindible:
+  // Turbopack/Webpack solo inlinean en el bundle del navegador las
+  // referencias DIRECTAS a `process.env.NEXT_PUBLIC_*`. Un lookup
+  // dinámico como `env.NEXT_PUBLIC_*` NO se reemplaza y llegaría vacío
+  // al cliente. El parámetro `env` (inyectado por las pruebas) conserva
+  // prioridad para que los tests no dependan del entorno real.
+  const mapTilerKey = (
+    env.NEXT_PUBLIC_MAPTILER_API_KEY ?? process.env.NEXT_PUBLIC_MAPTILER_API_KEY
+  )?.trim();
+
+  return mapTilerKey ? { mapTilerKey } : null;
 }

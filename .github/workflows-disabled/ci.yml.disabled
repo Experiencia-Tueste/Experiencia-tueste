@@ -1,3 +1,15 @@
+# CI LOCAL TEMPORAL — WORKFLOW DESACTIVADO
+# ---------------------------------------------------------------------------
+# Este workflow está desactivado temporalmente por el bloqueo externo de
+# facturación de GitHub Actions en la cuenta (falla antes de iniciar runner,
+# no por el código).
+#
+# El reemplazo temporal es `npm run verify`, ejecutado localmente.
+#
+# NO BORRAR: se restaurará a .github/workflows/ci.yml cuando GitHub Actions
+# esté disponible de nuevo.
+# ---------------------------------------------------------------------------
+
 name: CI
 
 on:

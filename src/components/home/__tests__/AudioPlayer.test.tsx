@@ -19,6 +19,7 @@ function mockPlayer(overrides: Partial<AudioPlayerResult> = {}): AudioPlayerResu
     select: vi.fn(),
     seek: vi.fn(),
     selectChannel: vi.fn(),
+    play: vi.fn(),
     ...overrides,
   };
 }

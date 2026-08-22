@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   addToCart,
@@ -40,5 +42,27 @@ describe('feature commerce', () => {
     expect(formatoCOP(185000)).toContain('185.000');
     expect(formatoCOP(72000)).toContain('72.000');
     expect(formatoCOP(0)).toContain('0');
+  });
+
+  it('los seis productos usan las rutas exactas de assets locales existentes', () => {
+    const esperado: Record<string, string> = {
+      'coffee-in-frequencies': '/images/store/vinilo-coffee-in-frequencies.webp',
+      'field-tapes': '/images/store/cassette-field-tapes.webp',
+      'taza-cantara': '/images/store/taza-cantara.webp',
+      'camiseta-origen': '/images/store/camiseta-origen.webp',
+      'print-espectrograma': '/images/store/print-espectrograma.webp',
+      'cafe-lote-000': '/images/store/cafe-lote-000.webp',
+    };
+
+    for (const product of PRODUCTS) {
+      expect(product.imageSrc).toBe(esperado[product.id]);
+      expect(product.imageSrc).toMatch(/^\/images\/store\//);
+      expect(product.imageSrc).not.toMatch(/^https?:\/\//);
+      expect(product.imageSrc).not.toMatch(/^data:/);
+      expect(
+        existsSync(join(process.cwd(), 'public', product.imageSrc as string)),
+        `asset local faltante: ${product.imageSrc}`,
+      ).toBe(true);
+    }
   });
 });

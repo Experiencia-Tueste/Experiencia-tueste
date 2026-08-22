@@ -1,7 +1,14 @@
+import Image from 'next/image';
+
 /**
  * Visual determinista de producto para la tienda (SVG puro, sin
  * imágenes externas, base64 ni aleatoriedad). Un icono por categoría
  * del catálogo, dibujado con la paleta de marca.
+ *
+ * Cuando `imageSrc` apunta a un asset local de `public/images/merch/`,
+ * se muestra esa fotografía editorial con `next/image`; mientras el
+ * asset no exista, se conserva el SVG de categoría (fallback elegante,
+ * sin romper el layout).
  */
 
 const AMBER = '#fba922';
@@ -178,11 +185,31 @@ const VISUALES: Record<string, () => React.ReactElement> = {
   coffee: Cafe,
 };
 
+export interface ProductVisualProps {
+  /** Clave `icon` del catálogo (vinyl, cassette, cup, tee, print, coffee). */
+  icon: string;
+  /** Asset local opcional bajo public/images/merch/ (fotografía editorial). */
+  imageSrc?: string;
+  /** Nombre del producto para el texto alternativo de la imagen. */
+  name?: string;
+}
+
 /**
- * Visual de producto según la clave `icon` del catálogo. Si la clave no
- * existe, cae en el vinilo (nunca renderiza vacío).
+ * Visual de producto: fotografía local cuando `imageSrc` existe; si no,
+ * el ícono SVG de la categoría (o el vinilo como último respaldo).
  */
-export default function ProductVisual({ icon }: { icon: string }) {
+export default function ProductVisual({ icon, imageSrc, name }: ProductVisualProps) {
+  if (imageSrc) {
+    return (
+      <Image
+        src={imageSrc}
+        alt={`Producto de Tueste: ${name ?? 'objeto del universo Origen Tostado'}`}
+        fill
+        sizes="(max-width: 780px) 100vw, 25vw"
+        className="product-art-image"
+      />
+    );
+  }
   const Visual = VISUALES[icon] ?? Vinilo;
   return <Visual />;
 }

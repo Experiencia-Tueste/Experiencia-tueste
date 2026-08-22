@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import { getTrack } from '@/features/audio';
 import type { OrigenPaso, OrigenIcono } from '@/features/origen';
-import type { TrackId } from '@/lib/audio';
 import styles from './OrigenStep.module.css';
 
 /** Iconos decorativos de cada etapa, tomados del mockup (SVG inline). */
@@ -29,36 +28,54 @@ export interface OrigenStepProps {
   paso: OrigenPaso;
   /** true si la pista asociada es la seleccionada en el reproductor. */
   seleccionado: boolean;
-  /** Selecciona la pista del paso en el reproductor. */
-  onSelect: (id: TrackId) => void;
+  /** true si la pista de esta tarjeta está sonando en el reproductor global. */
+  reproduciendo: boolean;
+  /** Alterna reproducir/pausar/reanudar la melodía de esta tarjeta. */
+  onToggle: () => void;
 }
 
 /**
- * Etapa del origen. Es un botón real con `aria-pressed` que, al pulsarse,
- * selecciona la pista asociada en el reproductor (Frecuencias) vía el
- * estado compartido de ListeningExperience. La frecuencia en Hz se
- * resuelve del catálogo de audio, sin duplicar datos.
+ * Etapa del origen. La TARJETA COMPLETA es un único control real: un
+ * `<button>` estilizado como tarjeta (sin botones anidados) que
+ * reproduce/pausa/reanuda su melodía a través del reproductor GLOBAL
+ * (nunca un <audio> propio):
+ * - pista distinta: cambia e inicia desde cero;
+ * - pista actual sonando: pausa;
+ * - pista actual pausada: reanuda.
+ *
+ * Navegable con Tab, activable con Enter/Espacio, con foco visible,
+ * `aria-pressed` y `aria-label` con la acción y el nombre de la pista.
+ * El texto visible indica «Reproducir · 111 Hz» o «Pausar · 111 Hz».
  */
-export default function OrigenStep({ paso, seleccionado, onSelect }: OrigenStepProps) {
+export default function OrigenStep({
+  paso,
+  seleccionado,
+  reproduciendo,
+  onToggle,
+}: OrigenStepProps) {
   const track = getTrack(paso.trackId);
   const hz = track?.hz;
+  const suenaEsta = seleccionado && reproduciendo;
+  const accion = suenaEsta ? 'Pausar' : 'Reproducir';
+  const etiqueta = `${accion} ${paso.titulo} · ${track?.title ?? paso.titulo}`;
 
   return (
-    <div className={styles.step}>
+    <button
+      type="button"
+      className={`${styles.step}${suenaEsta ? ` ${styles.on}` : ''}`}
+      aria-pressed={suenaEsta}
+      aria-label={etiqueta}
+      onClick={onToggle}
+    >
       <i className={styles.fase}>{paso.fase}</i>
       <svg className={styles.icono} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         {ICONOS[paso.icono]}
       </svg>
       <b className={styles.titulo}>{paso.titulo}</b>
-      <p className={styles.desc}>{paso.descripcion}</p>
-      <button
-        type="button"
-        className={`${styles.play}${seleccionado ? ` ${styles.on}` : ''}`}
-        aria-pressed={seleccionado}
-        onClick={() => onSelect(paso.trackId)}
-      >
-        <span aria-hidden="true">▶</span> {hz} Hz
-      </button>
-    </div>
+      <span className={styles.desc}>{paso.descripcion}</span>
+      <span className={`${styles.play}${suenaEsta ? ` ${styles.playOn}` : ''}`} aria-hidden="true">
+        <span aria-hidden="true">{suenaEsta ? '❚❚' : '▶'}</span> {accion} · {hz} Hz
+      </span>
+    </button>
   );
 }

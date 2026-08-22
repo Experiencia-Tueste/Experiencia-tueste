@@ -116,15 +116,21 @@
 }
 
 .media {
+  position: relative;
   border-radius: 14px;
   overflow: hidden;
   margin-bottom: 16px;
+  aspect-ratio: 200 / 150;
+}
+
+.media img {
+  object-fit: cover;
 }
 
 .media svg {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
 }
 
 .top {

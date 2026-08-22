@@ -10,36 +10,6 @@
   overflow: hidden;
 }
 
-/* ── Texto fantasma de fondo ───────────────────────────── */
-.ghost {
-  position: absolute;
-  left: 50%;
-  top: 49%;
-  transform: translate(-50%, -50%);
-  z-index: 0;
-  pointer-events: none;
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-weight: 700;
-  text-transform: uppercase;
-  white-space: nowrap;
-  font-size: clamp(6rem, 21vw, 19rem);
-  line-height: 1;
-  color: transparent;
-  -webkit-text-stroke: 1.5px rgba(var(--cream-rgb), 0.07);
-  animation: ghostfloat 11s ease-in-out infinite;
-}
-
-@keyframes ghostfloat {
-  0%,
-  100% {
-    transform: translate(-50%, -50%) scale(1);
-  }
-  50% {
-    transform: translate(-50%, -53%) scale(1.03);
-  }
-}
-
 /* ── Kicker ─────────────────────────────────────────────── */
 
 /* ── Kicker ────────────────────────────────────────────── */
@@ -385,16 +355,16 @@
 }
 
 /* ── Sol principal ─────────────────────────────────────── */
-.herosun {
+.heroSun {
   position: absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  opacity: 0.14;
+  max-width: min(48vw, 280px);
+  max-height: min(48vw, 280px);
+  opacity: 0.13;
   z-index: 0;
   pointer-events: none;
-  max-width: 78vw;
-  max-height: 78vw;
 }
 
 /* ── Scroll hint ───────────────────────────────────────── */
@@ -442,19 +412,12 @@
 
 /* ── Responsive ────────────────────────────────────────── */
 @media (max-width: 760px) {
-  .ghost {
-    font-size: 30vw;
-  }
   .seal {
     display: none;
   }
 }
 
 /* ── Modo día ──────────────────────────────────────────── */
-:global(body.day) .ghost {
-  -webkit-text-stroke-color: rgba(46, 42, 36, 0.12);
-}
-
 :global(body.day) .btnGlass,
 :global(body.day) .stat {
   background: rgba(46, 42, 36, 0.05);
@@ -506,15 +469,14 @@
   color: #2e2a24;
 }
 
-:global(body.day) .herosun {
+:global(body.day) .heroSun {
   opacity: 0.18;
 }
 
 /* ── Motion reducido ───────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  .ghost,
   .seal svg,
-  .herosun,
+  .heroSun,
   .dot,
   .scrollhint i {
     animation: none;

@@ -36,7 +36,7 @@ export default function ListeningExperience() {
   return (
     <>
       <Frecuencias player={player} />
-      <Origen selectedId={player.trackId} onSelect={player.select} />
+      <Origen player={player} />
       <Lanzamientos onSelect={player.select} />
       <BaristaSonoro onSelect={player.select} />
       <EditorialTicker variant="dim" reverse />

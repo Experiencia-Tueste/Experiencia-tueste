@@ -21,6 +21,12 @@ export interface Product {
   description: string;
   /** Icono del catálogo (vinyl, cassette, cup, tee, print, coffee). */
   icon: string;
+  /**
+   * Asset local bajo `public/images/merch/` (p. ej.
+   * `/images/merch/vinilo-coffee-in-frequencies.webp`). Vacío = asset
+   * pendiente: el componente conserva su fallback editorial SVG.
+   */
+  imageSrc?: string;
   /** Etiqueta opcional (LIMITADO, NUEVO…). */
   badge?: string;
 }
@@ -42,6 +48,7 @@ export const PRODUCTS: Product[] = [
   {
     id: 'coffee-in-frequencies',
     name: 'Coffee in Frequencies',
+    imageSrc: '/images/store/vinilo-coffee-in-frequencies.webp',
     category: 'vinilo',
     categoryLabel: 'Vinilo 12"',
     price: 185000,
@@ -53,6 +60,7 @@ export const PRODUCTS: Product[] = [
   {
     id: 'field-tapes',
     name: 'Field Tapes · Tostión',
+    imageSrc: '/images/store/cassette-field-tapes.webp',
     category: 'cassette',
     categoryLabel: 'Cassette',
     price: 78000,
@@ -62,6 +70,7 @@ export const PRODUCTS: Product[] = [
   {
     id: 'taza-cantara',
     name: 'Taza Cántara',
+    imageSrc: '/images/store/taza-cantara.webp',
     category: 'ceramica',
     categoryLabel: 'Cerámica artesanal',
     price: 95000,
@@ -71,6 +80,7 @@ export const PRODUCTS: Product[] = [
   {
     id: 'camiseta-origen',
     name: 'Camiseta Origen',
+    imageSrc: '/images/store/camiseta-origen.webp',
     category: 'textil',
     categoryLabel: 'Algodón orgánico',
     price: 119000,
@@ -81,6 +91,7 @@ export const PRODUCTS: Product[] = [
   {
     id: 'print-espectrograma',
     name: 'Print Espectrograma',
+    imageSrc: '/images/store/print-espectrograma.webp',
     category: 'print',
     categoryLabel: 'Lámina A3',
     price: 64000,
@@ -90,6 +101,7 @@ export const PRODUCTS: Product[] = [
   {
     id: 'cafe-lote-000',
     name: 'Café del Lote 000',
+    imageSrc: '/images/store/cafe-lote-000.webp',
     category: 'cafe',
     categoryLabel: 'Microlote · 250g',
     price: 72000,

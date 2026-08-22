@@ -1,3 +1,6 @@
+/* Tarjeta del origen: la tarjeta completa es el control (button real
+   estilizado como tarjeta editorial, sin botones anidados). */
+
 .step {
   position: relative;
   border: 1px solid rgba(var(--cream-rgb), 0.15);
@@ -6,7 +9,15 @@
   background: rgba(255, 244, 224, 0.03);
   display: flex;
   flex-direction: column;
+  align-items: stretch;
   gap: 10px;
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
   transition:
     transform var(--dur-slow) var(--ease-out),
     border-color var(--dur-base);
@@ -15,6 +26,17 @@
 .step:hover {
   transform: translateY(-8px);
   border-color: rgba(251, 169, 34, 0.5);
+}
+
+.step:focus-visible {
+  outline: 2px solid var(--teal-bright);
+  outline-offset: 3px;
+}
+
+/* Tarjeta activa (su melodía suena en el reproductor global). */
+.step.on {
+  border-color: rgba(15, 162, 149, 0.65);
+  background: rgba(15, 162, 149, 0.06);
 }
 
 .fase {
@@ -44,6 +66,7 @@
 }
 
 .desc {
+  display: block;
   font-size: 0.8rem;
   line-height: 1.5;
   color: rgba(var(--cream-rgb), 0.72);
@@ -51,6 +74,8 @@
   flex: 1;
 }
 
+/* Chip visible del estado: texto informativo dentro de la tarjeta
+   (no es un control independiente). */
 .play {
   align-self: flex-start;
   border: 1px solid rgba(var(--cream-rgb), 0.3);
@@ -62,31 +87,13 @@
   font-size: 0.58rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  cursor: pointer;
   transition:
     background var(--dur-fast) var(--ease-out),
     color var(--dur-fast) var(--ease-out),
     border-color var(--dur-fast) var(--ease-out);
 }
 
-.play:hover {
-  background: var(--amber);
-  color: var(--ink);
-  border-color: var(--amber);
-}
-
-.play:focus-visible {
-  outline: 2px solid var(--teal-bright);
-  outline-offset: 3px;
-}
-
-.on {
-  background: var(--teal);
-  border-color: var(--teal);
-  color: #fff;
-}
-
-.on:hover {
+.playOn {
   background: var(--teal);
   border-color: var(--teal);
   color: #fff;
@@ -95,6 +102,11 @@
 :global(body.day) .step {
   border-color: rgba(46, 42, 36, 0.18);
   background: rgba(255, 244, 224, 0.35);
+}
+
+:global(body.day) .step.on {
+  border-color: rgba(15, 162, 149, 0.7);
+  background: rgba(15, 162, 149, 0.1);
 }
 
 :global(body.day) .icono {
@@ -108,12 +120,6 @@
 :global(body.day) .play {
   border-color: rgba(46, 42, 36, 0.35);
   color: var(--cream);
-}
-
-:global(body.day) .play:hover {
-  background: var(--amber);
-  color: var(--ink);
-  border-color: var(--amber);
 }
 
 @media (prefers-reduced-motion: reduce) {

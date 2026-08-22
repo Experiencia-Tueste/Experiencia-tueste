@@ -1,10 +1,13 @@
+import Image from 'next/image';
 import type { Release, ReleaseSeason } from '@/features/music';
 import type { TrackId } from '@/lib/audio';
 import styles from './ReleaseCard.module.css';
 
 /**
  * Gradientes de portada por temporada (deterministas, del mockup).
- * Cada temporada define un par de colores para el radialGradient.
+ * Se usan como FALLBACK editorial mientras no exista el asset local:
+ * en cuanto `release.coverImage` apunte a `public/images/releases/…`,
+ * la tarjeta muestra esa fotografía/portada real.
  */
 const SEASON_GRADIENT: Record<ReleaseSeason, readonly [string, string]> = {
   floracion: ['#6667A8', '#FF6F86'],
@@ -50,64 +53,82 @@ export interface ReleaseCardProps {
   release: Release;
   /** Selecciona la pista asociada en el reproductor. */
   onSelect: (id: TrackId) => void;
-  /** Anuncia «Compra disponible próximamente.» (aria-live del padre). */
-  onBuy: () => void;
 }
 
 /**
- * Tarjeta de lanzamiento. La portada es un SVG determinista (gradiente
- * por temporada + barras de frecuencia precalculadas). «Escuchar» y el
- * play de la portada seleccionan la pista asociada y navegan con un
- * enlace semántico a #frecuencias. Los controles de compra conservan la
- * intención visual pero solo anuncian disponibilidad futura.
+ * Tarjeta de lanzamiento.
+ *
+ * Portada: asset local (`coverImage`) cuando existe; mientras los
+ * assets estén pendientes, usa el fallback editorial SVG (gradiente por
+ * temporada + barras de frecuencia precalculadas).
+ *
+ * Compra: con `purchaseStatus: 'unavailable'` muestra un botón honesto
+ * y deshabilitado «Compra próximamente» (sin enlaces vacíos, sin
+ * checkout ficticio ni Mercado Pago simulado). Cuando exista
+ * `purchaseUrl`, el mismo componente muestra «Comprar» y abre
+ * únicamente esa URL.
+ *
+ * Spotify: si `spotifyUrl` existe, se abre en pestaña nueva con
+ * `rel="noreferrer"`.
  */
-export default function ReleaseCard({ release, onSelect, onBuy }: ReleaseCardProps) {
+export default function ReleaseCard({ release, onSelect }: ReleaseCardProps) {
   const [c1, c2] = SEASON_GRADIENT[release.season];
   const gradId = `rel-grad-${release.id}`;
 
   const handleListen = () => onSelect(release.trackId);
+  const puedeComprar = release.purchaseStatus === 'available' && release.purchaseUrl;
 
   return (
     <article className={styles.card}>
       <div className={styles.cover}>
-        <svg
-          className={styles.art}
-          viewBox="0 0 400 400"
-          preserveAspectRatio="xMidYMid slice"
-          aria-hidden="true"
-          focusable="false"
-        >
-          <defs>
-            <radialGradient id={gradId} cx="38%" cy="34%" r="85%">
-              <stop offset="0" stopColor={c1} />
-              <stop offset="1" stopColor={c2} />
-            </radialGradient>
-          </defs>
-          <rect width="400" height="400" fill={`url(#${gradId})`} />
-          {BARRAS.map(([x1, y1, x2, y2], i) => (
-            <line
-              key={i}
-              x1={x1}
-              y1={y1}
-              x2={x2}
-              y2={y2}
-              stroke="#FFE8BF"
-              strokeWidth="2"
-              opacity="0.32"
-            />
-          ))}
-          <circle cx="200" cy="200" r="56" fill="#0d0210" opacity="0.5" />
-          <circle
-            cx="200"
-            cy="200"
-            r="56"
-            fill="none"
-            stroke="#FFE8BF"
-            strokeWidth="1.4"
-            opacity="0.5"
+        {release.coverImage ? (
+          <Image
+            src={release.coverImage}
+            alt={`Portada de ${release.title}`}
+            fill
+            sizes="(max-width: 780px) 100vw, 25vw"
+            className={styles.artImage}
           />
-          <circle cx="200" cy="200" r="9" fill="#FFE8BF" opacity="0.85" />
-        </svg>
+        ) : (
+          <svg
+            className={styles.art}
+            viewBox="0 0 400 400"
+            preserveAspectRatio="xMidYMid slice"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <defs>
+              <radialGradient id={gradId} cx="38%" cy="34%" r="85%">
+                <stop offset="0" stopColor={c1} />
+                <stop offset="1" stopColor={c2} />
+              </radialGradient>
+            </defs>
+            <rect width="400" height="400" fill={`url(#${gradId})`} />
+            {BARRAS.map(([x1, y1, x2, y2], i) => (
+              <line
+                key={i}
+                x1={x1}
+                y1={y1}
+                x2={x2}
+                y2={y2}
+                stroke="#FFE8BF"
+                strokeWidth="2"
+                opacity="0.32"
+              />
+            ))}
+            <circle cx="200" cy="200" r="56" fill="#0d0210" opacity="0.5" />
+            <circle
+              cx="200"
+              cy="200"
+              r="56"
+              fill="none"
+              stroke="#FFE8BF"
+              strokeWidth="1.4"
+              opacity="0.5"
+            />
+            <circle cx="200" cy="200" r="9" fill="#FFE8BF" opacity="0.85" />
+          </svg>
+        )}
 
         <span className={styles.kind}>{release.kind}</span>
 
@@ -131,10 +152,10 @@ export default function ReleaseCard({ release, onSelect, onBuy }: ReleaseCardPro
         <span className={styles.meta}>{release.date} · Logik Pro</span>
         <span className={styles.formats}>{release.formats}</span>
 
-        {release.spotify ? (
+        {release.spotifyUrl ? (
           <a
             className={styles.spotify}
-            href={release.spotify}
+            href={release.spotifyUrl}
             target="_blank"
             rel="noreferrer noopener"
           >
@@ -149,13 +170,18 @@ export default function ReleaseCard({ release, onSelect, onBuy }: ReleaseCardPro
           <a className={styles.listen} href="#frecuencias" onClick={handleListen}>
             <span aria-hidden="true">▶</span> Escuchar
           </a>
-          {release.status === 'out' ? (
-            <button type="button" className={styles.buy} onClick={onBuy}>
-              <i>{release.price}</i> · Añadir
-            </button>
+          {puedeComprar ? (
+            <a
+              className={styles.buy}
+              href={release.purchaseUrl}
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              Comprar
+            </a>
           ) : (
-            <button type="button" className={`${styles.buy} ${styles.soon}`} onClick={onBuy}>
-              Pre-save · Avísame
+            <button type="button" className={`${styles.buy} ${styles.soon}`} disabled>
+              Compra próximamente
             </button>
           )}
         </div>

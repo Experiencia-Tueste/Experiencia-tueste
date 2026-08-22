@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import type { MercadoAccent } from '@/features/mercado';
 
 /** Color CSS por acento de tipo de producto (variable --mc del mockup). */
@@ -9,17 +10,35 @@ export const ACCENT_COLOR: Record<MercadoAccent, string> = {
 };
 
 export interface MercadoVisualProps {
-  /** Marca del producto (su inicial decora la bolsa). */
+  /** Marca del producto (su inicial decora la bolsa del fallback). */
   marca: string;
   accent: MercadoAccent;
+  /** Asset local opcional bajo public/images/mercado/ (imagen editorial). */
+  imageSrc?: string;
 }
 
 /**
- * Visual determinista de producto del Mercado de Origen: una bolsa de
- * café con la inicial de la marca, replicando el SVG del mockup
- * (mkMedia). Sin imágenes externas, base64 ni assets descargados.
+ * Visual de producto del Mercado de Origen.
+ *
+ * Con `imageSrc` muestra el asset local (café colombiano realista y
+ * sobrio) mediante `next/image` con alt descriptivo. Sin asset, usa el
+ * fallback determinista: una bolsa de café con la inicial de la marca,
+ * replicando el SVG del mockup (mkMedia). Sin imágenes externas,
+ * base64 ni assets descargados.
  */
-export default function MercadoVisual({ marca, accent }: MercadoVisualProps) {
+export default function MercadoVisual({ marca, accent, imageSrc }: MercadoVisualProps) {
+  if (imageSrc) {
+    return (
+      <Image
+        src={imageSrc}
+        alt={`Producto de ${marca}: café de origen colombiano`}
+        fill
+        sizes="(max-width: 780px) 100vw, 33vw"
+        className="mercado-art-image"
+      />
+    );
+  }
+
   const inicial = (marca.trim().charAt(0) || '?').toUpperCase();
   return (
     <svg viewBox="0 0 200 150" aria-hidden="true" className="mk-visual">

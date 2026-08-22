@@ -95,7 +95,7 @@ export default function Tienda() {
           {PRODUCTS.map((p) => (
             <article className={styles.card} key={p.id}>
               <div className={styles.ph}>
-                <ProductVisual icon={p.icon} />
+                <ProductVisual icon={p.icon} imageSrc={p.imageSrc} name={p.name} />
                 {p.badge ? <span className={styles.badge}>{p.badge}</span> : null}
               </div>
               <div className={styles.body}>

@@ -7,10 +7,10 @@ import * as portalData from '../data/portal';
  */
 describe('portal data (contrato estático)', () => {
   it('los textos editoriales son exactos', () => {
-    expect(portalData.PORTAL_KICKER).toBe('TUESTE · DOS CAMINOS, UN ORIGEN');
+    expect(portalData.PORTAL_KICKER).toBe('TUESTE · TRES CAMINOS, UN ORIGEN');
     expect(portalData.PORTAL_TITLE_1).toBe('El café también se escucha.');
-    expect(portalData.PORTAL_SUBTITLE).toBe('Dos caminos nacidos del mismo origen.');
-    expect(portalData.PORTAL_FOOTER_TAG).toBe('UN SOLO ORIGEN · DOS FORMAS DE VIVIRLO');
+    expect(portalData.PORTAL_SUBTITLE).toBe('Tres caminos nacidos del mismo origen.');
+    expect(portalData.PORTAL_FOOTER_TAG).toBe('UN SOLO ORIGEN · TRES FORMAS DE VIVIRLO');
   });
 
   it('no queda referencia al mini-deck sintético (PORTAL_DECK_BARS)', () => {

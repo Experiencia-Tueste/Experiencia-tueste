@@ -182,6 +182,35 @@ describe('Página pública (números fantasma de sección)', () => {
   });
 });
 
+describe('Página pública (CTA comerciales sin pagos)', () => {
+  it('los lanzamientos exponen intención comercial estable y no fingen compra', () => {
+    render(<Home />);
+
+    const proximamente = document.querySelectorAll('[data-commercial-intent^="release-"]');
+    expect(proximamente.length).toBeGreaterThan(0);
+    for (const el of proximamente) {
+      expect(el.getAttribute('data-commercial-intent')).toMatch(/^release-[a-z0-9-]+$/);
+    }
+    // Sin enlaces vacíos ni javascript:.
+    const enlaces = Array.from(document.querySelectorAll('a'));
+    for (const a of enlaces) {
+      expect(a.getAttribute('href')).not.toBe('#');
+      expect(a.getAttribute('href')).not.toMatch(/^javascript:/);
+    }
+  });
+
+  it('la tienda y el mercado exponen intención comercial estable', () => {
+    render(<Home />);
+
+    expect(document.querySelectorAll('[data-commercial-intent^="merch-"]').length).toBeGreaterThan(
+      0,
+    );
+    expect(
+      document.querySelectorAll('[data-commercial-intent^="availability-"]').length,
+    ).toBeGreaterThan(0);
+  });
+});
+
 describe('Página pública (animación de entrada por scroll)', () => {
   it('envuelve los bloques principales de cada sección en Reveal (data-reveal)', () => {
     render(<Home />);

@@ -176,11 +176,17 @@ export default function ReleaseCard({ release, onSelect }: ReleaseCardProps) {
               href={release.purchaseUrl}
               target="_blank"
               rel="noreferrer noopener"
+              data-commercial-intent={`release-${release.id}`}
             >
               Comprar
             </a>
           ) : (
-            <button type="button" className={`${styles.buy} ${styles.soon}`} disabled>
+            <button
+              type="button"
+              className={`${styles.buy} ${styles.soon}`}
+              disabled
+              data-commercial-intent={`release-${release.id}`}
+            >
               Compra próximamente
             </button>
           )}

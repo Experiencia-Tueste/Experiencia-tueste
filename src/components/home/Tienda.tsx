@@ -104,7 +104,12 @@ export default function Tienda() {
                 <p className={styles.desc}>{p.description}</p>
                 <div className={styles.foot}>
                   <span className={styles.price}>{formatoCOP(p.price)}</span>
-                  <button type="button" className={styles.add} onClick={() => agregar(p.id)}>
+                  <button
+                    type="button"
+                    className={styles.add}
+                    onClick={() => agregar(p.id)}
+                    data-commercial-intent={`merch-${p.id}`}
+                  >
                     Agregar
                   </button>
                 </div>

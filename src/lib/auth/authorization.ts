@@ -25,7 +25,10 @@ export interface CurrentAdmin {
   role: AdminRole;
 }
 
-/** Administrador actual, o null si no hay sesión válida. */
+/** Administrador actual, o null si no hay sesión válida.
+ *  Fase 1.2: el rol dejará de ser temporal y vendrá del repositorio
+ *  persistente (AdminIdentityRepository). El comportamiento de la
+ *  Fase 1.1 no cambia en esta fase. */
 export async function getCurrentAdmin(): Promise<CurrentAdmin | null> {
   const session = await auth();
   const email = session?.user?.email ?? null;

@@ -11,7 +11,8 @@ import type { AdminRole } from './permissions';
  *
  * @returns `'admin'` (rol temporal de la Fase 1.1) si el correo está
  *   permitido, `null` en caso contrario (o sin correo). En la Fase 1.2
- *   el rol provendrá de la base de datos.
+ *   `getCurrentAdmin()` consultará el repositorio persistente
+ *   (AdminIdentityRepository) en lugar de la allowlist temporal.
  */
 export function resolveAdminRole(
   email: string | null | undefined,

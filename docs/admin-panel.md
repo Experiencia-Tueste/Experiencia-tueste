@@ -169,7 +169,9 @@ administración.
 
 ### Fase 1.1 — Fundación segura (Google OAuth, allowlist y sesiones, sin persistencia)
 
-**Estado: implementada localmente en `feat/admin-foundation` (commit pendiente).**
+**Estado: implementada localmente en `feat/admin-foundation`**, pero sigue
+pendiente configurar el OAuth Client real en Google Cloud y colocar las
+variables server-side en el hosting.
 
 - Auth.js (v5) con Google OAuth/OIDC; Google solo identifica, Tueste decide
   permisos.
@@ -180,8 +182,9 @@ administración.
 - Roles y capacidades puras (`permissions.ts`) sin base de datos.
 - **El rol temporal de esta fase es `admin`, asignado en servidor** a los
   correos permitidos; en la Fase 1.2 el rol vendrá de la base de datos.
-- `-`/`admin/login` se resuelven dinámicamente por request (`force-dynamic`):
-  un build sin credenciales no congela redirects ni estados de configuración.
+- `/admin` y `/admin/login` se resuelven dinámicamente por request
+  (`force-dynamic`): un build sin credenciales no congela redirects ni
+  estados de configuración.
 - Sin `User`, `Role`, `Permission` ni `AuditLog` persistentes todavía.
 
 **Pendiente (no se hace en esta fase):**
@@ -200,30 +203,51 @@ RBAC persistente y auditoría).
 falla cerrada si falta configuración; sin base de datos ni auditoría
 persistente.
 
-- Auth.js (v5) con Google OAuth/OIDC; Google solo identifica, Tueste decide
-  permisos.
-- Allowlist server-side de correos (`ADMIN_ALLOWED_EMAILS`, CSV normalizada);
-  validada en el login y de nuevo al consultar la sesión.
-- Protección real de `/admin` con `requireAdmin()`; login, acceso denegado y
-  logout; panel mínimo protegido.
-- Roles y capacidades puras (`permissions.ts`) sin base de datos.
-- **El rol temporal de esta fase es `admin`, asignado en servidor** a los
-  correos permitidos; en la Fase 1.2 el rol vendrá de la base de datos.
-- Configuración manual futura en Google Cloud (no realizada todavía):
-  - redirect URI local: `http://localhost:3000/api/auth/callback/google`
-  - redirect URI de producción futura:
-    `https://admin.tueste.shop/api/auth/callback/google`
-- Sin `User`, `Role`, `Permission` ni `AuditLog` persistentes todavía.
+### Fase 1.2.0 — contrato de persistencia preparado
 
-**Criterio de salida:** nadie entra al panel sin Google + allowlist; la app
-falla cerrada si falta configuración; sin base de datos ni auditoría
-persistente.
+Contratos puros y testeables en `src/features/admin/` (sin base de datos):
+
+- `identity.ts` — `AdminUser` / `AdminRole` persistentes y validación Zod.
+- `audit.ts` — `AuditLogEntry` y validación de metadata serializable.
+- `repository.ts` — puerto `AdminIdentityRepository` (solo interfaz).
+
+Estado real:
+
+- **PostgreSQL será necesario antes de activar RBAC persistente.**
+- La implementación futura tendrá tablas conceptuales: `User`, `Role`,
+  `UserRole`, `AuditLog`.
+- **Google sigue siendo identidad, no autoridad de permisos**: el servidor
+  consultará roles/capacidades persistentes en cada operación.
+- `AuditLog` será **append-only**: nunca editable desde la interfaz.
+- La selección de proveedor PostgreSQL y ORM queda **pendiente** y no se tomó
+  en esta fase (puede ser AWS RDS, Supabase PostgreSQL, Neon u otro).
+- **No hay base de datos, datos reales, migraciones ni auditoría guardada
+  aún.** No afirmar que la persistencia está implementada.
+
+### Fase 1.2.3 — cierre del contrato de persistencia (cerrada)
+
+- Los contratos de **identidad, RBAC, auditoría y repositorio están
+  listos** (puros, TypeScript/Zod, sin red ni infraestructura).
+- **Aún no hay persistencia real**: sin base de datos, sin migraciones,
+  sin datos guardados.
+- **Siguiente paso aprobado:** PostgreSQL administrado en **Supabase** +
+  **Drizzle ORM** + migraciones. Supabase se usará como PostgreSQL y, en
+  el futuro, Storage; **no se usará Supabase Auth**.
+- Google OAuth seguirá siendo manejado por **Auth.js**.
+- Arquitectura futura de tablas: `users`, `roles`, `user_roles`,
+  `audit_logs`, `auth_accounts`, `auth_sessions`.
+- La base funcional del admin **no avanzará** hasta tener base de datos,
+  credenciales y RBAC persistente (Fase 1.2 siguiente).
 
 ### Fase 1.2 — RBAC persistente
 
-- PostgreSQL con `User`, `Role`, `Permission` y `AuditLog`.
-- El rol deja de ser temporal: `getCurrentAdmin()` consulta la base de datos.
+- PostgreSQL con `User`, `Role`, `Permission` y `AuditLog` (tablas
+  conceptuales `User`, `Role`, `UserRole`, `AuditLog`).
+- El rol deja de ser temporal: `getCurrentAdmin()` consulta el repositorio.
 - Auditoría inmutable de acciones y pruebas de autorización de servidor.
+- Las acciones mutables deberán registrar un `AuditLog` append-only con:
+  actor, acción, objetivo, fecha, **razón obligatoria** y metadata segura.
+- La fecha de auditoría la inyecta la capa de persistencia.
 
 ### Fase 2 — Contenido y activos
 
@@ -255,7 +279,10 @@ subastas/TuesteX se toman en el orden de la tabla anterior.
 - Roles, entidades, límites y dependencias están definidos antes de crear
   tablas o rutas.
 - Google es proveedor de identidad inicial; los permisos pertenecen a Tueste.
-- La siguiente fase es exclusivamente la **fundación segura** (Fase 1).
+- Antecedente histórico: esta Fase 0 definió que el siguiente paso era la
+  fundación segura. Ese trabajo ya existe como Fase 1.1 (implementada
+  localmente); el siguiente trabajo real pendiente es activar el **RBAC
+  persistente con PostgreSQL** después de decidir el proveedor.
 - El panel se desarrollará en `feat/admin-foundation`, luego PR a `develop` y
   finalmente PR de `develop` a `main`, con `npm run verify` documentado antes
   de cada merge mientras GitHub Actions siga desactivado.

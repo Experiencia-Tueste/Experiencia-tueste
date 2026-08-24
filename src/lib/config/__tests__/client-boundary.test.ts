@@ -43,6 +43,34 @@ describe('frontera cliente/servidor (configuración)', () => {
     expect(offenders).toEqual([]);
   });
 
+  it('ningún componente cliente importa rutas de administración sensibles', () => {
+    // Patrones de administración que jamás deben alcanzar un bundle
+    // cliente, ni directa ni indirectamente (imports de módulos).
+    const SENSITIVE_PATTERNS = [
+      '@/lib/config/admin-auth-env',
+      'lib/config/admin-auth-env',
+      '@/lib/auth/',
+      'lib/auth/',
+      '@/auth',
+      'next-auth',
+    ];
+
+    const offenders: string[] = [];
+    for (const file of files) {
+      const raw = readFileSync(file, 'utf-8');
+      if (!raw.startsWith("'use client'") && !raw.includes('"use client"')) continue;
+      // Se evalúa el código sin comentarios: los JSDoc pueden nombrar la
+      // prohibición sin importarla.
+      const code = raw.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+      for (const pattern of SENSITIVE_PATTERNS) {
+        if (code.includes(pattern)) {
+          offenders.push(`${file} -> ${pattern}`);
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
   it('process.env solo vive en los módulos de configuración', () => {
     const offenders: string[] = [];
     for (const file of files) {

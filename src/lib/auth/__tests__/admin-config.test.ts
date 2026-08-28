@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { loadAdminAuthConfig, parseAllowedEmails } from '../admin-config';
+import { loadAdminAuthConfig } from '../admin-config';
 
 /**
  * Pruebas de la configuración server-only del panel: parsing de la
@@ -7,34 +7,11 @@ import { loadAdminAuthConfig, parseAllowedEmails } from '../admin-config';
  * reales ni red.
  */
 
-describe('admin-config · ADMIN_ALLOWED_EMAILS', () => {
-  it('normaliza mayúsculas y espacios', () => {
-    expect(parseAllowedEmails('  Admin@Tueste.Co , otro@tueste.co ')).toEqual([
-      'admin@tueste.co',
-      'otro@tueste.co',
-    ]);
-  });
-
-  it('elimina duplicados', () => {
-    expect(parseAllowedEmails('a@tueste.co,A@TUESTE.CO,a@tueste.co')).toEqual(['a@tueste.co']);
-  });
-
-  it('una lista vacía no autoriza a nadie', () => {
-    expect(parseAllowedEmails(undefined)).toEqual([]);
-    expect(parseAllowedEmails('')).toEqual([]);
-    expect(parseAllowedEmails('   , ,  ')).toEqual([]);
-  });
-
-  it('un correo inválido produce un error claro', () => {
-    expect(() => parseAllowedEmails('no-es-correo')).toThrow(/ADMIN_ALLOWED_EMAILS/);
-  });
-});
-
 describe('admin-config · configuración de Google', () => {
   it('ambas variables ausentes → Google no configurado', () => {
     const config = loadAdminAuthConfig({});
     expect(config.googleConfigured).toBe(false);
-    expect(config.allowedEmails).toEqual([]);
+    expect(config.authSecret).toBe('');
   });
 
   it('solo una variable → error claro de configuración parcial', () => {
@@ -51,11 +28,10 @@ describe('admin-config · configuración de Google', () => {
       AUTH_GOOGLE_ID: 'id',
       AUTH_GOOGLE_SECRET: 'secret',
       AUTH_SECRET: 'secret-sesion',
-      ADMIN_ALLOWED_EMAILS: 'admin@tueste.co',
     });
     expect(config.googleConfigured).toBe(true);
     expect(config.googleClientId).toBe('id');
-    expect(config.allowedEmails).toEqual(['admin@tueste.co']);
+    expect(config.authSecret).toBe('secret-sesion');
   });
 
   it('Google configurado sin AUTH_SECRET → error claro (fallo cerrado)', () => {

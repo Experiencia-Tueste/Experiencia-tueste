@@ -1,6 +1,9 @@
 import { z } from 'zod';
 import { ALL_CAPABILITIES } from './permissions';
-import type { AdminCapability, AdminRole as AdminRoleKey } from './permissions';
+import type { AdminCapability } from './permissions';
+
+/** Clave estable de un rol persistente (tipo de permissions.ts). */
+export type AdminRoleKey = import('./permissions').AdminRole;
 
 /**
  * Modelo de identidad persistente del panel — solo tipos y validación.

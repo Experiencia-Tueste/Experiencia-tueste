@@ -172,3 +172,40 @@ CloudWatch):
   absorberá y cacheará las rutas estáticas.
 - **HSTS** se habilitará solo al confirmar el dominio HTTPS propio.
 - Antes de producción habrá **staging** y **pruebas de carga**.
+
+## Panel administrativo (estado actual)
+
+- **RBAC persistente implementado**: acceso por usuario `active` con rol
+  en PostgreSQL (schema `private`); sin allowlist.
+- **Fase 2 parcialmente implementada**: contratos Zod, servicio con
+  auditoría append-only en transacciones y ruta `/admin/contenido`.
+- Migración `0001_blue_tarantula.sql` generada y pendiente de
+  confirmar/aplicar con `npm run db:migrate`.
+- Storage, biblioteca multimedia, editor completo y gestión de pistas
+  pendientes.
+
+## Panel administrativo (Fase 1.2.2)
+
+- La base administrativa usa **PostgreSQL de Supabase** (datos en el
+  schema privado `private`).
+- Las migraciones se generan con `npm run db:generate` y se aplican con
+  `npm run db:migrate` (ambas leen `DATABASE_URL` desde `.env.local`).
+- `.env.local` **nunca se sube al repositorio**.
+- Esquema declarativo en `src/db/schema/admin-identity.ts`; cliente
+  server-only en `src/db/client.ts`.
+
+## Panel administrativo (Fase 1.2.1) — HISTORIAL
+
+> **Historial:** fase previa a la conexión de base de datos. Desde la
+> Fase 1.2.2 existen cliente PostgreSQL, migraciones y las cuatro tablas
+> en Supabase; el contenido siguiente se conserva como registro.
+
+- Esquema declarativo de identidad en `src/db/schema/admin-identity.ts`
+  (Drizzle ORM, schema `private`): `admin_users`, `admin_roles`,
+  `admin_user_roles`, `audit_logs`.
+- **Sin conexión de base de datos todavía**: no hay `DATABASE_URL`,
+  cliente SQL, migraciones ni tablas creadas.
+- Semilla pura de roles en `src/db/admin-identity-seed.ts`.
+- La siguiente fase configurará `DATABASE_URL` de forma privada y
+  aplicará migraciones controladas. Auth.js + Google sigue siendo la
+  autenticación del panel.

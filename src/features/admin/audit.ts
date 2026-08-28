@@ -5,10 +5,10 @@ import { z } from 'zod';
  * ---------------------------------------------------------------------
  * Solo tipos y validación de metadata. No almacena logs, no genera ids
  * aleatorios, no usa Date.now() ni Math.random(): `occurredAt` e `id`
- * los proveerá la capa de persistencia futura.
+ * los provee la capa de persistencia (repositorio Drizzle).
  */
 
-/** Acciones iniciales estrictamente administrativas. */
+/** Acciones administrativas auditables (identidad + contenido Fase 2). */
 export const AUDIT_ACTIONS = [
   'user.invited',
   'user.activated',
@@ -17,14 +17,47 @@ export const AUDIT_ACTIONS = [
   'role.revoked',
   'auth.sign_in',
   'auth.sign_out',
+  'content.created',
+  'content.updated',
+  'content.reviewed',
+  'content.published',
+  'content.archived',
+  'release.created',
+  'release.reviewed',
+  'release.published',
+  'release.archived',
+  'asset.created',
+  'asset.approved',
+  'asset.archived',
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
+
+/** Acciones de contenido: tipo derivado de AuditAction (solo en tiempo
+ *  de compilación; sin lista runtime duplicada). Extract garantiza que
+ *  cada literal es una AuditAction válida: no puede desalinearse. */
+export type ContentAuditAction = Extract<
+  AuditAction,
+  | 'content.created'
+  | 'content.updated'
+  | 'content.reviewed'
+  | 'content.published'
+  | 'content.archived'
+  | 'release.created'
+  | 'release.reviewed'
+  | 'release.published'
+  | 'release.archived'
+  | 'asset.created'
+  | 'asset.approved'
+  | 'asset.archived'
+>;
 
 /** Entrada de auditoría inmutable. */
 export interface AuditLogEntry {
   id: string;
   actorUserId: string;
+  /** Snapshot del correo del actor (opcional; nunca null si se conoce). */
+  actorEmail?: string;
   action: AuditAction;
   targetType: string;
   targetId: string;
@@ -114,11 +147,12 @@ function isValidMetadataValue(value: unknown, ancestors: WeakSet<object>): boole
 }
 
 export const AUDIT_ENTRY_SCHEMA = z.object({
-  id: z.string().min(1).max(64),
-  actorUserId: z.string().min(1).max(64),
+  id: z.string().uuid(),
+  actorUserId: z.string().uuid(),
+  actorEmail: z.string().trim().toLowerCase().email().optional(),
   action: z.enum(AUDIT_ACTIONS),
   targetType: z.string().trim().min(1).max(80),
-  targetId: z.string().min(1).max(64),
+  targetId: z.string().uuid(),
   occurredAt: z.string().datetime(),
   reason: z
     .string()

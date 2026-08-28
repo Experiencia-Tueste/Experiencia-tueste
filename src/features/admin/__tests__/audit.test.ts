@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { AUDIT_ACTIONS, isSafeReason, parseAuditEntry, validateAuditMetadata } from '../audit';
+import type { ContentAuditAction } from '../audit';
 
 /**
  * Pruebas del contrato de auditoría inmutable: razón obligatoria,
@@ -8,11 +9,11 @@ import { AUDIT_ACTIONS, isSafeReason, parseAuditEntry, validateAuditMetadata } f
  */
 
 const VALID_ENTRY = {
-  id: 'audit_1',
-  actorUserId: 'usr_1',
+  id: 'a3f8b6c2-9d4e-4f1a-8b7c-2d5e6f7a8b9c',
+  actorUserId: 'b4c9d7e3-0a5f-4b2c-9d8e-3f6a7b8c9d0e',
   action: 'user.invited' as const,
   targetType: 'user',
-  targetId: 'usr_2',
+  targetId: 'c5d0e8f4-1b6a-4c3d-9e0f-4a7b8c9d0e1f',
   occurredAt: '2026-08-24T12:00:00.000Z',
   reason: 'Invitación inicial del equipo',
   metadata: { from: 'invited', to: 'active' },
@@ -28,6 +29,18 @@ describe('admin · auditoría (reason obligatoria)', () => {
       'role.revoked',
       'auth.sign_in',
       'auth.sign_out',
+      'content.created',
+      'content.updated',
+      'content.reviewed',
+      'content.published',
+      'content.archived',
+      'release.created',
+      'release.reviewed',
+      'release.published',
+      'release.archived',
+      'asset.created',
+      'asset.approved',
+      'asset.archived',
     ]);
   });
 
@@ -59,6 +72,17 @@ describe('admin · auditoría (reason obligatoria)', () => {
     expect(isSafeReason('El token=abc del cliente')).toBe(false);
     expect(isSafeReason('password=1234 guardada')).toBe(false);
     expect(() => parseAuditEntry({ ...VALID_ENTRY, reason: 'access_token=xyz' })).toThrow();
+  });
+});
+
+describe('admin · auditoría (acciones de contenido derivadas)', () => {
+  it('ContentAuditAction es un tipo derivado de AuditAction (compilación)', () => {
+    // Extract garantiza la alineación en tiempo de compilación: cualquier
+    // literal de contenido es asignable a AuditAction.
+    const accion: ContentAuditAction = 'content.published';
+    const comoAuditAction: (typeof AUDIT_ACTIONS)[number] = accion;
+    expect(comoAuditAction).toBe('content.published');
+    expect(AUDIT_ACTIONS).toContain(accion);
   });
 });
 

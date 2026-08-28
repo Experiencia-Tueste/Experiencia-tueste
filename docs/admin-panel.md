@@ -1,4 +1,23 @@
-# Panel administrativo de Tueste — contrato de Fase 0
+# Panel administrativo de Tueste — historial y estado de implementación
+
+> El plan rector actual está en
+> [docs/admin-architecture.md](./admin-architecture.md). Este documento
+> conserva el contrato y el historial de las fases ya implementadas; no debe
+> usarse para decidir nuevas funcionalidades si contradice el documento
+> rector.
+
+## Estado actual (una sola fuente de verdad)
+
+- **RBAC persistente implementado**: acceso por usuario `active` con rol
+  en PostgreSQL; capacidades por rol (y unión si hay varios roles).
+- **Fase 2 parcialmente implementada**: contratos Zod, repositorio y
+  servicio de contenido, ruta `/admin/contenido` (listado y transiciones
+  con auditoría append-only en transacciones).
+- **Migración de contenido (`0001_blue_tarantula.sql`) generada y
+  revisada**; se aplica manualmente con `npm run db:migrate` cuando se
+  confirme.
+- **Pendiente todavía**: Storage real (URLs firmadas), biblioteca
+  multimedia completa, editor de contenido completo y gestión de pistas.
 
 ## 1. Propósito y alcance
 
@@ -54,9 +73,10 @@ solamente identifica a la persona. **Tueste decide los permisos** en su propia
 base de datos, verificados del lado del servidor en cada Route Handler y Server
 Action.
 
-El acceso inicial será por **allowlist de correos corporativos aprobados**. Un
-inicio de sesión válido de Google que no esté en la allowlist no otorga entrada
-al panel.
+El acceso lo decide el **RBAC persistente**: un usuario debe existir en
+`private.admin_users` con estado `active` y al menos un rol. (La allowlist
+`ADMIN_ALLOWED_EMAILS` fue una etapa intermedia de la Fase 1.1 y ya no se
+consulta.)
 
 ### Variables futuras (sin valores; nunca con prefijo `NEXT_PUBLIC_`)
 
@@ -167,9 +187,14 @@ administración.
 | 7         | **Mercado Pago y pagos**                 | Cobros.                                           | Flujos aprobados, webhooks y legal.            |
 | 8         | **Subastas, TuesteX y automatizaciones** | Experiencias especiales.                          | Auditoría, pagos y reglas de negocio cerradas. |
 
-### Fase 1.1 — Fundación segura (Google OAuth, allowlist y sesiones, sin persistencia)
+### Fase 1.1 — Fundación segura (HISTORIAL)
 
-**Estado: implementada localmente en `feat/admin-foundation`**, pero sigue
+> **Historial:** la Fase 1.1 fue la primera capa (Google OAuth + allowlist
+> temporal). Desde la Fase 1.2 el acceso lo decide el RBAC persistente; la
+> allowlist quedó retirada. El contenido siguiente se conserva como registro
+> histórico.
+
+**Estado en su momento:** implementada localmente en `feat/admin-foundation`,
 pendiente configurar el OAuth Client real en Google Cloud y colocar las
 variables server-side en el hosting.
 
@@ -203,7 +228,12 @@ RBAC persistente y auditoría).
 falla cerrada si falta configuración; sin base de datos ni auditoría
 persistente.
 
-### Fase 1.2.0 — contrato de persistencia preparado
+### Fase 1.2.0 — contrato de persistencia preparado (HISTORIAL)
+
+> **Historial:** esta fase definió los contratos puros antes de que
+> existiera PostgreSQL. Desde la Fase 1.2 el RBAC es persistente y la
+> migración de identidad está aplicada; el contenido siguiente se conserva
+> como registro histórico.
 
 Contratos puros y testeables en `src/features/admin/` (sin base de datos):
 
@@ -224,7 +254,40 @@ Estado real:
 - **No hay base de datos, datos reales, migraciones ni auditoría guardada
   aún.** No afirmar que la persistencia está implementada.
 
-### Fase 1.2.3 — cierre del contrato de persistencia (cerrada)
+### Fase 1.2.2 — migración segura de identidad (aplicada)
+
+- Migración versionada **aplicada** (`drizzle/0000_lean_malice.sql`) con
+  schema `private`, CHECK constraints, UUIDs por servidor, defaults `now()`
+  y revocación de acceso a `PUBLIC`/`anon`/`authenticated`.
+- Cliente PostgreSQL server-only (`src/db/client.ts`, `getDb()` perezoso).
+- Las cuatro tablas quedaron creadas en Supabase: `private.admin_users`,
+  `private.admin_roles`, `private.admin_user_roles`, `private.audit_logs`.
+- Detalles en `docs/database-admin.md`.
+
+### Fase 1.2.1 — esquema declarativo de identidad (HISTORIAL)
+
+> **Historial:** esta fase declaró el esquema antes de la conexión. Desde
+> la Fase 1.2.2 existen cliente PostgreSQL, migraciones y las cuatro
+> tablas creadas en Supabase; el contenido siguiente se conserva como
+> registro histórico.
+
+- El esquema futuro está **declarado en código** (Drizzle ORM) en
+  `src/db/schema/admin-identity.ts`, dentro del schema `private`:
+  `admin_users`, `admin_roles`, `admin_user_roles`, `audit_logs`.
+- **Todavía no existe una conexión de base de datos.**
+- **No se han creado tablas ni migraciones.**
+- Semilla pura de los seis roles en `src/db/admin-identity-seed.ts`.
+- **Siguiente fase (1.2.2):** configurar `DATABASE_URL` únicamente en
+  `.env.local`, generar una migración revisable y aplicarla de forma
+  explícita.
+- Supabase se usará como PostgreSQL administrado; **Auth.js + Google
+  continúa siendo la autenticación** (sin Supabase Auth).
+
+### Fase 1.2.3 — cierre del contrato de persistencia (HISTORIAL)
+
+> **Historial:** esta fase cerró el contrato puro antes de implementar la
+> persistencia. Desde la Fase 1.2 el RBAC es persistente (migración de
+> identidad aplicada); el contenido siguiente se conserva como registro.
 
 - Los contratos de **identidad, RBAC, auditoría y repositorio están
   listos** (puros, TypeScript/Zod, sin red ni infraestructura).
@@ -239,22 +302,44 @@ Estado real:
 - La base funcional del admin **no avanzará** hasta tener base de datos,
   credenciales y RBAC persistente (Fase 1.2 siguiente).
 
-### Fase 1.2 — RBAC persistente
+### Fase 1.2 — RBAC persistente (implementada)
 
-- PostgreSQL con `User`, `Role`, `Permission` y `AuditLog` (tablas
-  conceptuales `User`, `Role`, `UserRole`, `AuditLog`).
-- El rol deja de ser temporal: `getCurrentAdmin()` consulta el repositorio.
-- Auditoría inmutable de acciones y pruebas de autorización de servidor.
-- Las acciones mutables deberán registrar un `AuditLog` append-only con:
-  actor, acción, objetivo, fecha, **razón obligatoria** y metadata segura.
-- La fecha de auditoría la inyecta la capa de persistencia.
+- `getCurrentAdmin()` consulta el usuario y sus roles en PostgreSQL
+  (`DrizzleAdminIdentityRepository`): acceso solo con estado `active` y al
+  menos un rol persistido. **La allowlist temporal de ADMIN_ALLOWED_EMAILS
+  dejó de decidir el acceso** (Auth.js solo identifica; los permisos viven
+  en la base).
+- Auditoría append-only implementada: `appendAudit` valida razón y metadata
+  con los contratos antes de insertar.
+- Bootstrap idempotente de roles y primer admin: `db:bootstrap` con
+  `ADMIN_BOOTSTRAP_EMAIL` (documentado en `docs/database-admin.md`).
+- Fallo cerrado: usuario inexistente, suspendido, sin rol o error de acceso
+  ⇒ sin permisos.
 
-### Fase 2 — Contenido y activos
+### Fase 2 — Contenido y activos (parcialmente implementada)
 
-- Biblioteca de medios con metadatos, borrador/revisión/publicación y uso de
-  assets en secciones públicas.
-- Gestión de lanzamientos/pistas y enlaces externos con preview solo cuando el
-  proveedor lo permita.
+- **Modelo nuevo** en schema `private`: `assets`, `content_entries`,
+  `releases`, `tracks` con ciclos de estado (contenido:
+  draft → review → published → archived; activos:
+  pending → approved → archived) y actores/fechas en cambios importantes.
+- **Migración `0001_blue_tarantula.sql` generada y revisada** — queda
+  **pendiente de aplicar** manualmente con `npm run db:migrate`.
+- **Repositorios server-only** (`src/db/admin-content-repository.ts`) y
+  **servicio** (`src/features/admin/content-service.ts`): sesión → 401,
+  capacidad → 403, validación Zod y auditoría append-only con razón
+  obligatoria en transiciones.
+- **Ruta protegida** `/admin/contenido`: listado, estados, acciones según
+  capacidades y mensajes de error reales.
+- **Capacidades**: `content.read` (lectura), `content.edit` (crear/editar/
+  preparar/revisar/archivar), `content.publish` (publicar; solo
+  owner/admin). Los usuarios con varios roles suman capacidades (unión).
+- **Almacenamiento**: contrato provider-neutral (`storage-contract.ts`);
+  sin subidas reales ni URLs firmadas hasta configurar credenciales de
+  Storage (documentado en `docs/database-admin.md`).
+
+**Pendiente de la Fase 2 (fase parcial):** Storage real con URLs firmadas,
+editor completo de contenido, biblioteca multimedia (assets) con su flujo
+pendiente → approved → archived, gestión de pistas y publicación pública.
 
 ### Fase 3 — CRM B2B, solicitudes y eventos
 
@@ -272,7 +357,11 @@ Estado real:
 Radio/Mercado, comunidad/analítica, pagos con Mercado Pago y por último
 subastas/TuesteX se toman en el orden de la tabla anterior.
 
-## 10. Criterios de salida de Fase 0
+## 10. Criterios de salida de Fase 0 (HISTORIAL)
+
+> **Historial:** criterios definidos antes de la fundación segura (Fase 1.1)
+> y del RBAC persistente (Fase 1.2), ambos implementados desde entonces.
+> El contenido siguiente se conserva como registro histórico.
 
 - Shopify queda aislado (fuera del alcance transaccional del panel).
 - **No hay auth, base de datos, endpoints ni pagos implementados.**

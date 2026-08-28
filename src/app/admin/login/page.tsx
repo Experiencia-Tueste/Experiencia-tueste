@@ -10,13 +10,16 @@ export const dynamic = 'force-dynamic';
 /**
  * /admin/login — acceso restringido del panel interno.
  *
- * Si Google no está configurado (o la allowlist está vacía), muestra el
- * estado editorial «Acceso interno en configuración» sin botón activo y
- * sin detalles técnicos. Nunca expone la allowlist ni secretos.
+ * Si Google no está configurado, muestra el estado editorial «Acceso
+ * interno en configuración» sin botón activo y sin detalles técnicos.
+ * La autorización final la decide el RBAC persistente (usuario activo
+ * con rol en PostgreSQL). Nunca expone secretos.
  */
 export default function AdminLoginPage() {
   const config = loadAdminConfig();
-  const disponible = config.googleConfigured && config.allowedEmails.length > 0;
+  // La disponibilidad del botón depende SOLO de que Google OAuth esté
+  // configurado; la autorización final la decide el RBAC persistente.
+  const disponible = config.googleConfigured;
 
   return (
     <main className={styles.center}>

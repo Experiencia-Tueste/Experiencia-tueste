@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { loadPublicConfig } from '../env-public';
-import { loadShopifyStoreUrl, loadSiteUrl } from '../env-server';
+import { loadAdminStorageConfig, loadShopifyStoreUrl, loadSiteUrl } from '../env-server';
 
 /**
  * Pruebas del contrato de configuración. Nunca dependen del entorno
@@ -95,6 +95,49 @@ describe('loadShopifyStoreUrl (URL pública de la tienda)', () => {
     expect(() => loadShopifyStoreUrl({ SHOPIFY_STORE_URL: 'http://tueste.com' })).toThrow(
       /SHOPIFY_STORE_URL/,
     );
+  });
+});
+
+describe('loadAdminStorageConfig (Storage privado del panel)', () => {
+  it('devuelve null si Storage no está configurado', () => {
+    expect(loadAdminStorageConfig({})).toBeNull();
+    expect(
+      loadAdminStorageConfig({
+        SUPABASE_STORAGE_URL: '',
+        SUPABASE_STORAGE_ADMIN_KEY: '',
+        SUPABASE_STORAGE_BUCKET: '',
+      }),
+    ).toBeNull();
+  });
+
+  it('exige configuración completa si se activa Storage', () => {
+    expect(() =>
+      loadAdminStorageConfig({ SUPABASE_STORAGE_URL: 'https://demo.supabase.co' }),
+    ).toThrow(/Storage/);
+  });
+
+  it('devuelve la configuración privada completa', () => {
+    expect(
+      loadAdminStorageConfig({
+        SUPABASE_STORAGE_URL: 'https://demo.supabase.co',
+        SUPABASE_STORAGE_ADMIN_KEY: 'storage-admin-demo',
+        SUPABASE_STORAGE_BUCKET: 'tueste-admin-assets',
+      }),
+    ).toEqual({
+      supabaseUrl: 'https://demo.supabase.co',
+      adminKey: 'storage-admin-demo',
+      bucket: 'tueste-admin-assets',
+    });
+  });
+});
+
+describe('lectura literal para el bundle cliente', () => {
+  it('supabasePublicEnv devuelve las públicas con acceso literal a process.env', () => {
+    const src = readFileSync(resolve(__dirname, '../env-public.ts'), 'utf-8');
+    // El acceso literal permite a Next reemplazar los valores en el
+    // bundle cliente (la inyección no depende de `env` dinámico).
+    expect(src).toContain('process.env.NEXT_PUBLIC_SUPABASE_URL');
+    expect(src).toContain('process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY');
   });
 });
 

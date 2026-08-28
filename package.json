@@ -18,15 +18,20 @@
     "lint:fix": "eslint . --fix",
     "format:check": "prettier --check .",
     "format": "prettier --write .",
-    "verify": "npm run lint && npm run format:check && npm run typecheck && npm test && npm run build"
+    "verify": "npm run lint && npm run format:check && npm run typecheck && npm test && npm run build",
+    "db:generate": "node --env-file=.env.local ./node_modules/drizzle-kit/bin.cjs generate",
+    "db:migrate": "node --env-file=.env.local ./node_modules/drizzle-kit/bin.cjs migrate",
+    "db:bootstrap": "node --env-file=.env.local ./scripts/bootstrap-admin.mjs"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^7.0.0",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.3",
     "@types/node": "^26.2.0",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
+    "drizzle-kit": "^0.31.10",
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.3.0",
     "eslint-config-prettier": "^10.1.8",
@@ -39,8 +44,10 @@
   "dependencies": {
     "@supabase/ssr": "^0.12.4",
     "@supabase/supabase-js": "^2.112.2",
+    "drizzle-orm": "^0.45.2",
     "next": "^16.3.0",
     "next-auth": "^5.0.0-beta.32",
+    "pg": "^8.23.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "server-only": "^0.0.1",

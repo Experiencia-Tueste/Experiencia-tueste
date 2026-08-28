@@ -2,43 +2,50 @@ import 'server-only';
 
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
-import { resolveAdminRole } from '@/features/admin/authorization-core';
-import { hasCapability } from '@/features/admin/permissions';
-import type { AdminCapability, AdminRole } from '@/features/admin/permissions';
-import { loadAdminConfig } from '@/lib/config/admin-auth-env';
+import { resolvePersistedAdmin } from '@/features/admin/authorization-core';
+import type { CurrentAdmin } from '@/features/admin/authorization-core';
+import type { AdminCapability } from '@/features/admin/permissions';
+import { getAdminRepository } from '@/db/admin-identity-repository';
 
 /**
- * Capa de autorización server-only del panel.
+ * Capa de autorización server-only del panel (Fase 1.2 — RBAC
+ * persistente).
  * ---------------------------------------------------------------------
- * Consulta `auth()` de Auth.js en servidor y decide el acceso. En la
- * Fase 1.1 el rol temporal de los correos permitidos es `admin`; en la
- * Fase 1.2 el rol provendrá de la base de datos (User/Role/Permission).
+ * `getCurrentAdmin()` obtiene la identidad de Auth.js (Google),
+ * normaliza el correo, consulta el usuario y sus roles en PostgreSQL y
+ * concede acceso SOLO a usuarios con estado `active` y al menos un rol
+ * persistido. Falla cerrada: usuario inexistente, suspendido, sin rol o
+ * error de acceso ⇒ null (sin permisos).
  *
- * Ninguna de estas funciones se usa desde componentes cliente y ninguna
- * filtra datos sensibles (secretos ni allowlist).
+ * Ninguna función se usa desde componentes cliente y ninguna filtra
+ * secretos, DATABASE_URL ni consultas administrativas.
  */
 
-export interface CurrentAdmin {
-  email: string;
-  name: string | null;
-  /** Rol temporal de la Fase 1.1 (server-side). */
-  role: AdminRole;
-}
-
-/** Administrador actual, o null si no hay sesión válida.
- *  Fase 1.2: el rol dejará de ser temporal y vendrá del repositorio
- *  persistente (AdminIdentityRepository). El comportamiento de la
- *  Fase 1.1 no cambia en esta fase. */
+/** Administrador actual, o null si no hay sesión o identidad válida. */
 export async function getCurrentAdmin(): Promise<CurrentAdmin | null> {
   const session = await auth();
-  const email = session?.user?.email ?? null;
-  const name = session?.user?.name ?? null;
-  const config = loadAdminConfig();
-  const role = resolveAdminRole(email, config.allowedEmails);
+  const email = session?.user?.email?.trim().toLowerCase();
+  if (!email) return null;
 
-  if (role === null) return null;
+  const repository = getAdminRepository();
 
-  return { email: email as string, name, role };
+  try {
+    const user = await repository.findUserByEmail(email);
+    if (user === null) return null;
+    const roles = await repository.findRolesByUserId(user.id);
+    const admin = resolvePersistedAdmin(user, roles);
+    return admin === null ? null : { ...admin, id: user.id };
+  } catch (error) {
+    // Fail closed: un error de PostgreSQL nunca concede acceso. Se
+    // registra en servidor un marcador SEGURO para diagnosticar fallos
+    // de conexión o configuración: sin DATABASE_URL, mensajes de
+    // drivers, tokens, cookies ni sesiones.
+    console.error(
+      '[admin-auth] fallo al consultar la identidad persistente.',
+      error instanceof Error ? error.name : 'unknown',
+    );
+    return null;
+  }
 }
 
 /** Exige sesión de administrador; redirige a /admin/login si no la hay. */
@@ -50,11 +57,14 @@ export async function requireAdmin(): Promise<CurrentAdmin> {
   return admin;
 }
 
-/** Exige sesión Y una capacidad concreta; redirige a acceso denegado. */
+/** Exige sesión Y una capacidad concreta (unión de roles); redirige a
+ *  acceso denegado si no la tiene. */
 export async function requireCapability(capability: AdminCapability): Promise<CurrentAdmin> {
   const admin = await requireAdmin();
-  if (!hasCapability(admin.role, capability)) {
+  if (!admin.capabilities.includes(capability)) {
     redirect('/admin/acceso-denegado');
   }
   return admin;
 }
+
+export type { CurrentAdmin };

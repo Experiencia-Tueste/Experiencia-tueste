@@ -27,6 +27,41 @@ import styles from '../Admin.module.css';
 /** Estado inicial de useActionState (sin mensajes). */
 const initialActionState: ActionResult = {};
 
+/** Ayuda breve para el campo slug (repite el contrato de validación). */
+function SlugHint() {
+  return <p className={styles.fieldHint}>Solo minúsculas, números y guiones.</p>;
+}
+
+/** Ayuda breve para el campo razón (obligatoria y auditada). */
+function ReasonHint() {
+  return <p className={styles.fieldHint}>Queda guardada en auditoría.</p>;
+}
+
+/**
+ * Traduce un error de Storage del lado del navegador a un mensaje
+ * accionable y seguro (sin detalles JSON crudos ni secretos).
+ */
+function mensajeUploadAccionable(error: unknown): string {
+  if (error !== null && typeof error === 'object') {
+    const storageError = error as {
+      status?: unknown;
+      statusCode?: unknown;
+      code?: unknown;
+      message?: unknown;
+    };
+    const status = typeof storageError.status === 'number' ? storageError.status : undefined;
+    const code = typeof storageError.code === 'string' ? storageError.code : undefined;
+    const message = typeof storageError.message === 'string' ? storageError.message : '';
+    if (status === 404 || code === 'NoSuchBucket' || /bucket/i.test(message)) {
+      return 'Storage no encontró el bucket. Revisa que exista un bucket privado llamado tueste-admin-assets y que SUPABASE_STORAGE_BUCKET tenga exactamente ese nombre.';
+    }
+    if (status === 401 || status === 403 || code === 'AccessDenied') {
+      return 'Storage rechazó la autorización. Revisa que la key privada de Storage sea completa y del mismo proyecto.';
+    }
+  }
+  return 'No se pudo subir el archivo a Storage. Revisa la configuración de Storage e intenta nuevamente.';
+}
+
 /**
  * Formularios de contenido (cliente): usan useActionState para mostrar
  * mensajes de error/éxito reales de las Server Actions. Las acciones
@@ -221,6 +256,7 @@ export function EditContentForm({ row }: { row: ContentRow }) {
           defaultValue={row.slug}
           pattern="[a-z0-9-]+"
         />
+        <SlugHint />
       </label>
       <label className={styles.label}>
         Cuerpo
@@ -235,6 +271,7 @@ export function EditContentForm({ row }: { row: ContentRow }) {
           minLength={3}
           maxLength={300}
         />
+        <ReasonHint />
       </label>
       <button type="submit" className={styles.buttonGhost}>
         Guardar
@@ -255,6 +292,7 @@ export function CreateDraftForm() {
       <label className={styles.label}>
         Slug
         <input name="slug" className={styles.input} required pattern="[a-z0-9-]+" />
+        <SlugHint />
       </label>
       <label className={styles.label}>
         Cuerpo
@@ -263,6 +301,7 @@ export function CreateDraftForm() {
       <label className={styles.label}>
         Razón
         <input name="reason" className={styles.input} required minLength={3} maxLength={300} />
+        <ReasonHint />
       </label>
       <button type="submit" className={styles.button}>
         Crear borrador
@@ -345,22 +384,30 @@ export function CreateReleaseForm({ assets }: { assets: AssetRow[] }) {
       <label className={styles.label}>
         Slug
         <input name="slug" className={styles.input} required pattern="[a-z0-9-]+" />
+        <SlugHint />
       </label>
-      <AssetSelect
-        name="coverAssetId"
-        label="Portada"
-        assets={assets}
-        acceptedMimePrefix="image/"
-      />
-      <div className={styles.fieldGroup}>
-        <p className={styles.fieldHint}>Pistas opcionales</p>
-        {[0, 1, 2].map((index) => (
-          <TrackFields key={index} index={index} assets={assets} />
-        ))}
-      </div>
+      {assets.length === 0 ? (
+        <p className={styles.fieldHint}>Sube y aprueba activos antes de usarlos.</p>
+      ) : (
+        <>
+          <AssetSelect
+            name="coverAssetId"
+            label="Portada"
+            assets={assets}
+            acceptedMimePrefix="image/"
+          />
+          <div className={styles.fieldGroup}>
+            <p className={styles.fieldHint}>Pistas opcionales</p>
+            {[0, 1, 2].map((index) => (
+              <TrackFields key={index} index={index} assets={assets} />
+            ))}
+          </div>
+        </>
+      )}
       <label className={styles.label}>
         Razón
         <input name="reason" className={styles.input} required minLength={3} maxLength={300} />
+        <ReasonHint />
       </label>
       <button type="submit" className={styles.button}>
         Crear lanzamiento
@@ -383,6 +430,7 @@ export function AssetRegistrationForm() {
           maxLength={500}
           placeholder="tueste-admin-assets/carpeta/archivo.webp"
         />
+        <p className={styles.fieldHint}>Ruta completa dentro del bucket, incluido su nombre.</p>
       </label>
       <label className={styles.label}>
         Nombre de archivo
@@ -411,6 +459,7 @@ export function AssetRegistrationForm() {
       <label className={styles.label}>
         Razón
         <input name="reason" className={styles.input} required minLength={3} maxLength={300} />
+        <ReasonHint />
       </label>
       <button type="submit" className={styles.button}>
         Registrar activo
@@ -432,7 +481,10 @@ export function AssetUploadForm({ storageConfigured }: { storageConfigured: bool
 
     const form = event.currentTarget;
     const formData = new FormData(form);
-    const file = formData.get('file');
+    // Lectura directa del input (más robusta que FormData para archivos:
+    // jsdom no los incluye, y evita depender de la serialización).
+    const fileInput = form.elements.namedItem('file');
+    const file = fileInput instanceof HTMLInputElement ? fileInput.files?.[0] : undefined;
     const reason = String(formData.get('reason') ?? '').trim();
 
     if (!(file instanceof File) || file.size === 0) {
@@ -473,7 +525,9 @@ export function AssetUploadForm({ storageConfigured }: { storageConfigured: bool
       });
 
     if (uploadError) {
-      setState({ error: 'No se pudo subir el archivo a Storage.' });
+      // Mensaje accionable y seguro: nunca se muestra el error JSON
+      // crudo de Storage ni la URL del proveedor.
+      setState({ error: mensajeUploadAccionable(uploadError) });
       setPending(false);
       return;
     }
@@ -522,6 +576,7 @@ export function AssetUploadForm({ storageConfigured }: { storageConfigured: bool
           maxLength={300}
           disabled={pending}
         />
+        <ReasonHint />
       </label>
       {!storageConfigured ? (
         <p className={styles.feedbackError}>

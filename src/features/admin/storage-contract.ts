@@ -1,13 +1,13 @@
 /**
  * Contrato de almacenamiento de activos — provider-neutral.
  * ---------------------------------------------------------------------
- * Define lo que cualquier proveedor (Supabase Storage, S3, etc.) deberá
- * implementar. NO hay implementación real todavía: requiere credenciales
- * nuevas no configuradas (claves de Storage), por lo que la subida y las
- * URLs firmadas quedan documentadas como paso pendiente.
- *
- * Nada de esto llega al cliente: los secretos del proveedor son
- * exclusivamente server-side.
+ * Define lo que cualquier proveedor (Supabase Storage, S3, etc.) debe
+ * implementar. La implementación concreta actual vive en
+ * `src/integrations/storage/supabase-storage.ts` (Supabase Storage:
+ * subida con URL firmada y URLs de lectura firmadas); las credenciales
+ * del proveedor son exclusivamente server-side y nunca llegan al
+ * cliente. Sin credenciales configuradas, el panel opera sin Storage
+ * (fail cerrado, sin subidas).
  */
 
 export interface StoredAssetInput {

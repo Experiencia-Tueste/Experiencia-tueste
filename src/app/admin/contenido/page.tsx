@@ -21,6 +21,19 @@ export const metadata: Metadata = {
   description: 'Gestión editorial de contenido, lanzamientos y pistas del panel Tueste.',
 };
 
+/** Formatea bytes a una unidad legible (p. ej. «1,2 MB»). */
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  const units = ['KB', 'MB', 'GB'];
+  let value = bytes / 1024;
+  let unit = units[0];
+  for (let i = 1; i < units.length && value >= 1024; i += 1) {
+    value /= 1024;
+    unit = units[i];
+  }
+  return `${value.toLocaleString('es-AR', { maximumFractionDigits: 1 })} ${unit}`;
+}
+
 /**
  * /admin/contenido — gestión editorial de contenido (Fase 3).
  *
@@ -28,12 +41,21 @@ export const metadata: Metadata = {
  * acciones disponibles dependen de las capacidades del usuario
  * (content.read / content.edit / content.publish). Sin datos demo:
  * los estados vacíos y los errores son reales.
+ *
+ * Orden pensado para uso real: la Biblioteca de activos va primero
+ * (previews con URLs firmadas, subida cerca, registro manual bajo
+ * «Avanzado»), luego Lanzamientos (solo activos aprobados) y por
+ * último las Entradas editoriales.
  */
 export default async function AdminContentPage() {
   const admin = await requireCapability('content.read');
   const canEdit = admin.capabilities.includes('content.edit');
   const canPublish = admin.capabilities.includes('content.publish');
   const workspace = await getContentWorkspace(admin);
+
+  // Crear lanzamiento solo con activos aprobados (el servidor sigue
+  // validando; aquí solo se reduce lo que el usuario puede elegir).
+  const approvedAssets = workspace.assets.filter((asset) => asset.status === 'approved');
 
   return (
     <AdminShell admin={admin} currentPath="/admin/contenido">
@@ -46,29 +68,65 @@ export default async function AdminContentPage() {
           </p>
         </header>
 
-        <section className={styles.section} aria-labelledby="contenido-titulo">
-          <h2 id="contenido-titulo" className={styles.statusTitle}>
-            Entradas editoriales
-          </h2>
+        <section className={styles.section} aria-labelledby="assets-titulo">
+          <div className={styles.sectionHeader}>
+            <div>
+              <h2 id="assets-titulo" className={styles.statusTitle}>
+                Biblioteca de activos
+              </h2>
+              <p className={styles.empty}>
+                Storage {workspace.storage.configured ? 'configurado' : 'pendiente de configurar'}.
+                Sube y aprueba activos antes de usarlos.
+              </p>
+            </div>
+          </div>
 
-          {workspace.content.length === 0 ? (
-            <p className={styles.empty}>Aún no hay contenido. Crea el primer borrador.</p>
+          {workspace.assets.length === 0 ? (
+            <p className={styles.empty}>Aún no hay activos registrados.</p>
           ) : (
-            <ul className={styles.list}>
-              {workspace.content.map((row) => (
-                <li key={row.id} className={styles.row}>
-                  <div className={styles.rowMain}>
-                    <strong className={styles.rowTitle}>{row.title}</strong>
-                    <span className={styles.rowMeta}>
-                      {row.slug} · v{row.version} · {row.status}
-                    </span>
+            <ul className={styles.assetGrid}>
+              {workspace.assets.map((asset) => (
+                <li key={asset.id} className={styles.assetCard}>
+                  <div className={styles.assetPreviewWrap}>
+                    {asset.previewUrl ? (
+                      // URL firmada temporal de Storage (expira): next/image
+                      // la optimizaría y exigiría remotePatterns por dominio
+                      // desconocido; el preview se usa tal cual.
+                      // eslint-disable-next-line @next/next/no-img-element -- preview con URL firmada dinámica
+                      <img
+                        className={styles.assetPreview}
+                        src={asset.previewUrl}
+                        alt={asset.altText ?? asset.filename}
+                        loading="lazy"
+                      />
+                    ) : (
+                      <span className={styles.assetPreviewPlaceholder}>sin preview</span>
+                    )}
                   </div>
-                  {canEdit || canPublish ? (
-                    <ContentRowActions row={row} canEdit={canEdit} canPublish={canPublish} />
-                  ) : null}
+                  <div className={styles.assetInfo}>
+                    <strong className={styles.rowTitle}>{asset.filename}</strong>
+                    <span className={styles.rowMeta}>
+                      {asset.mimeType} · {formatBytes(asset.sizeBytes)} · {asset.status}
+                    </span>
+                    <code className={styles.assetStorageKey}>{asset.storageKey}</code>
+                  </div>
+                  <AssetRowActions id={asset.id} status={asset.status} canEdit={canEdit} />
                 </li>
               ))}
             </ul>
+          )}
+
+          {canEdit && (
+            <div className={styles.fieldGroup}>
+              <h3 className={styles.statusTitle}>Añadir activo</h3>
+              <AssetUploadForm storageConfigured={workspace.storage.configured} />
+              <details className={styles.advancedDetails}>
+                <summary className={styles.advancedSummary}>
+                  Avanzado: registrar activo manualmente
+                </summary>
+                <AssetRegistrationForm />
+              </details>
+            </div>
           )}
         </section>
 
@@ -112,53 +170,53 @@ export default async function AdminContentPage() {
               ))}
             </ul>
           )}
+
+          {canEdit && (
+            <div className={styles.fieldGroup}>
+              <h3 className={styles.statusTitle}>Crear lanzamiento</h3>
+              {approvedAssets.length === 0 ? (
+                <p className={styles.empty}>
+                  No hay activos aprobados para usar en un lanzamiento: sube y aprueba activos antes
+                  de usarlos.
+                </p>
+              ) : null}
+              <CreateReleaseForm assets={approvedAssets} />
+            </div>
+          )}
         </section>
 
-        <section className={styles.section} aria-labelledby="assets-titulo">
-          <div className={styles.sectionHeader}>
-            <div>
-              <h2 id="assets-titulo" className={styles.statusTitle}>
-                Biblioteca de activos
-              </h2>
-              <p className={styles.empty}>
-                Storage {workspace.storage.configured ? 'configurado' : 'pendiente de configurar'}.
-              </p>
-            </div>
-          </div>
-          {workspace.assets.length === 0 ? (
-            <p className={styles.empty}>Aún no hay activos registrados.</p>
+        <section className={styles.section} aria-labelledby="contenido-titulo">
+          <h2 id="contenido-titulo" className={styles.statusTitle}>
+            Entradas editoriales
+          </h2>
+
+          {workspace.content.length === 0 ? (
+            <p className={styles.empty}>Aún no hay contenido. Crea el primer borrador.</p>
           ) : (
             <ul className={styles.list}>
-              {workspace.assets.map((asset) => (
-                <li key={asset.id} className={styles.row}>
+              {workspace.content.map((row) => (
+                <li key={row.id} className={styles.row}>
                   <div className={styles.rowMain}>
-                    <strong className={styles.rowTitle}>{asset.filename}</strong>
+                    <strong className={styles.rowTitle}>{row.title}</strong>
                     <span className={styles.rowMeta}>
-                      {asset.mimeType} · {asset.sizeBytes} bytes · {asset.status}
+                      {row.slug} · v{row.version} · {row.status}
                     </span>
-                    <code className={styles.inlineCode}>{asset.storageKey}</code>
                   </div>
-                  <AssetRowActions id={asset.id} status={asset.status} canEdit={canEdit} />
+                  {canEdit || canPublish ? (
+                    <ContentRowActions row={row} canEdit={canEdit} canPublish={canPublish} />
+                  ) : null}
                 </li>
               ))}
             </ul>
           )}
-        </section>
 
-        {canEdit && (
-          <section className={styles.section} aria-labelledby="crear-titulo">
-            <h2 id="crear-titulo" className={styles.statusTitle}>
-              Crear borrador
-            </h2>
-            <CreateDraftForm />
-            <h3 className={styles.statusTitle}>Crear lanzamiento</h3>
-            <CreateReleaseForm assets={workspace.assets} />
-            <h3 className={styles.statusTitle}>Subir activo</h3>
-            <AssetUploadForm storageConfigured={workspace.storage.configured} />
-            <h3 className={styles.statusTitle}>Registrar activo</h3>
-            <AssetRegistrationForm />
-          </section>
-        )}
+          {canEdit && (
+            <div className={styles.fieldGroup}>
+              <h3 className={styles.statusTitle}>Crear borrador</h3>
+              <CreateDraftForm />
+            </div>
+          )}
+        </section>
       </main>
     </AdminShell>
   );

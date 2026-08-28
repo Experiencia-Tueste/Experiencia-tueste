@@ -333,13 +333,15 @@ Estado real:
 - **Capacidades**: `content.read` (lectura), `content.edit` (crear/editar/
   preparar/revisar/archivar), `content.publish` (publicar; solo
   owner/admin). Los usuarios con varios roles suman capacidades (unión).
-- **Almacenamiento**: contrato provider-neutral (`storage-contract.ts`);
-  sin subidas reales ni URLs firmadas hasta configurar credenciales de
-  Storage (documentado en `docs/database-admin.md`).
+- **Almacenamiento**: contrato provider-neutral (`storage-contract.ts`)
+  implementado con **Supabase Storage** (`src/integrations/storage/
+supabase-storage.ts`): subida con URL firmada desde el navegador y
+  previews firmados en la biblioteca. Las credenciales quedan
+  server-only; sin ellas el panel opera sin Storage (fail cerrado).
 
-**Pendiente de la Fase 2 (fase parcial):** Storage real con URLs firmadas,
-editor completo de contenido, biblioteca multimedia (assets) con su flujo
-pendiente → approved → archived, gestión de pistas y publicación pública.
+**Pendiente de la Fase 2 (fase parcial):** editor completo de contenido,
+biblioteca multimedia (assets) con su flujo pendiente → approved →
+archived, gestión de pistas y publicación pública.
 
 ### Fase 3 — CRM B2B, solicitudes y eventos
 

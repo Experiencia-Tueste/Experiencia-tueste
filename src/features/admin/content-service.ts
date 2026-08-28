@@ -17,7 +17,7 @@ import {
 } from './content-schemas';
 import type { AdminCapability } from './permissions';
 import type { CurrentAdmin } from './authorization-core';
-import { getAdminStorageStatus } from './storage-service';
+import { attachAssetPreview, getAdminStorageStatus } from './storage-service';
 
 /**
  * Servicio de operaciones de contenido — server-only.
@@ -63,10 +63,12 @@ export async function getContentWorkspace(admin: CurrentAdmin) {
     repository.listAssets(),
   ]);
 
+  const assetsWithPreviews = await Promise.all(assets.map(attachAssetPreview));
+
   return {
     content,
     releases,
-    assets,
+    assets: assetsWithPreviews,
     storage: getAdminStorageStatus(),
   };
 }

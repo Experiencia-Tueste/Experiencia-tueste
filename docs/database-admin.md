@@ -79,14 +79,16 @@ privado `private` (nunca el esquema `public`).
   efectivas son la unión de todos sus roles (no se descartan roles
   secundarios).
 
-## Storage (URLs firmadas) — pendiente
+## Storage (URLs firmadas) — implementado con Supabase
 
-- El contrato `storageProvider` está definido pero **sin implementación**:
-  requiere credenciales de Storage (Supabase Storage u otro proveedor)
-  que aún no están configuradas.
-- Para habilitar URLs firmadas en el futuro:
-  1. Configurar las credenciales del proveedor como variables
-     server-only (nunca `NEXT_PUBLIC_`).
-  2. Implementar `StorageProvider.put` y `getSignedUrl` en el servidor.
-  3. Exponer solo las URLs firmadas (expiración corta) a la interfaz;
-     nunca las claves del proveedor.
+- El contrato `storageProvider` está **implementado** en
+  `src/integrations/storage/supabase-storage.ts` (Supabase Storage):
+  subida con URL firmada (`createSignedUploadUrl` desde el navegador),
+  lectura con URLs firmadas de corta expiración y previews en la
+  biblioteca de activos.
+- Requiere credenciales server-only (`SUPABASE_STORAGE_URL`,
+  `SUPABASE_STORAGE_ADMIN_KEY`, `SUPABASE_STORAGE_BUCKET`), nunca con
+  prefijo `NEXT_PUBLIC_`. Sin ellas, el panel queda con Storage
+  deshabilitado (fail cerrado, sin subidas).
+- Exposición a la interfaz: solo URLs firmadas con expiración corta;
+  las claves del proveedor nunca llegan al cliente.

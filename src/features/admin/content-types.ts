@@ -30,6 +30,12 @@ export interface AssetRow {
   status: AssetStatus;
   createdAt: string;
   updatedAt: string;
+  /**
+   * URL firmada temporal para preview (solo imágenes), generada en
+   * servidor cuando Storage está configurado. `null` si no aplica o
+   * si la generación falló.
+   */
+  previewUrl?: string | null;
 }
 
 /** Pista perteneciente a un lanzamiento. */

@@ -250,7 +250,7 @@ Estado real:
   consultará roles/capacidades persistentes en cada operación.
 - `AuditLog` será **append-only**: nunca editable desde la interfaz.
 - La selección de proveedor PostgreSQL y ORM queda **pendiente** y no se tomó
-  en esta fase (puede ser AWS RDS, Supabase PostgreSQL, Neon u otro).
+  en esta fase (puede ser Supabase PostgreSQL, Neon u otro).
 - **No hay base de datos, datos reales, migraciones ni auditoría guardada
   aún.** No afirmar que la persistencia está implementada.
 

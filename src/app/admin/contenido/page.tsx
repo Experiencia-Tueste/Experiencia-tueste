@@ -7,6 +7,7 @@ import {
   CreateReleaseForm,
   ContentRowActions,
   ReleaseRowActions,
+  ScheduleForm,
 } from './ContenidoForms';
 import { getContentWorkspace } from '@/features/admin/content-service';
 import { requireCapability } from '@/lib/auth/authorization';
@@ -166,6 +167,9 @@ export default async function AdminContentPage() {
                       canPublish={canPublish}
                     />
                   ) : null}
+                  {release.status === 'review' && canPublish ? (
+                    <ScheduleForm id={release.id} kind="release" />
+                  ) : null}
                 </li>
               ))}
             </ul>
@@ -204,6 +208,9 @@ export default async function AdminContentPage() {
                   </div>
                   {canEdit || canPublish ? (
                     <ContentRowActions row={row} canEdit={canEdit} canPublish={canPublish} />
+                  ) : null}
+                  {row.status === 'review' && canPublish ? (
+                    <ScheduleForm id={row.id} kind="content" />
                   ) : null}
                 </li>
               ))}

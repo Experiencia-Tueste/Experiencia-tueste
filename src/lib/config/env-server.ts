@@ -49,7 +49,7 @@ export interface AdminStorageConfig {
  * válida, lanza un error claro.
  *
  * Antes de producción se configura `SITE_URL` con el dominio público
- * HTTPS real (p. ej. en AWS Route 53); no se hardcodea ningún dominio.
+ * HTTPS real de Latinoamérica Hosting; no se hardcodea ningún dominio.
  */
 export function loadSiteUrl(env: PublicEnv = process.env): string {
   const raw = env.SITE_URL;

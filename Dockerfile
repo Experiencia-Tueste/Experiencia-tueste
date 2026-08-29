@@ -1,12 +1,13 @@
 # ─────────────────────────────────────────────────────────────────────
-# Tueste · Origen Tostado — imagen de producción para ECS Fargate
+# Tueste · Origen Tostado — imagen de producción para Latinoamérica Hosting
 # ─────────────────────────────────────────────────────────────────────
 # Multi-stage con salida standalone de Next.js:
 #   1. builder   → instala con `npm ci` y compila (typecheck/lint en CI)
 #   2. runner    → imagen mínima, usuario no-root, `node server.js`
 #
 # Los secretos NUNCA se pasan como build args ni se hornean en la
-# imagen: en AWS llegarán vía IAM + Secrets Manager (fase posterior).
+# imagen: Latinoamérica Hosting los inyectará desde su configuración segura
+# de variables (fase de despliegue).
 # SITE_URL es PÚBLICA (canonical/metadata) y sí se admite como build
 # arg no secreto, con fallback demo si no se entrega.
 

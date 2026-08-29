@@ -735,7 +735,7 @@ No se acepta:
 La siguiente entrega debe cerrar los pendientes de **Fase 3** antes de saltar a
 otros módulos, con este orden:
 
-1. crear/configurar el bucket privado de Storage en el entorno;
+1. mantener configurado el bucket privado de Storage para staging;
 2. completar programación temporal de publicación;
 3. conectar la superficie pública a contenido publicado;
 4. conservar /admin/contenido como primera rebanada vertical de referencia.

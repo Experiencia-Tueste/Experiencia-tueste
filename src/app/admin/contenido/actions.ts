@@ -6,6 +6,8 @@ import {
   createContentDraft,
   createRelease,
   registerAsset,
+  scheduleContentPublication,
+  scheduleReleasePublication,
   transitionAssetStatus,
   transitionContentStatus,
   transitionReleaseStatus,
@@ -26,6 +28,38 @@ import { mensajeSeguro } from './error-messages';
 export interface ActionResult {
   ok?: boolean;
   error?: string;
+}
+
+export async function scheduleContentAction(
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  try {
+    await scheduleContentPublication(String(formData.get('id') ?? ''), {
+      scheduledAt: String(formData.get('scheduledAt') ?? ''),
+      reason: String(formData.get('reason') ?? ''),
+    });
+    revalidateContenido();
+    return { ok: true };
+  } catch (error) {
+    return { error: mensajeSeguro(error) };
+  }
+}
+
+export async function scheduleReleaseAction(
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  try {
+    await scheduleReleasePublication(String(formData.get('id') ?? ''), {
+      scheduledAt: String(formData.get('scheduledAt') ?? ''),
+      reason: String(formData.get('reason') ?? ''),
+    });
+    revalidateContenido();
+    return { ok: true };
+  } catch (error) {
+    return { error: mensajeSeguro(error) };
+  }
 }
 
 export interface SignedAssetUploadResult extends ActionResult {

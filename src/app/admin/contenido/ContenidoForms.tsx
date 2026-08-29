@@ -15,6 +15,8 @@ import {
   prepareSignedAssetUploadAction,
   publishAction,
   publishReleaseAction,
+  scheduleContentAction,
+  scheduleReleaseAction,
   sendReleaseToReviewAction,
   registerAssetAction,
   sendToReviewAction,
@@ -199,6 +201,31 @@ export function ReleaseRowActions({
         />
       )}
     </div>
+  );
+}
+
+export function ScheduleForm({ id, kind }: { id: string; kind: 'content' | 'release' }) {
+  const action = kind === 'content' ? scheduleContentAction : scheduleReleaseAction;
+  const [state, formAction] = useActionState(action, initialActionState);
+  return (
+    <form action={formAction} className={styles.rowForm}>
+      <input type="hidden" name="id" value={id} />
+      <label className={styles.label}>
+        Publicar el
+        <input className={styles.input} type="datetime-local" name="scheduledAt" required />
+      </label>
+      <input
+        className={styles.input}
+        name="reason"
+        minLength={3}
+        required
+        placeholder="Razón de programación"
+      />
+      <button type="submit" className={styles.actionButton}>
+        Programar
+      </button>
+      <Feedback state={state} />
+    </form>
   );
 }
 

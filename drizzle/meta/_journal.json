@@ -15,6 +15,13 @@
       "when": 1787829763675,
       "tag": "0001_blue_tarantula",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1787990982876,
+      "tag": "0002_parallel_aqueduct",
+      "breakpoints": true
     }
   ]
 }

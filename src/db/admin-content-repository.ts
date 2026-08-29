@@ -30,6 +30,7 @@ function toContentRow(row: typeof contentEntries.$inferSelect): ContentRow {
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
     publishedAt: row.publishedAt?.toISOString() ?? null,
+    scheduledAt: row.scheduledAt?.toISOString() ?? null,
     archivedAt: row.archivedAt?.toISOString() ?? null,
   };
 }
@@ -218,6 +219,21 @@ export class DrizzleAdminContentRepository {
     return row ? toContentRow(row) : null;
   }
 
+  async scheduleContent(
+    id: string,
+    scheduledAt: Date,
+    actorId: string,
+    tx?: DbClient,
+  ): Promise<ContentRow | null> {
+    const db = tx ?? getDb();
+    const [row] = await db
+      .update(contentEntries)
+      .set({ scheduledAt, updatedBy: actorId, updatedAt: new Date() })
+      .where(and(eq(contentEntries.id, id), eq(contentEntries.status, 'review')))
+      .returning();
+    return row ? toContentRow(row) : null;
+  }
+
   async setReleaseStatus(
     id: string,
     from: ContentStatus,
@@ -232,6 +248,16 @@ export class DrizzleAdminContentRepository {
         updatedAt: new Date(),
       })
       .where(and(eq(releases.id, id), eq(releases.status, from)))
+      .returning();
+    return row ? toReleaseRow(row) : null;
+  }
+
+  async scheduleRelease(id: string, scheduledAt: Date, tx?: DbClient): Promise<ReleaseRow | null> {
+    const db = tx ?? getDb();
+    const [row] = await db
+      .update(releases)
+      .set({ scheduledAt, updatedAt: new Date() })
+      .where(and(eq(releases.id, id), eq(releases.status, 'review')))
       .returning();
     return row ? toReleaseRow(row) : null;
   }

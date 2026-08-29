@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { eq } from 'drizzle-orm';
+import { desc, eq, ilike } from 'drizzle-orm';
 
 import { getDb } from './client';
 import type { DbClient } from './db-types';
@@ -31,6 +31,19 @@ function mapStatus(status: string): AdminUser['status'] {
 }
 
 export class DrizzleAdminIdentityRepository implements AdminIdentityRepository {
+  private mapUser(row: typeof adminUsers.$inferSelect, roleIds: string[] = []): AdminUser {
+    return {
+      id: row.id,
+      email: row.email,
+      displayName: row.displayName,
+      status: mapStatus(row.status),
+      createdAt: row.createdAt.toISOString(),
+      updatedAt: row.updatedAt.toISOString(),
+      lastSignedInAt: row.lastSignedInAt?.toISOString(),
+      roleIds,
+    };
+  }
+
   async findUserByEmail(email: string): Promise<AdminUser | null> {
     const normalized = email.trim().toLowerCase();
     const db = getDb();
@@ -42,16 +55,7 @@ export class DrizzleAdminIdentityRepository implements AdminIdentityRepository {
 
     if (!row) return null;
 
-    return {
-      id: row.id,
-      email: row.email,
-      displayName: row.displayName,
-      status: mapStatus(row.status),
-      createdAt: row.createdAt.toISOString(),
-      updatedAt: row.updatedAt.toISOString(),
-      lastSignedInAt: row.lastSignedInAt?.toISOString(),
-      roleIds: [],
-    };
+    return this.mapUser(row);
   }
 
   async findUserById(id: string): Promise<AdminUser | null> {
@@ -60,16 +64,59 @@ export class DrizzleAdminIdentityRepository implements AdminIdentityRepository {
 
     if (!row) return null;
 
-    return {
-      id: row.id,
-      email: row.email,
-      displayName: row.displayName,
-      status: mapStatus(row.status),
-      createdAt: row.createdAt.toISOString(),
-      updatedAt: row.updatedAt.toISOString(),
-      lastSignedInAt: row.lastSignedInAt?.toISOString(),
-      roleIds: [],
-    };
+    return this.mapUser(row);
+  }
+
+  async listUsers(): Promise<AdminUser[]> {
+    const db = getDb();
+    const rows = await db.select().from(adminUsers).orderBy(adminUsers.email);
+    const assignments = await db.select().from(adminUserRoles);
+    const roleIdsByUser = new Map<string, string[]>();
+    for (const assignment of assignments) {
+      const ids = roleIdsByUser.get(assignment.userId) ?? [];
+      ids.push(assignment.roleId);
+      roleIdsByUser.set(assignment.userId, ids);
+    }
+    return rows.map((row) => this.mapUser(row, roleIdsByUser.get(row.id) ?? []));
+  }
+
+  async listRoles(): Promise<PersistedAdminRole[]> {
+    const db = getDb();
+    const rows = await db.select().from(adminRoles).orderBy(adminRoles.key);
+    return rows.map((row) => {
+      const key = assertRoleKey(row.key);
+      return {
+        id: row.id,
+        key,
+        name: row.name,
+        description: row.description,
+        capabilities: [...ROLE_CAPABILITIES[key]],
+      };
+    });
+  }
+
+  async listAudit(filters: { action?: string; limit?: number } = {}): Promise<AuditLogEntry[]> {
+    const db = getDb();
+    const limit = Math.min(Math.max(filters.limit ?? 100, 1), 200);
+    const rows = await db
+      .select()
+      .from(auditLogs)
+      .where(filters.action ? ilike(auditLogs.action, `%${filters.action}%`) : undefined)
+      .orderBy(desc(auditLogs.createdAt))
+      .limit(limit);
+    return rows.map((row) =>
+      parseAuditEntry({
+        id: row.id,
+        actorUserId: row.actorUserId ?? row.id,
+        actorEmail: row.actorEmail ?? undefined,
+        action: row.action,
+        targetType: row.targetType ?? 'unknown',
+        targetId: row.targetId ?? row.id,
+        occurredAt: row.createdAt.toISOString(),
+        reason: row.reason ?? 'Sin razón registrada',
+        metadata: row.metadata,
+      }),
+    );
   }
 
   async findRolesByUserId(userId: string): Promise<PersistedAdminRole[]> {

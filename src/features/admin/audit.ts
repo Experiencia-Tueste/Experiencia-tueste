@@ -21,10 +21,12 @@ export const AUDIT_ACTIONS = [
   'content.updated',
   'content.reviewed',
   'content.published',
+  'content.scheduled',
   'content.archived',
   'release.created',
   'release.reviewed',
   'release.published',
+  'release.scheduled',
   'release.archived',
   'asset.created',
   'asset.approved',
@@ -42,10 +44,12 @@ export type ContentAuditAction = Extract<
   | 'content.updated'
   | 'content.reviewed'
   | 'content.published'
+  | 'content.scheduled'
   | 'content.archived'
   | 'release.created'
   | 'release.reviewed'
   | 'release.published'
+  | 'release.scheduled'
   | 'release.archived'
   | 'asset.created'
   | 'asset.approved'

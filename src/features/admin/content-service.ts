@@ -12,6 +12,7 @@ import {
   CONTENT_UPDATE_SCHEMA,
   RELEASE_SCHEMA,
   STATUS_TRANSITION_SCHEMA,
+  SCHEDULE_SCHEMA,
   canTransitionAsset,
   canTransitionContent,
 } from './content-schemas';
@@ -202,6 +203,57 @@ export async function transitionReleaseStatus(id: string, input: unknown) {
     }
     await getAdminRepository().appendAudit(auditEntry, tx);
     return { ok: true as const };
+  });
+}
+
+export async function scheduleContentPublication(id: string, input: unknown) {
+  const admin = await requireContentCapability('content.publish');
+  const parsed = SCHEDULE_SCHEMA.parse(input);
+  const row = await getContentRepository().getContentById(id);
+  if (!row || row.status !== 'review')
+    throw new Error('409: solo se puede programar contenido en revisión.');
+  return getDb().transaction(async (tx) => {
+    const updated = await getContentRepository().scheduleContent(
+      id,
+      parsed.scheduledAt,
+      admin.id,
+      tx,
+    );
+    if (!updated) throw new Error('409: no se pudo programar el contenido.');
+    await getAdminRepository().appendAudit(
+      buildAuditEntry(admin, {
+        action: 'content.scheduled',
+        targetType: 'content',
+        targetId: id,
+        reason: parsed.reason,
+        metadata: { scheduledAt: parsed.scheduledAt.toISOString() },
+      }),
+      tx,
+    );
+    return updated;
+  });
+}
+
+export async function scheduleReleasePublication(id: string, input: unknown) {
+  const admin = await requireContentCapability('content.publish');
+  const parsed = SCHEDULE_SCHEMA.parse(input);
+  const row = await getContentRepository().getReleaseById(id);
+  if (!row || row.status !== 'review')
+    throw new Error('409: solo se puede programar un lanzamiento en revisión.');
+  return getDb().transaction(async (tx) => {
+    const updated = await getContentRepository().scheduleRelease(id, parsed.scheduledAt, tx);
+    if (!updated) throw new Error('409: no se pudo programar el lanzamiento.');
+    await getAdminRepository().appendAudit(
+      buildAuditEntry(admin, {
+        action: 'release.scheduled',
+        targetType: 'release',
+        targetId: id,
+        reason: parsed.reason,
+        metadata: { scheduledAt: parsed.scheduledAt.toISOString() },
+      }),
+      tx,
+    );
+    return updated;
   });
 }
 

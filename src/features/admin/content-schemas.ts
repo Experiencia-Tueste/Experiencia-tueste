@@ -81,6 +81,13 @@ export const ASSET_STATUS_TRANSITION_SCHEMA = z.object({
   reason: z.string().trim().min(3).max(300),
 });
 
+export const SCHEDULE_SCHEMA = z.object({
+  scheduledAt: z.coerce
+    .date()
+    .refine((value) => value.getTime() > Date.now(), 'La fecha debe estar en el futuro.'),
+  reason: z.string().trim().min(3).max(300),
+});
+
 /** Creación de un lanzamiento con sus pistas. */
 export const RELEASE_SCHEMA = z.object({
   title: z.string().trim().min(1).max(200),

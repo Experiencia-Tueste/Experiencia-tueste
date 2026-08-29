@@ -16,4 +16,7 @@ export interface AdminIdentityRepository {
   findUserById(id: string): Promise<AdminUser | null>;
   findRolesByUserId(userId: string): Promise<AdminRole[]>;
   appendAudit(entry: AuditLogEntry): Promise<void>;
+  listUsers?(): Promise<AdminUser[]>;
+  listRoles?(): Promise<AdminRole[]>;
+  listAudit?(filters?: { action?: string; limit?: number }): Promise<AuditLogEntry[]>;
 }

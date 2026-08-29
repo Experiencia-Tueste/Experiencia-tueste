@@ -16,7 +16,7 @@
  *   requiere hashes/nonces por build, pendiente de una auditoría
  *   específica.
  * - HSTS: NO se añade. Solo debe activarse cuando exista un dominio
- *   HTTPS de producción confirmado (AWS Route 53 + CloudFront).
+ *   HTTPS de producción confirmado en Latinoamérica Hosting.
  * - frame-ancestors 'none': la app no debe poder embeberse en iframes
  *   ajenos; X-Frame-Options queda en DENY como respaldo para clientes
  *   que no lean CSP.

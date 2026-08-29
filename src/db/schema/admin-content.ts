@@ -50,6 +50,7 @@ export const contentEntries = privateSchema.table(
     createdBy: uuid('created_by').references(() => adminUsers.id, { onDelete: 'set null' }),
     updatedBy: uuid('updated_by').references(() => adminUsers.id, { onDelete: 'set null' }),
     publishedAt: timestamp('published_at', { withTimezone: true }),
+    scheduledAt: timestamp('scheduled_at', { withTimezone: true }),
     archivedAt: timestamp('archived_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -74,6 +75,7 @@ export const releases = privateSchema.table(
     coverAssetId: uuid('cover_asset_id').references(() => assets.id, { onDelete: 'set null' }),
     /** CHECK: draft | review | published | archived. */
     status: text('status').notNull().default('draft'),
+    scheduledAt: timestamp('scheduled_at', { withTimezone: true }),
     createdBy: uuid('created_by').references(() => adminUsers.id, { onDelete: 'set null' }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

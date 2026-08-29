@@ -6,7 +6,6 @@
   },
   "deploy": {
     "startCommand": "node server.js",
-    "preDeployCommand": "npm run db:migrate",
     "healthcheckPath": "/",
     "healthcheckTimeout": 300,
     "restartPolicyType": "ALWAYS",

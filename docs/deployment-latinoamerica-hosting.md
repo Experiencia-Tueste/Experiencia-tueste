@@ -27,6 +27,7 @@ Hosting. Nunca subir valores reales al repositorio:
 - `AUTH_SECRET`
 - `AUTH_GOOGLE_ID`
 - `AUTH_GOOGLE_SECRET`
+- `AUTH_TRUST_HOST` (en Railway: `true`; solo para el proxy controlado)
 - `DATABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`

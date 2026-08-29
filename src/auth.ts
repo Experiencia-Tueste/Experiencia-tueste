@@ -25,6 +25,10 @@ function buildAuth() {
 
   return NextAuth({
     secret: config.authSecret,
+    // Railway termina TLS en su proxy y reenvía la petición al contenedor
+    // con el host interno 0.0.0.0:8080. Se habilita solo mediante una
+    // variable explícita del entorno de despliegue, nunca por defecto.
+    trustHost: config.trustHost,
     providers: [
       Google({
         clientId: config.googleClientId,

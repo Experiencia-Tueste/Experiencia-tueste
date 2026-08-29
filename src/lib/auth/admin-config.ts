@@ -19,6 +19,7 @@ export interface AdminAuthEnv {
   AUTH_SECRET?: string;
   AUTH_GOOGLE_ID?: string;
   AUTH_GOOGLE_SECRET?: string;
+  AUTH_TRUST_HOST?: string;
 }
 
 export interface AdminAuthConfig {
@@ -28,6 +29,8 @@ export interface AdminAuthConfig {
   googleClientSecret: string;
   /** Secreto de sesión de Auth.js (vacío si no está definido). */
   authSecret: string;
+  /** Confianza explícita en el proxy HTTPS del proveedor de hosting. */
+  trustHost: boolean;
 }
 
 /**
@@ -61,5 +64,6 @@ export function loadAdminAuthConfig(env: AdminAuthEnv): AdminAuthConfig {
     googleClientId: googleId,
     googleClientSecret: googleSecret,
     authSecret,
+    trustHost: env.AUTH_TRUST_HOST?.trim().toLowerCase() === 'true',
   };
 }

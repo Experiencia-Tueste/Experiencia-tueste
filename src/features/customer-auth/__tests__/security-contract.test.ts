@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 const accountPage = readFileSync(resolve(__dirname, '../../../app/cuenta/page.tsx'), 'utf8');
 const proxy = readFileSync(resolve(__dirname, '../../../lib/supabase/proxy.ts'), 'utf8');
+const confirmRoute = readFileSync(resolve(__dirname, '../../../app/auth/confirm/route.ts'), 'utf8');
 
 describe('frontera de autenticación pública', () => {
   it('valida la cuenta y renueva sesión con getClaims, nunca con getSession', () => {
@@ -15,5 +16,10 @@ describe('frontera de autenticación pública', () => {
 
   it('mantiene las rutas públicas fuera del namespace /admin', () => {
     expect(accountPage).not.toContain('/admin');
+  });
+
+  it('acepta confirmación PKCE y plantillas token_hash', () => {
+    expect(confirmRoute).toContain('exchangeCodeForSession(code)');
+    expect(confirmRoute).toContain('verifyOtp({ type, token_hash: tokenHash })');
   });
 });

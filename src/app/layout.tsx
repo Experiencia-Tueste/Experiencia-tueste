@@ -47,7 +47,7 @@ const FONT_HREF =
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="es" className="js">
+    <html lang="es" className="js" data-scroll-behavior="smooth">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

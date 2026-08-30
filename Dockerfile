@@ -12,8 +12,8 @@
 # argumentos de build. Next.js necesita estas últimas durante `npm run build`
 # para insertarlas en el bundle del navegador.
 
-# Versión de Node fija desde .nvmrc (20.19.4).
-ARG NODE_VERSION=20.19.4
+# Versión LTS de Node fija desde .nvmrc.
+ARG NODE_VERSION=24.20.0
 
 # ── Etapa 1: build de producción ─────────────────────────────────────
 FROM node:${NODE_VERSION}-bookworm-slim AS builder

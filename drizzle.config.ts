@@ -16,6 +16,7 @@ export default defineConfig({
     './src/db/schema/admin-config.ts',
     './src/db/schema/admin-events.ts',
     './src/db/schema/admin-compliance.ts',
+    './src/db/schema/admin-community.ts',
   ],
   out: './drizzle',
   dbCredentials: {

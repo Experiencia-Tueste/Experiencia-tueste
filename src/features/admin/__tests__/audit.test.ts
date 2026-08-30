@@ -52,6 +52,12 @@ describe('admin · auditoría (reason obligatoria)', () => {
       'farm.lot_created',
       'compliance.created',
       'compliance.status_changed',
+      'community.member_created',
+      'community.member_status_changed',
+      'community.post_created',
+      'community.post_status_changed',
+      'community.report_created',
+      'community.report_resolved',
     ]);
   });
 

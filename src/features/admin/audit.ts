@@ -40,6 +40,12 @@ export const AUDIT_ACTIONS = [
   'farm.lot_created',
   'compliance.created',
   'compliance.status_changed',
+  'community.member_created',
+  'community.member_status_changed',
+  'community.post_created',
+  'community.post_status_changed',
+  'community.report_created',
+  'community.report_resolved',
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

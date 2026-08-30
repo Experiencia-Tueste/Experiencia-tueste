@@ -43,6 +43,13 @@
       "when": 1788129009109,
       "tag": "0005_young_madame_web",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1788129851838,
+      "tag": "0006_abandoned_white_tiger",
+      "breakpoints": true
     }
   ]
 }

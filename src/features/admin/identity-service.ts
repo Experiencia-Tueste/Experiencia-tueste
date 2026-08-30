@@ -10,6 +10,7 @@ import { getAdminRepository } from '@/db/admin-identity-repository';
 import { adminUserRoles, adminUsers } from '@/db/schema/admin-identity';
 import { getCurrentAdmin } from '@/lib/auth/authorization';
 import { parseAuditEntry } from './audit';
+import { isLastActiveOwner } from './identity-policy';
 
 const userInput = z.object({
   email: z.string().trim().toLowerCase().email(),
@@ -96,9 +97,19 @@ export async function changeAdminUserStatus(input: unknown) {
   const parsed = statusInput.parse(input);
   if (parsed.userId === admin.id)
     throw new Error('400: no puedes cambiar tu propio estado desde este panel.');
-  const target = await getAdminRepository().findUserById(parsed.userId);
+  const repository = getAdminRepository();
+  const [users, roles] = await Promise.all([repository.listUsers(), repository.listRoles()]);
+  const target = users.find((user) => user.id === parsed.userId);
   if (!target) throw new Error('404: usuario no encontrado.');
   if (target.status === parsed.status) return { ok: true as const };
+  const ownerRole = roles.find((role) => role.key === 'owner');
+  if (
+    parsed.status !== 'active' &&
+    ownerRole &&
+    isLastActiveOwner(users, ownerRole.id, parsed.userId)
+  ) {
+    throw new Error('409: debe quedar al menos un owner activo.');
+  }
   const action =
     parsed.status === 'active'
       ? 'user.activated'
@@ -132,11 +143,15 @@ export async function assignAdminRole(input: unknown) {
   const admin = await requireUsersManager();
   const parsed = roleInput.parse(input);
   const repository = getAdminRepository();
-  const target = await repository.findUserById(parsed.userId);
+  const users = await repository.listUsers();
+  const target = users.find((user) => user.id === parsed.userId);
   if (!target) throw new Error('404: usuario no encontrado.');
   const roles = repository.listRoles ? await repository.listRoles() : [];
   const role = roles.find((item) => item.id === parsed.roleId);
   if (!role) throw new Error('404: rol no encontrado.');
+  if (target.roleIds.includes(parsed.roleId)) {
+    throw new Error('409: el usuario ya tiene ese rol.');
+  }
   return getDb().transaction(async (tx) => {
     await tx
       .insert(adminUserRoles)
@@ -166,10 +181,12 @@ export async function revokeAdminRole(input: unknown) {
   const parsed = roleInput.parse(input);
   if (parsed.userId === admin.id) throw new Error('400: no puedes quitarte roles a ti mismo.');
   const repository = getAdminRepository();
-  const role = repository.listRoles
-    ? (await repository.listRoles()).find((item) => item.id === parsed.roleId)
-    : undefined;
+  const [roles, users] = await Promise.all([repository.listRoles(), repository.listUsers()]);
+  const role = roles.find((item) => item.id === parsed.roleId);
   if (!role) throw new Error('404: rol no encontrado.');
+  if (role.key === 'owner' && isLastActiveOwner(users, role.id, parsed.userId)) {
+    throw new Error('409: debe quedar al menos un owner activo.');
+  }
   return getDb().transaction(async (tx) => {
     const deleted = await tx
       .delete(adminUserRoles)

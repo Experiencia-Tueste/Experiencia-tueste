@@ -59,6 +59,7 @@ export interface ReleaseRow {
   slug: string;
   coverAssetId: string | null;
   status: ContentStatus;
+  scheduledAt?: string | null;
   createdAt: string;
   updatedAt: string;
   tracks: TrackRow[];

@@ -74,6 +74,7 @@ function toReleaseRow(
     slug: row.slug,
     coverAssetId: row.coverAssetId,
     status,
+    scheduledAt: row.scheduledAt?.toISOString() ?? null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
     tracks: releaseTracks,

@@ -22,4 +22,15 @@ describe('frontera de autenticación pública', () => {
     expect(confirmRoute).toContain('exchangeCodeForSession(code)');
     expect(confirmRoute).toContain('verifyOtp({ type, token_hash: tokenHash })');
   });
+
+  it('redirecciona al dominio público y nunca al host interno de Railway', () => {
+    expect(confirmRoute).toContain('new URL(pathname, loadSiteUrl())');
+    expect(confirmRoute).not.toContain('request.nextUrl.clone()');
+    expect(confirmRoute).not.toContain('0.0.0.0');
+  });
+
+  it('convierte errores del proveedor en una respuesta segura y recuperable', () => {
+    expect(confirmRoute).toContain('try {');
+    expect(confirmRoute).toContain("publicRedirect('/cuenta/iniciar-sesion'");
+  });
 });

@@ -1,0 +1,102 @@
+.columns,
+.cards,
+.grid {
+  display: grid;
+  gap: 16px;
+}
+.columns {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.cards {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+.grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.form,
+.card,
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.card {
+  padding: 18px;
+  border: 1px solid rgba(var(--cream-rgb), 0.12);
+  border-radius: var(--radius-xl);
+  background: rgba(var(--cream-rgb), 0.025);
+}
+.label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: rgba(var(--cream-rgb), 0.58);
+  font: 600 0.6rem var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.input,
+.select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid rgba(var(--cream-rgb), 0.18);
+  border-radius: var(--radius-md);
+  background: rgba(var(--void-rgb), 0.45);
+  color: var(--cream);
+}
+.button {
+  width: fit-content;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--amber);
+  color: var(--ink);
+  cursor: pointer;
+  font: 0.65rem var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.meta,
+.empty {
+  margin: 0;
+  color: rgba(var(--cream-rgb), 0.55);
+  font-size: 0.82rem;
+}
+.stat {
+  padding: 18px;
+  border: 1px solid rgba(var(--cream-rgb), 0.1);
+  border-radius: var(--radius-lg);
+}
+.stat strong {
+  display: block;
+  font: 2rem var(--font-serif);
+}
+.stat span {
+  color: rgba(var(--cream-rgb), 0.5);
+  font: 0.58rem var(--font-mono);
+  text-transform: uppercase;
+}
+.record {
+  padding: 12px 0;
+  border-top: 1px solid rgba(var(--cream-rgb), 0.08);
+}
+.record h3 {
+  margin: 0;
+}
+.badge {
+  width: fit-content;
+  padding: 5px 8px;
+  border: 1px solid rgba(var(--amber-rgb, 251, 169, 34), 0.4);
+  border-radius: var(--radius-pill);
+  color: var(--amber);
+  font: 0.58rem var(--font-mono);
+  text-transform: uppercase;
+}
+@media (max-width: 900px) {
+  .columns {
+    grid-template-columns: 1fr;
+  }
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

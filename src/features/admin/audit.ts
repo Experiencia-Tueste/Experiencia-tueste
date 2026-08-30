@@ -36,6 +36,10 @@ export const AUDIT_ACTIONS = [
   'event.status_changed',
   'event.attendee_registered',
   'event.checked_in',
+  'farm.created',
+  'farm.lot_created',
+  'compliance.created',
+  'compliance.status_changed',
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

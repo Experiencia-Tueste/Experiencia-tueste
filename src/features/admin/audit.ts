@@ -31,6 +31,7 @@ export const AUDIT_ACTIONS = [
   'asset.created',
   'asset.approved',
   'asset.archived',
+  'config.updated',
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

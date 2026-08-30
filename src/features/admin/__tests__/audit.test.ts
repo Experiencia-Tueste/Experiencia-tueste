@@ -43,6 +43,7 @@ describe('admin · auditoría (reason obligatoria)', () => {
       'asset.created',
       'asset.approved',
       'asset.archived',
+      'config.updated',
     ]);
   });
 

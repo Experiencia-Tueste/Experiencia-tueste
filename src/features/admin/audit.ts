@@ -32,6 +32,10 @@ export const AUDIT_ACTIONS = [
   'asset.approved',
   'asset.archived',
   'config.updated',
+  'event.created',
+  'event.status_changed',
+  'event.attendee_registered',
+  'event.checked_in',
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

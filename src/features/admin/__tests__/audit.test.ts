@@ -44,6 +44,10 @@ describe('admin · auditoría (reason obligatoria)', () => {
       'asset.approved',
       'asset.archived',
       'config.updated',
+      'event.created',
+      'event.status_changed',
+      'event.attendee_registered',
+      'event.checked_in',
     ]);
   });
 

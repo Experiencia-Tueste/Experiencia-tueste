@@ -162,6 +162,18 @@
   gap: var(--space-5);
   min-height: 0;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--cream-rgb), 0.2) transparent;
+}
+
+.navigation::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.navigation::-webkit-scrollbar-thumb {
+  border-radius: var(--radius-pill);
+  background: rgba(var(--cream-rgb), 0.2);
 }
 
 .navigationGroup {
@@ -883,6 +895,15 @@
   .navigationLink,
   .navigationLinkActive {
     white-space: nowrap;
+  }
+
+  .headerRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .sessionBadge {
+    max-width: 100%;
   }
 
   .sidebarFooter {

@@ -6,6 +6,7 @@ import { resolvePersistedAdmin } from '@/features/admin/authorization-core';
 import type { CurrentAdmin } from '@/features/admin/authorization-core';
 import type { AdminCapability } from '@/features/admin/permissions';
 import { getAdminRepository } from '@/db/admin-identity-repository';
+import { createServerSupabase } from '@/lib/supabase/server';
 
 /**
  * Capa de autorización server-only del panel (Fase 1.2 — RBAC
@@ -21,10 +22,11 @@ import { getAdminRepository } from '@/db/admin-identity-repository';
  * secretos, DATABASE_URL ni consultas administrativas.
  */
 
-/** Administrador actual, o null si no hay sesión o identidad válida. */
-export async function getCurrentAdmin(): Promise<CurrentAdmin | null> {
-  const session = await auth();
-  const email = session?.user?.email?.trim().toLowerCase();
+/** Resuelve un correo ya verificado contra el RBAC persistente. */
+export async function getAdminByEmail(
+  rawEmail: string | null | undefined,
+): Promise<CurrentAdmin | null> {
+  const email = rawEmail?.trim().toLowerCase();
   if (!email) return null;
 
   const repository = getAdminRepository();
@@ -48,11 +50,33 @@ export async function getCurrentAdmin(): Promise<CurrentAdmin | null> {
   }
 }
 
-/** Exige sesión de administrador; redirige a /admin/login si no la hay. */
+/** Administrador actual, o null si no hay sesión o identidad válida. */
+export async function getCurrentAdmin(): Promise<CurrentAdmin | null> {
+  // La puerta pública usa Supabase Auth. getUser() valida la sesión con
+  // el servidor de Auth; nunca autorizamos usando getSession() ni
+  // metadata editable del usuario.
+  const supabase = await createServerSupabase();
+  if (supabase) {
+    try {
+      const { data, error } = await supabase.auth.getUser();
+      if (!error && data.user?.email) {
+        return getAdminByEmail(data.user.email);
+      }
+    } catch {
+      // Continúa con la sesión administrativa heredada durante la
+      // transición. Cualquier fallo termina cerrado más abajo.
+    }
+  }
+
+  const session = await auth();
+  return getAdminByEmail(session?.user?.email);
+}
+
+/** Exige sesión de administrador; vuelve a la puerta pública si no la hay. */
 export async function requireAdmin(): Promise<CurrentAdmin> {
   const admin = await getCurrentAdmin();
   if (admin === null) {
-    redirect('/admin/login');
+    redirect('/cuenta/iniciar-sesion');
   }
   return admin;
 }

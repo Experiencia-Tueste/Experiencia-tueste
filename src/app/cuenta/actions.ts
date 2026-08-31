@@ -4,6 +4,8 @@ import { redirect } from 'next/navigation';
 import { loadSiteUrl } from '@/lib/config/env-server';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { customerCredentialsSchema } from '@/features/customer-auth/schemas';
+import { getAdminByEmail } from '@/lib/auth/authorization';
+import { postSignInDestination } from '@/features/customer-auth/post-sign-in';
 
 export interface CustomerAuthState {
   status: 'idle' | 'error' | 'success';
@@ -60,7 +62,11 @@ export async function loginCustomerAction(
     return { status: 'error', message: 'Correo o contraseña inválidos.' };
   }
 
-  redirect('/experiencia?bienvenida=1');
+  const { data: verified } = await supabase.auth.getUser();
+  const admin = await getAdminByEmail(verified.user?.email);
+  const destination = postSignInDestination(admin);
+  const query = destination.searchParams ? '?bienvenida=1' : '';
+  redirect(`${destination.pathname}${query}`);
 }
 
 export async function registerCustomerAction(

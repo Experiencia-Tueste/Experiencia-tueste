@@ -23,8 +23,9 @@ describe('frontera de autenticación pública', () => {
     expect(proxy).not.toContain('auth.getSession()');
   });
 
-  it('mantiene las rutas públicas fuera del namespace /admin', () => {
-    expect(accountPage).not.toContain('/admin');
+  it('mantiene la autorización administrativa del lado del servidor', () => {
+    expect(customerActions).toContain('getAdminByEmail(verified.user?.email)');
+    expect(customerActions).toContain('postSignInDestination(admin)');
   });
 
   it('acepta confirmación PKCE y plantillas token_hash', () => {
@@ -32,9 +33,10 @@ describe('frontera de autenticación pública', () => {
     expect(confirmRoute).toContain('verifyOtp({ type, token_hash: tokenHash })');
   });
 
-  it('devuelve al cliente a la experiencia con confirmación visible', () => {
-    expect(confirmRoute).toContain("publicRedirect('/experiencia', { bienvenida: '1' })");
-    expect(customerActions).toContain("redirect('/experiencia?bienvenida=1')");
+  it('decide en servidor entre panel administrativo y experiencia', () => {
+    expect(confirmRoute).toContain('redirectAuthenticatedUser(supabase)');
+    expect(confirmRoute).toContain('supabase.auth.getUser()');
+    expect(customerActions).toContain('postSignInDestination(admin)');
     expect(welcome).toContain('Ya eres Cliente Tueste. Tu experiencia está lista.');
   });
 

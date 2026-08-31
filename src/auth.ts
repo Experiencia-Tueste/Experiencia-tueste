@@ -3,15 +3,16 @@ import Google from 'next-auth/providers/google';
 import { loadAdminConfig } from './lib/config/admin-auth-env';
 
 /**
- * Auth.js (v5) para el panel administrativo — App Router.
+ * Auth.js (v5) se conserva temporalmente para cerrar y reconocer
+ * sesiones administrativas heredadas. La puerta principal usa
+ * Supabase Auth y comparte identidad entre clientes y administradores.
  *
  * Google OAuth/OIDC se configura SOLO cuando AUTH_GOOGLE_ID y
  * AUTH_GOOGLE_SECRET existen ambas. Si no están configuradas, el panel
  * queda cerrado: `auth()` devuelve null, los handlers responden 503 y
  * no existe ningún proveedor ni acceso demo.
  *
- * Desde la Fase 1.2 el acceso NO se decide aquí: Auth.js solo identifica
- * (Google); la autorización la resuelve el RBAC persistente en
+ * El acceso NO se decide aquí: la autorización la resuelve el RBAC persistente en
  * `src/lib/auth/authorization.ts` (usuario activo + roles en
  * PostgreSQL). Sin Credentials, sin usuarios demo, sin localStorage.
  */

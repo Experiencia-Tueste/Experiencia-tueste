@@ -66,12 +66,13 @@ Fuera del panel en esta etapa:
 
 ## 4. Autenticación y autorización
 
-### Propuesta: Google OAuth/OIDC con Auth.js
+### Google OAuth/OIDC con entrada unificada
 
-La primera integración será **Google OAuth/OIDC mediante Auth.js**, pero Google
-solamente identifica a la persona. **Tueste decide los permisos** en su propia
-base de datos, verificados del lado del servidor en cada Route Handler y Server
-Action.
+Clientes y administradores entran por la misma autenticación pública de Supabase.
+Después de validar la sesión, **Tueste decide el destino y los permisos** en su
+propia base de datos: un administrador activo con rol va a `/admin`; cualquier
+otro usuario va a `/experiencia`. La decisión se verifica del lado del servidor
+en cada página, Route Handler y Server Action.
 
 El acceso lo decide el **RBAC persistente**: un usuario debe existir en
 `private.admin_users` con estado `active` y al menos un rol. (La allowlist
@@ -296,7 +297,9 @@ Estado real:
 - **Siguiente paso aprobado:** PostgreSQL administrado en **Supabase** +
   **Drizzle ORM** + migraciones. Supabase se usará como PostgreSQL y, en
   el futuro, Storage; **no se usará Supabase Auth**.
-- Google OAuth seguirá siendo manejado por **Auth.js**.
+- Las sesiones nuevas usan **Supabase Auth** como puerta unificada. Auth.js se
+  conserva temporalmente solo para compatibilidad con sesiones administrativas
+  anteriores durante la transición.
 - Arquitectura futura de tablas: `users`, `roles`, `user_roles`,
   `audit_logs`, `auth_accounts`, `auth_sessions`.
 - La base funcional del admin **no avanzará** hasta tener base de datos,

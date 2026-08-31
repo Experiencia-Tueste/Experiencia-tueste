@@ -62,7 +62,8 @@ privado `private` (nunca el esquema `public`).
   usuario en PostgreSQL. El acceso se concede solo a usuarios `active`
   con al menos un rol persistido; cualquier fallo cierra el acceso.
 - La antigua allowlist temporal (`ADMIN_ALLOWED_EMAILS`) **ya no decide
-  el acceso**: Auth.js + Google solo identifican.
+  el acceso**: Supabase Auth identifica desde la puerta pública y el RBAC
+  persistente decide si la persona puede entrar al panel.
 - Las capacidades por rol se derivan del contrato
   (`src/features/admin/permissions.ts`), no se duplican en la base.
 

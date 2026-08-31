@@ -1,7 +1,10 @@
 import type { EmailOtpType } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { NextResponse, type NextRequest } from 'next/server';
 import { loadSiteUrl } from '@/lib/config/env-server';
 import { createServerSupabase } from '@/lib/supabase/server';
+import { getAdminByEmail } from '@/lib/auth/authorization';
+import { postSignInDestination } from '@/features/customer-auth/post-sign-in';
 
 function publicRedirect(pathname: string, searchParams?: Record<string, string>) {
   const destination = new URL(pathname, loadSiteUrl());
@@ -11,6 +14,13 @@ function publicRedirect(pathname: string, searchParams?: Record<string, string>)
   });
 
   return NextResponse.redirect(destination);
+}
+
+async function redirectAuthenticatedUser(supabase: SupabaseClient) {
+  const { data, error } = await supabase.auth.getUser();
+  const admin = error ? null : await getAdminByEmail(data.user?.email);
+  const destination = postSignInDestination(admin);
+  return publicRedirect(destination.pathname, destination.searchParams);
 }
 
 export async function GET(request: NextRequest) {
@@ -24,7 +34,7 @@ export async function GET(request: NextRequest) {
       const supabase = await createServerSupabase();
       if (supabase) {
         const { error } = await supabase.auth.exchangeCodeForSession(code);
-        if (!error) return publicRedirect('/experiencia', { bienvenida: '1' });
+        if (!error) return redirectAuthenticatedUser(supabase);
       }
     } catch {
       // Un código inválido o una indisponibilidad temporal nunca debe
@@ -38,7 +48,7 @@ export async function GET(request: NextRequest) {
       const supabase = await createServerSupabase();
       if (supabase) {
         const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
-        if (!error) return publicRedirect('/experiencia', { bienvenida: '1' });
+        if (!error) return redirectAuthenticatedUser(supabase);
       }
     } catch {
       // Mismo comportamiento seguro para tokens vencidos o malformados.

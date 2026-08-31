@@ -58,6 +58,9 @@ describe('admin · auditoría (reason obligatoria)', () => {
       'community.post_status_changed',
       'community.report_created',
       'community.report_resolved',
+      'radio.company_created',
+      'radio.channel_created',
+      'radio.subscription_status_changed',
     ]);
   });
 

@@ -50,6 +50,13 @@
       "when": 1788129851838,
       "tag": "0006_abandoned_white_tiger",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1788130327688,
+      "tag": "0007_nebulous_arclight",
+      "breakpoints": true
     }
   ]
 }

@@ -5,7 +5,7 @@ import { randomUUID } from 'node:crypto';
 import { getAdminConfigRepository } from '@/db/admin-config-repository';
 import { getAdminRepository } from '@/db/admin-identity-repository';
 import { getDb } from '@/db/client';
-import { getCurrentAdmin } from '@/lib/auth/authorization';
+import { requireCapability } from '@/lib/auth/authorization';
 import { parseAuditEntry } from './audit';
 import {
   ADMIN_SETTING_DEFINITIONS,
@@ -16,12 +16,7 @@ import {
 } from './config-schemas';
 
 async function requireConfigManager() {
-  const admin = await getCurrentAdmin();
-  if (!admin) throw new Error('401: sesión requerida.');
-  if (!admin.capabilities.includes('config.manage')) {
-    throw new Error('403: capacidad config.manage requerida.');
-  }
-  return admin;
+  return requireCapability('config.manage');
 }
 
 export async function listAdminSettings() {

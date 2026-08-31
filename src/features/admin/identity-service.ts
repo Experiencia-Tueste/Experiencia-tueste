@@ -14,7 +14,7 @@ import {
   vendorMemberships,
   vendors,
 } from '@/db/schema/admin-identity';
-import { getCurrentAdmin } from '@/lib/auth/authorization';
+import { requireCapability } from '@/lib/auth/authorization';
 import { parseAuditEntry } from './audit';
 import { isLastActiveOwner } from './identity-policy';
 import { ALL_CAPABILITIES } from './permissions';
@@ -76,11 +76,7 @@ function audit(
 }
 
 async function requireUsersManager() {
-  const admin = await getCurrentAdmin();
-  if (!admin) throw new Error('401: sesión requerida.');
-  if (!admin.capabilities.includes('users.manage'))
-    throw new Error('403: capacidad users.manage requerida.');
-  return admin;
+  return requireCapability('users.manage');
 }
 
 export async function listAdminUsers() {

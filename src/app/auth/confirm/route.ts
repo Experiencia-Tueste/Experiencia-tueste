@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
       const supabase = await createServerSupabase();
       if (supabase) {
         const { error } = await supabase.auth.exchangeCodeForSession(code);
-        if (!error) return publicRedirect('/cuenta');
+        if (!error) return publicRedirect('/experiencia', { bienvenida: '1' });
       }
     } catch {
       // Un código inválido o una indisponibilidad temporal nunca debe
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
       const supabase = await createServerSupabase();
       if (supabase) {
         const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
-        if (!error) return publicRedirect('/cuenta');
+        if (!error) return publicRedirect('/experiencia', { bienvenida: '1' });
       }
     } catch {
       // Mismo comportamiento seguro para tokens vencidos o malformados.

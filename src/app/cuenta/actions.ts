@@ -60,7 +60,7 @@ export async function loginCustomerAction(
     return { status: 'error', message: 'Correo o contraseña inválidos.' };
   }
 
-  redirect('/cuenta');
+  redirect('/experiencia?bienvenida=1');
 }
 
 export async function registerCustomerAction(

@@ -10,6 +10,10 @@ const googleAuth = readFileSync(
   resolve(__dirname, '../../../app/cuenta/GoogleCustomerAuth.tsx'),
   'utf8',
 );
+const welcome = readFileSync(
+  resolve(__dirname, '../../../features/customer-auth/components/CustomerWelcome.tsx'),
+  'utf8',
+);
 
 describe('frontera de autenticación pública', () => {
   it('valida la cuenta y renueva sesión con getClaims, nunca con getSession', () => {
@@ -26,6 +30,12 @@ describe('frontera de autenticación pública', () => {
   it('acepta confirmación PKCE y plantillas token_hash', () => {
     expect(confirmRoute).toContain('exchangeCodeForSession(code)');
     expect(confirmRoute).toContain('verifyOtp({ type, token_hash: tokenHash })');
+  });
+
+  it('devuelve al cliente a la experiencia con confirmación visible', () => {
+    expect(confirmRoute).toContain("publicRedirect('/experiencia', { bienvenida: '1' })");
+    expect(customerActions).toContain("redirect('/experiencia?bienvenida=1')");
+    expect(welcome).toContain('Ya eres Cliente Tueste. Tu experiencia está lista.');
   });
 
   it('inicia Google OAuth con PKCE hacia el callback público', () => {

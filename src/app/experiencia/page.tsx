@@ -7,6 +7,7 @@ import ListeningExperience from '@/components/home/ListeningExperience';
 import Manifiesto from '@/components/home/Manifiesto';
 import Navbar from '@/components/home/Navbar';
 import SkipLink from '@/components/SkipLink';
+import CustomerWelcome from '@/features/customer-auth/components/CustomerWelcome';
 
 /**
  * Metadata explícita de la experiencia (conserva la base global del
@@ -34,6 +35,7 @@ export default function Home() {
     <>
       <SkipLink />
       <Navbar />
+      <CustomerWelcome />
       <div id="contenido-principal">
         <Atmosphere />
         <main id="contenido" tabIndex={-1}>

@@ -40,6 +40,10 @@ export default async function CustomerAccountPage() {
           </div>
         </div>
 
+        <Link className={styles.experienceCta} href="/experiencia">
+          Volver a Experiencia Tueste →
+        </Link>
+
         <form action={logoutCustomerAction}>
           <button className={styles.logout} type="submit">
             Cerrar sesión

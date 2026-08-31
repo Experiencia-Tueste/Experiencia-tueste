@@ -10,6 +10,29 @@ export interface CustomerAuthState {
   message: string;
 }
 
+export async function loginWithGoogleAction(formData: FormData) {
+  const fallbackPath =
+    formData.get('fallback') === 'registro'
+      ? '/cuenta/registro?oauth=fallido'
+      : '/cuenta/iniciar-sesion?oauth=fallido';
+  const supabase = await createServerSupabase();
+  if (!supabase) {
+    redirect(fallbackPath);
+  }
+
+  const redirectTo = new URL('/auth/confirm', loadSiteUrl()).toString();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo },
+  });
+
+  if (error || !data.url) {
+    redirect(fallbackPath);
+  }
+
+  redirect(data.url);
+}
+
 function credentialsFrom(formData: FormData) {
   return customerCredentialsSchema.safeParse({
     email: formData.get('email'),

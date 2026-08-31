@@ -57,6 +57,71 @@
   margin-top: 32px;
 }
 
+.oauthForm {
+  margin-top: 30px;
+}
+
+.googleButton {
+  width: 100%;
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border: 1px solid rgba(var(--cream-rgb), 0.34);
+  border-radius: var(--radius-pill);
+  padding: 0 22px;
+  background: rgba(var(--cream-rgb), 0.07);
+  color: var(--cream);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  transition:
+    border-color 180ms ease,
+    background 180ms ease,
+    transform 180ms ease;
+}
+
+.googleButton:hover {
+  border-color: rgba(var(--cream-rgb), 0.68);
+  background: rgba(var(--cream-rgb), 0.12);
+  transform: translateY(-1px);
+}
+
+.googleMark {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--cream);
+  color: #4285f4;
+  font: 800 1rem/1 var(--font-sans);
+  letter-spacing: 0;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 24px;
+  color: rgba(var(--cream-rgb), 0.46);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.divider::before,
+.divider::after {
+  height: 1px;
+  flex: 1;
+  content: '';
+  background: rgba(var(--cream-rgb), 0.16);
+}
+
 .field {
   display: grid;
   gap: 8px;

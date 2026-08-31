@@ -59,11 +59,18 @@ ejecuta automáticamente en cada reinicio del servicio web.
 
 ## Publicaciones programadas
 
-La programación se implementará en la aplicación con PostgreSQL como fuente de
-verdad y un proceso ejecutor independiente. En Railway será un servicio cron
-separado; en Latinoamérica Hosting será la tarea programada equivalente. El
-ejecutor debe ser corto, idempotente, cerrar sus conexiones y registrar cada
-publicación en auditoría.
+La programación usa PostgreSQL como fuente de verdad y un proceso ejecutor
+independiente. En Railway se configura un servicio cron separado con intervalo
+mínimo de cinco minutos y este comando:
+
+```bash
+npm run db:publish-scheduled
+```
+
+El servicio cron recibe únicamente `DATABASE_URL`, no expone dominio público y
+no comparte credenciales OAuth ni claves de Storage. En Latinoamérica Hosting
+se usa la tarea programada equivalente. El ejecutor es corto, idempotente,
+cierra sus conexiones y registra cada publicación en auditoría.
 
 El cambio de proveedor solo reemplaza la configuración del ejecutor; no cambia
 las tablas, acciones, permisos ni reglas de negocio.
@@ -76,5 +83,7 @@ las tablas, acciones, permisos ni reglas de negocio.
 4. Confirmar `GET /` y abrir `/admin/login`.
 5. Probar login Google, Storage y `/admin/contenido`.
 6. Verificar una subida, aprobación y publicación de prueba.
-7. Configurar el dominio HTTPS y actualizar el callback de Google.
-8. Documentar rollback antes de promover a producción.
+7. Programar una publicación a cinco minutos, verificar el cron y confirmar su
+   aparición en `/experiencia`.
+8. Configurar el dominio HTTPS y actualizar el callback de Google.
+9. Documentar rollback antes de promover a producción.

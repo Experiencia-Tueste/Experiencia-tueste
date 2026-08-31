@@ -8,9 +8,11 @@ import {
   CONTENT_STATUS_SCHEMA,
   CONTENT_STATUS_FLOW,
   RELEASE_SCHEMA,
+  SCHEDULE_SCHEMA,
   STATUS_TRANSITION_SCHEMA,
   canTransitionAsset,
   canTransitionContent,
+  localDateTimeWithOffset,
 } from '../content-schemas';
 import { ROLE_CAPABILITIES } from '../permissions';
 
@@ -106,6 +108,29 @@ describe('contenido · validación Zod', () => {
     expect(() =>
       RELEASE_SCHEMA.parse({ title: 'X', slug: 'x', tracks: [{ title: '', hz: 111 }] }),
     ).toThrow();
+  });
+
+  it('la programación exige una fecha futura y una razón auditada', () => {
+    const future = new Date(Date.now() + 60_000);
+    expect(
+      SCHEDULE_SCHEMA.parse({ scheduledAt: future.toISOString(), reason: 'Campaña editorial' })
+        .scheduledAt,
+    ).toEqual(future);
+    expect(() =>
+      SCHEDULE_SCHEMA.parse({
+        scheduledAt: new Date(Date.now() - 60_000).toISOString(),
+        reason: 'Campaña editorial',
+      }),
+    ).toThrow('La fecha debe estar en el futuro.');
+  });
+
+  it('convierte la hora local del navegador a UTC sin depender del timezone del servidor', () => {
+    expect(localDateTimeWithOffset('2026-09-01T09:30', 300).toISOString()).toBe(
+      '2026-09-01T14:30:00.000Z',
+    );
+    expect(localDateTimeWithOffset('2026-09-01T09:30', -120).toISOString()).toBe(
+      '2026-09-01T07:30:00.000Z',
+    );
   });
 });
 

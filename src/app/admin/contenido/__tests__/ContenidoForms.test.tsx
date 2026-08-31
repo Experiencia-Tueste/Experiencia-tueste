@@ -66,6 +66,7 @@ function fila(status: ContentRow['status'], version = 1): ContentRow {
     createdAt: '2026-08-24T12:00:00.000Z',
     updatedAt: '2026-08-24T12:00:00.000Z',
     publishedAt: null,
+    scheduledAt: null,
     archivedAt: null,
   };
 }

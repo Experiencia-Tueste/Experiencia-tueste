@@ -13,6 +13,7 @@ import {
   transitionReleaseStatus,
   updateContent,
 } from '@/features/admin/content-service';
+import { localDateTimeWithOffset } from '@/features/admin/content-schemas';
 import { createSignedAssetUpload } from '@/features/admin/storage-service';
 import { getCurrentAdmin } from '@/lib/auth/authorization';
 import { mensajeSeguro } from './error-messages';
@@ -30,13 +31,20 @@ export interface ActionResult {
   error?: string;
 }
 
+function scheduledAtFromForm(formData: FormData): Date {
+  return localDateTimeWithOffset(
+    String(formData.get('scheduledAt') ?? ''),
+    Number(String(formData.get('timezoneOffset') ?? '0')),
+  );
+}
+
 export async function scheduleContentAction(
   _prev: ActionResult,
   formData: FormData,
 ): Promise<ActionResult> {
   try {
     await scheduleContentPublication(String(formData.get('id') ?? ''), {
-      scheduledAt: String(formData.get('scheduledAt') ?? ''),
+      scheduledAt: scheduledAtFromForm(formData),
       reason: String(formData.get('reason') ?? ''),
     });
     revalidateContenido();
@@ -52,7 +60,7 @@ export async function scheduleReleaseAction(
 ): Promise<ActionResult> {
   try {
     await scheduleReleasePublication(String(formData.get('id') ?? ''), {
-      scheduledAt: String(formData.get('scheduledAt') ?? ''),
+      scheduledAt: scheduledAtFromForm(formData),
       reason: String(formData.get('reason') ?? ''),
     });
     revalidateContenido();

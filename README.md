@@ -180,8 +180,9 @@ privadas, logs y tareas programadas.
   auditoría append-only en transacciones y ruta `/admin/contenido`.
 - Migración `0001_blue_tarantula.sql` generada y aplicada con
   `npm run db:migrate`.
-- Storage y biblioteca multimedia implementados; el editor completo y la
-  conexión pública de contenido continúan pendientes de la Fase 3.
+- Storage y biblioteca multimedia implementados; programación temporal y
+  proyección pública de contenido publicado conectadas. El ejecutor se activa
+  con `npm run db:publish-scheduled` en un cron independiente.
 
 ## Panel administrativo (Fase 1.2.2)
 

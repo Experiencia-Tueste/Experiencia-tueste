@@ -16,7 +16,7 @@ export interface ContentRow {
   createdAt: string;
   updatedAt: string;
   publishedAt: string | null;
-  scheduledAt?: string | null;
+  scheduledAt: string | null;
   archivedAt: string | null;
 }
 
@@ -49,7 +49,6 @@ export interface TrackRow {
   audioAssetId: string | null;
   createdAt: string;
   updatedAt: string;
-  scheduledAt?: string | null;
 }
 
 /** Lanzamiento con sus pistas asociadas. */
@@ -59,7 +58,9 @@ export interface ReleaseRow {
   slug: string;
   coverAssetId: string | null;
   status: ContentStatus;
-  scheduledAt?: string | null;
+  scheduledAt: string | null;
+  publishedAt: string | null;
+  archivedAt: string | null;
   createdAt: string;
   updatedAt: string;
   tracks: TrackRow[];

@@ -88,6 +88,18 @@ export const SCHEDULE_SCHEMA = z.object({
   reason: z.string().trim().min(3).max(300),
 });
 
+const LOCAL_DATE_TIME_SCHEMA = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'Fecha local inválida.');
+
+/** Convierte el datetime-local del navegador a un instante UTC inequívoco. */
+export function localDateTimeWithOffset(value: string, timezoneOffset: number): Date {
+  const local = LOCAL_DATE_TIME_SCHEMA.parse(value);
+  const offset = z.number().int().min(-840).max(840).parse(timezoneOffset);
+  const localInterpretedAsUtc = Date.parse(`${local}:00.000Z`);
+  return new Date(localInterpretedAsUtc + offset * 60_000);
+}
+
 /** Creación de un lanzamiento con sus pistas. */
 export const RELEASE_SCHEMA = z.object({
   title: z.string().trim().min(1).max(200),

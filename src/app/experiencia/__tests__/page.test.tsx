@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import Home, { metadata } from '../page';
+import { dynamic, ExperienceView as Home, metadata } from '../page';
 
 describe('Experiencia (metadata)', () => {
   it('expone la metadata explícita de la experiencia', () => {
@@ -9,6 +9,10 @@ describe('Experiencia (metadata)', () => {
     expect(metadata.description).toBe(
       'Tueste · Origen Tostado. Café, música y ritual nacidos en el Eje Cafetero colombiano.',
     );
+  });
+
+  it('resuelve la proyección editorial en cada request', () => {
+    expect(dynamic).toBe('force-dynamic');
   });
 });
 

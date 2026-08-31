@@ -236,7 +236,11 @@ export default async function AdminContentPage() {
                         />
                       ) : null}
                       {release.status === 'review' && canPublish ? (
-                        <ScheduleForm id={release.id} kind="release" />
+                        <ScheduleForm
+                          id={release.id}
+                          kind="release"
+                          scheduledAt={release.scheduledAt}
+                        />
                       ) : null}
                     </li>
                   ))}
@@ -292,7 +296,7 @@ export default async function AdminContentPage() {
                         <ContentRowActions row={row} canEdit={canEdit} canPublish={canPublish} />
                       ) : null}
                       {row.status === 'review' && canPublish ? (
-                        <ScheduleForm id={row.id} kind="content" />
+                        <ScheduleForm id={row.id} kind="content" scheduledAt={row.scheduledAt} />
                       ) : null}
                     </li>
                   ))}

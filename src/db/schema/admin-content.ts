@@ -62,6 +62,9 @@ export const contentEntries = privateSchema.table(
       sql`${table.status} IN ('draft', 'review', 'published', 'archived')`,
     ),
     index('content_entries_status_idx').on(table.status),
+    index('content_entries_schedule_idx')
+      .on(table.scheduledAt)
+      .where(sql`${table.status} = 'review' AND ${table.scheduledAt} IS NOT NULL`),
   ],
 );
 
@@ -77,6 +80,9 @@ export const releases = privateSchema.table(
     status: text('status').notNull().default('draft'),
     scheduledAt: timestamp('scheduled_at', { withTimezone: true }),
     createdBy: uuid('created_by').references(() => adminUsers.id, { onDelete: 'set null' }),
+    updatedBy: uuid('updated_by').references(() => adminUsers.id, { onDelete: 'set null' }),
+    publishedAt: timestamp('published_at', { withTimezone: true }),
+    archivedAt: timestamp('archived_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -86,6 +92,10 @@ export const releases = privateSchema.table(
       'releases_status_check',
       sql`${table.status} IN ('draft', 'review', 'published', 'archived')`,
     ),
+    index('releases_status_idx').on(table.status),
+    index('releases_schedule_idx')
+      .on(table.scheduledAt)
+      .where(sql`${table.status} = 'review' AND ${table.scheduledAt} IS NOT NULL`),
   ],
 );
 

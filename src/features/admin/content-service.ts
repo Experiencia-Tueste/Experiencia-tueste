@@ -197,7 +197,13 @@ export async function transitionReleaseStatus(id: string, input: unknown) {
   });
 
   return getDb().transaction(async (tx) => {
-    const updated = await getContentRepository().setReleaseStatus(id, parsed.from, parsed.to, tx);
+    const updated = await getContentRepository().setReleaseStatus(
+      id,
+      parsed.from,
+      parsed.to,
+      admin.id,
+      tx,
+    );
     if (updated === null) {
       throw new Error(`409: el estado «${parsed.from}» ya no es el actual.`);
     }
@@ -241,7 +247,12 @@ export async function scheduleReleasePublication(id: string, input: unknown) {
   if (!row || row.status !== 'review')
     throw new Error('409: solo se puede programar un lanzamiento en revisión.');
   return getDb().transaction(async (tx) => {
-    const updated = await getContentRepository().scheduleRelease(id, parsed.scheduledAt, tx);
+    const updated = await getContentRepository().scheduleRelease(
+      id,
+      parsed.scheduledAt,
+      admin.id,
+      tx,
+    );
     if (!updated) throw new Error('409: no se pudo programar el lanzamiento.');
     await getAdminRepository().appendAudit(
       buildAuditEntry(admin, {

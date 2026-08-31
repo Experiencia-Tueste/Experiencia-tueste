@@ -538,15 +538,21 @@ Estado de implementación:
 - integración Supabase Storage aislada en `src/integrations/storage`, con
   proveedor server-only, generación de claves estables y URLs firmadas;
 - subida directa de archivos desde el panel mediante token firmado temporal;
-- Storage queda opcional hasta configurar `SUPABASE_STORAGE_URL`,
-  `SUPABASE_STORAGE_ADMIN_KEY` y `SUPABASE_STORAGE_BUCKET` en el entorno
-  privado.
+- Storage privado configurado en producción;
+- programación temporal desde el panel con fecha local normalizada a UTC;
+- ejecutor idempotente `npm run db:publish-scheduled`, transaccional y con
+  auditoría de sistema;
+- proyección pública server-only que consulta únicamente contenido y
+  lanzamientos publicados, usa solo activos aprobados y reemplaza claves
+  privadas por URLs firmadas temporales;
+- sección pública «Lo nuevo del origen» conectada a PostgreSQL sin necesidad
+  de un nuevo despliegue.
 
 Pendiente de esta fase:
 
-- crear el bucket privado y configurar credenciales de Storage en el entorno;
-- programación temporal de publicación;
-- conexión de la superficie pública a los contenidos publicados.
+- activar y verificar el servicio cron independiente en Railway;
+- ejecutar una prueba editorial completa con contenido real: revisión →
+  programación → publicación automática → visualización pública.
 
 ### Fase 4 — Usuarios, configuración y auditoría visible
 
@@ -713,8 +719,6 @@ No se acepta:
 
 - dashboard con identidad y estado de fundación;
 - shell y navegación por capacidades;
-- programación de contenido;
-- configuración operativa de Storage;
 - documentación de integración.
 
 ### Pendiente
@@ -725,20 +729,19 @@ No se acepta:
 - usuarios y auditoría visible;
 - módulos operativos del mockup;
 - adaptador Shopify;
-- conexión pública de contenido publicado;
 - eventos, comunidad, Radio, Unity, backstage y analítica;
 - subastas y pagos condicionados;
 - preparación de producción.
 
 ### Próxima entrega, sin ampliar alcance
 
-La siguiente entrega debe cerrar los pendientes de **Fase 3** antes de saltar a
-otros módulos, con este orden:
+La implementación de **Fase 3** está completa en código. Su puerta de salida se
+cierra operacionalmente con este orden:
 
-1. mantener configurado el bucket privado de Storage para staging;
-2. completar programación temporal de publicación;
-3. conectar la superficie pública a contenido publicado;
-4. conservar /admin/contenido como primera rebanada vertical de referencia.
+1. aplicar la migración `0008_optimal_marvel_boy.sql`;
+2. activar el cron de Railway con `npm run db:publish-scheduled`;
+3. ejecutar la prueba editorial completa en producción;
+4. iniciar Fase 4 con usuarios, roles y auditoría visible.
 
 No se implementarán todavía pagos, subastas operativas ni integraciones que no
 tengan contrato y credenciales aprobadas.

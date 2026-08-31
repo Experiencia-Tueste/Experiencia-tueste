@@ -204,12 +204,36 @@ export function ReleaseRowActions({
   );
 }
 
-export function ScheduleForm({ id, kind }: { id: string; kind: 'content' | 'release' }) {
+export function ScheduleForm({
+  id,
+  kind,
+  scheduledAt,
+}: {
+  id: string;
+  kind: 'content' | 'release';
+  scheduledAt: string | null;
+}) {
   const action = kind === 'content' ? scheduleContentAction : scheduleReleaseAction;
   const [state, formAction] = useActionState(action, initialActionState);
   return (
-    <form action={formAction} className={styles.rowForm}>
+    <form
+      action={formAction}
+      className={styles.rowForm}
+      onSubmit={(event) => {
+        const field = event.currentTarget.elements.namedItem('timezoneOffset');
+        if (field instanceof HTMLInputElement) {
+          field.value = String(new Date().getTimezoneOffset());
+        }
+      }}
+    >
       <input type="hidden" name="id" value={id} />
+      <input type="hidden" name="timezoneOffset" defaultValue="0" />
+      {scheduledAt ? (
+        <p className={styles.fieldHint}>
+          Programado:{' '}
+          {new Date(scheduledAt).toLocaleString('es-CO', { timeZone: 'America/Bogota' })}
+        </p>
+      ) : null}
       <label className={styles.label}>
         Publicar el
         <input className={styles.input} type="datetime-local" name="scheduledAt" required />
@@ -222,7 +246,7 @@ export function ScheduleForm({ id, kind }: { id: string; kind: 'content' | 'rele
         placeholder="Razón de programación"
       />
       <button type="submit" className={styles.actionButton}>
-        Programar
+        {scheduledAt ? 'Reprogramar' : 'Programar'}
       </button>
       <Feedback state={state} />
     </form>

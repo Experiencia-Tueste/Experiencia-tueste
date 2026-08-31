@@ -75,6 +75,8 @@ function toReleaseRow(
     coverAssetId: row.coverAssetId,
     status,
     scheduledAt: row.scheduledAt?.toISOString() ?? null,
+    publishedAt: row.publishedAt?.toISOString() ?? null,
+    archivedAt: row.archivedAt?.toISOString() ?? null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
     tracks: releaseTracks,
@@ -214,6 +216,8 @@ export class DrizzleAdminContentRepository {
         updatedAt: now,
         publishedAt: next === 'published' ? now : undefined,
         archivedAt: next === 'archived' ? now : undefined,
+        scheduledAt:
+          next === 'published' || next === 'archived' || next === 'draft' ? null : undefined,
       })
       .where(and(eq(contentEntries.id, id), eq(contentEntries.status, from)))
       .returning();
@@ -239,25 +243,37 @@ export class DrizzleAdminContentRepository {
     id: string,
     from: ContentStatus,
     next: ContentStatus,
+    actorId: string,
     tx?: DbClient,
   ): Promise<ReleaseRow | null> {
     const db = tx ?? getDb();
+    const now = new Date();
     const [row] = await db
       .update(releases)
       .set({
         status: next,
-        updatedAt: new Date(),
+        updatedBy: actorId,
+        updatedAt: now,
+        publishedAt: next === 'published' ? now : undefined,
+        archivedAt: next === 'archived' ? now : undefined,
+        scheduledAt:
+          next === 'published' || next === 'archived' || next === 'draft' ? null : undefined,
       })
       .where(and(eq(releases.id, id), eq(releases.status, from)))
       .returning();
     return row ? toReleaseRow(row) : null;
   }
 
-  async scheduleRelease(id: string, scheduledAt: Date, tx?: DbClient): Promise<ReleaseRow | null> {
+  async scheduleRelease(
+    id: string,
+    scheduledAt: Date,
+    actorId: string,
+    tx?: DbClient,
+  ): Promise<ReleaseRow | null> {
     const db = tx ?? getDb();
     const [row] = await db
       .update(releases)
-      .set({ scheduledAt, updatedAt: new Date() })
+      .set({ scheduledAt, updatedBy: actorId, updatedAt: new Date() })
       .where(and(eq(releases.id, id), eq(releases.status, 'review')))
       .returning();
     return row ? toReleaseRow(row) : null;
@@ -305,6 +321,7 @@ export class DrizzleAdminContentRepository {
         coverAssetId: input.coverAssetId ?? null,
         status: 'draft',
         createdBy: input.actorId,
+        updatedBy: input.actorId,
       })
       .returning({ id: releases.id });
 

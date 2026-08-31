@@ -1,5 +1,4 @@
-import type { AdminUser } from './identity';
-import type { AdminRole } from './identity';
+import type { AdminRole, AdminUser, Vendor } from './identity';
 import type { AuditLogEntry } from './audit';
 
 /**
@@ -16,7 +15,18 @@ export interface AdminIdentityRepository {
   findUserById(id: string): Promise<AdminUser | null>;
   findRolesByUserId(userId: string): Promise<AdminRole[]>;
   appendAudit(entry: AuditLogEntry): Promise<void>;
-  listUsers?(): Promise<AdminUser[]>;
-  listRoles?(): Promise<AdminRole[]>;
-  listAudit?(filters?: { action?: string; limit?: number }): Promise<AuditLogEntry[]>;
+  listUsers(): Promise<AdminUser[]>;
+  listRoles(): Promise<AdminRole[]>;
+  listVendors(): Promise<Vendor[]>;
+  findVendorByUserId(userId: string): Promise<Vendor | null>;
+  listAudit(filters?: AuditFilters): Promise<AuditLogEntry[]>;
+}
+
+export interface AuditFilters {
+  action?: string;
+  actor?: string;
+  targetType?: string;
+  from?: string;
+  to?: string;
+  limit?: number;
 }

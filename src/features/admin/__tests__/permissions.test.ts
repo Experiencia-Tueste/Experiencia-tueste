@@ -49,6 +49,14 @@ describe('admin · permisos por rol', () => {
     expect(hasCapability('lector', 'events.manage')).toBe(false);
   });
 
+  it('vendedor solo recibe lectura comercial y alcance propio', () => {
+    expect(hasCapability('vendedor', 'admin.access')).toBe(true);
+    expect(hasCapability('vendedor', 'market.self')).toBe(true);
+    expect(hasCapability('vendedor', 'orders.read')).toBe(true);
+    expect(hasCapability('vendedor', 'market.manage')).toBe(false);
+    expect(hasCapability('vendedor', 'users.manage')).toBe(false);
+  });
+
   it('el mapa cubre todos los roles sin capacidades fuera del catálogo', () => {
     for (const capabilities of Object.values(ROLE_CAPABILITIES)) {
       for (const capability of capabilities) {

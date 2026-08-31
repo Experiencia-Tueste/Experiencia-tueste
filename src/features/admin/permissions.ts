@@ -7,7 +7,10 @@
  * cliente.
  */
 
-export type AdminRole = 'owner' | 'admin' | 'editor' | 'operador' | 'moderador' | 'lector';
+import { ADMIN_CAPABILITIES, ADMIN_ROLES_META } from '@/db/admin-roles.mjs';
+
+export type AdminRole =
+  'owner' | 'admin' | 'editor' | 'operador' | 'moderador' | 'lector' | 'vendedor';
 
 export type AdminCapability =
   | 'admin.access'
@@ -47,129 +50,23 @@ export type AdminCapability =
   | 'community.moderate'
   | 'audit.read';
 
-/** Todas las capacidades conocidas (fuente única). */
-export const ALL_CAPABILITIES: readonly AdminCapability[] = [
-  'admin.access',
-  'users.manage',
-  'content.read',
-  'content.edit',
-  'content.review',
-  'content.publish',
-  'crm.read',
-  'crm.manage',
-  'crm.export',
-  'orders.read',
-  'orders.manage',
-  'orders.sync',
-  'market.read',
-  'market.manage',
-  'market.self',
-  'tree.read',
-  'tree.export',
-  'events.manage',
-  'events.read',
-  'events.checkin',
-  'events.export',
-  'unity.read',
-  'unity.manage',
-  'radio.read',
-  'radio.manage',
-  'backstage.read',
-  'backstage.manage',
-  'auctions.read',
-  'auctions.manage',
-  'analytics.read',
-  'analytics.export',
-  'config.manage',
-  'tree.update',
-  'community.read',
-  'community.moderate',
-  'audit.read',
-];
+/** Todas las capacidades conocidas (fuente única compartida con el bootstrap). */
+export const ALL_CAPABILITIES = ADMIN_CAPABILITIES as readonly AdminCapability[];
 
 /** Mapa explícito rol → capacidades. */
-export const ROLE_CAPABILITIES: Record<AdminRole, readonly AdminCapability[]> = {
-  owner: ALL_CAPABILITIES,
-  admin: [
-    'admin.access',
-    'content.read',
-    'content.edit',
-    'content.review',
-    'content.publish',
-    'crm.read',
-    'crm.manage',
-    'crm.export',
-    'orders.read',
-    'orders.manage',
-    'orders.sync',
-    'market.read',
-    'market.manage',
-    'tree.read',
-    'tree.export',
-    'events.manage',
-    'events.read',
-    'events.checkin',
-    'events.export',
-    'unity.read',
-    'unity.manage',
-    'radio.read',
-    'radio.manage',
-    'backstage.read',
-    'backstage.manage',
-    'auctions.read',
-    'auctions.manage',
-    'analytics.read',
-    'analytics.export',
-    'community.read',
-    'tree.update',
-    'community.moderate',
-    'audit.read',
-  ],
-  editor: [
-    'admin.access',
-    'content.read',
-    'content.edit',
-    'content.review',
-    'events.read',
-    'events.manage',
-  ],
-  operador: [
-    'admin.access',
-    'crm.read',
-    'crm.manage',
-    'crm.export',
-    'orders.read',
-    'orders.manage',
-    'market.read',
-    'tree.read',
-    'tree.update',
-    'tree.export',
-    'events.read',
-    'events.manage',
-    'events.checkin',
-    'events.export',
-    'unity.read',
-    'unity.manage',
-    'radio.read',
-    'backstage.read',
-    'backstage.manage',
-  ],
-  moderador: ['admin.access', 'community.read', 'community.moderate'],
-  lector: [
-    'admin.access',
-    'content.read',
-    'crm.read',
-    'orders.read',
-    'market.read',
-    'tree.read',
-    'events.read',
-    'unity.read',
-    'radio.read',
-    'community.read',
-    'backstage.read',
-    'analytics.read',
-  ],
-};
+const capabilitySet = new Set<string>(ALL_CAPABILITIES);
+export const ROLE_CAPABILITIES = Object.fromEntries(
+  ADMIN_ROLES_META.map((role) => {
+    const capabilities =
+      role.capabilities === '*'
+        ? ALL_CAPABILITIES
+        : (role.capabilities as readonly AdminCapability[]);
+    if (!capabilities.every((capability) => capabilitySet.has(capability))) {
+      throw new Error(`El rol ${role.key} declara una capacidad desconocida.`);
+    }
+    return [role.key, capabilities];
+  }),
+) as Record<AdminRole, readonly AdminCapability[]>;
 
 /** ¿Un rol tiene una capacidad? Función pura, sin efectos. */
 export function hasCapability(role: AdminRole, capability: AdminCapability): boolean {

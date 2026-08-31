@@ -23,7 +23,7 @@ const ROL_ADMIN: AdminRole = {
   key: 'admin',
   name: 'Administrador',
   description: 'Operación completa de módulos autorizados.',
-  capabilities: ['content.publish', 'events.manage'],
+  capabilities: ['admin.access', 'content.publish', 'events.manage'],
 };
 
 describe('admin · autorización pura (RBAC persistente)', () => {
@@ -66,7 +66,7 @@ describe('admin · autorización pura (RBAC persistente)', () => {
     expect(admin?.role).toBe('admin'); // jerarquía
     expect(admin?.capabilities).toContain('content.publish');
     expect(admin?.capabilities).toContain('community.moderate'); // rol secundario
-    expect(admin?.capabilities).toContain('crm.read'); // del rol admin
+    expect(admin?.capabilities).not.toContain('crm.read'); // no se fabrica fuera de PostgreSQL
   });
 
   it('elige el rol de mayor jerarquía cuando hay varios', () => {
@@ -79,5 +79,16 @@ describe('admin · autorización pura (RBAC persistente)', () => {
     };
     const admin = resolvePersistedAdmin(USUARIO_ACTIVO, [rolEditor, ROL_ADMIN]);
     expect(admin?.role).toBe('admin');
+  });
+
+  it('un rol vendedor falla cerrado sin vínculo de vendedor', () => {
+    const seller: AdminRole = {
+      ...ROL_ADMIN,
+      id: 'role_seller',
+      key: 'vendedor',
+      capabilities: ['admin.access', 'market.self'],
+    };
+    expect(resolvePersistedAdmin(USUARIO_ACTIVO, [seller])).toBeNull();
+    expect(resolvePersistedAdmin(USUARIO_ACTIVO, [seller], 'vendor_1')?.vendorId).toBe('vendor_1');
   });
 });

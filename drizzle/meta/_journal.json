@@ -64,6 +64,20 @@
       "when": 1788177648460,
       "tag": "0008_optimal_marvel_boy",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1788198638195,
+      "tag": "0009_thankful_domino",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1788198786771,
+      "tag": "0010_normal_midnight",
+      "breakpoints": true
     }
   ]
 }

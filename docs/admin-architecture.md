@@ -548,11 +548,9 @@ Estado de implementación:
 - sección pública «Lo nuevo del origen» conectada a PostgreSQL sin necesidad
   de un nuevo despliegue.
 
-Pendiente de esta fase:
-
-- activar y verificar el servicio cron independiente en Railway;
-- ejecutar una prueba editorial completa con contenido real: revisión →
-  programación → publicación automática → visualización pública.
+La fase quedó cerrada operacionalmente: migración aplicada, cron independiente
+activo en Railway y flujo editorial revisión → programación → publicación
+automática → visualización pública verificado en producción.
 
 ### Fase 4 — Usuarios, configuración y auditoría visible
 
@@ -569,6 +567,11 @@ Entregables:
 
 Puerta de salida: se puede operar el equipo sin bootstrap manual y cada acción
 administrativa sensible tiene trazabilidad.
+
+Estado: **implementada y migrada en producción**. Las capacidades se resuelven
+desde `private.admin_role_capabilities` (no desde datos editables del navegador),
+el rol vendedor exige una relación explícita con `private.vendors`, y las nuevas
+tablas de configuración permanecen en el schema privado sin almacenar secretos.
 
 ### Fase 5 — CRM, Unity, pedidos y vendedores
 
@@ -642,6 +645,21 @@ Requisitos previos:
 - disputas y reembolsos;
 - webhooks e idempotencia;
 - revisión de seguridad.
+
+Decisión de arquitectura para pagos:
+
+- los cobros vivirán en un servicio Spring Boot separado del frontend Next.js;
+- Next.js enviará al servicio una identidad de sesión de corta duración y con
+  audiencia explícita; Spring Boot validará firma, emisor, audiencia, expiración
+  y permisos del JWT antes de ejecutar cualquier operación;
+- el JWT contendrá identidad, alcance e identificadores mínimos, nunca secretos
+  del proveedor, datos completos de tarjetas ni credenciales;
+- las credenciales del proveedor de pagos permanecerán cifradas como secretos
+  del runtime de Spring Boot y solo ese servicio podrá leerlas;
+- webhooks se validarán con la firma nativa del proveedor y se procesarán con
+  idempotencia, máquina de estados y auditoría;
+- el navegador nunca llamará directamente al proveedor con credenciales
+  privilegiadas y el panel no almacenará tokens de pago.
 
 Sin estos requisitos, Subastas permanece como consulta o prototipo no
 operativo.
@@ -717,16 +735,12 @@ No se acepta:
 
 ### Parcial
 
-- dashboard con identidad y estado de fundación;
+- dashboard con métricas operativas aún ampliables;
 - shell y navegación por capacidades;
 - documentación de integración.
 
 ### Pendiente
 
-- matriz completa de capacidades;
-- migración y relación del rol vendedor;
-- layout compartido;
-- usuarios y auditoría visible;
 - módulos operativos del mockup;
 - adaptador Shopify;
 - eventos, comunidad, Radio, Unity, backstage y analítica;
@@ -735,13 +749,10 @@ No se acepta:
 
 ### Próxima entrega, sin ampliar alcance
 
-La implementación de **Fase 3** está completa en código. Su puerta de salida se
-cierra operacionalmente con este orden:
-
-1. aplicar la migración `0008_optimal_marvel_boy.sql`;
-2. activar el cron de Railway con `npm run db:publish-scheduled`;
-3. ejecutar la prueba editorial completa en producción;
-4. iniciar Fase 4 con usuarios, roles y auditoría visible.
+Las **Fases 3 y 4** están completas en código y base de datos. La siguiente
+entrega es la Fase 5: CRM, Unity, pedidos y vendedores, reutilizando el alcance
+`vendorId` creado en esta fase para que un vendedor nunca consulte registros
+ajenos.
 
 No se implementarán todavía pagos, subastas operativas ni integraciones que no
 tengan contrato y credenciales aprobadas.

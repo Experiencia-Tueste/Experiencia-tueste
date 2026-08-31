@@ -34,8 +34,15 @@ export async function getAdminByEmail(
   try {
     const user = await repository.findUserByEmail(email);
     if (user === null) return null;
-    const roles = await repository.findRolesByUserId(user.id);
-    const admin = resolvePersistedAdmin(user, roles);
+    const [roles, vendor] = await Promise.all([
+      repository.findRolesByUserId(user.id),
+      repository.findVendorByUserId(user.id),
+    ]);
+    const admin = resolvePersistedAdmin(
+      user,
+      roles,
+      vendor?.status === 'active' ? vendor.id : undefined,
+    );
     return admin === null ? null : { ...admin, id: user.id };
   } catch (error) {
     // Fail closed: un error de PostgreSQL nunca concede acceso. Se

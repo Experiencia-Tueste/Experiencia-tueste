@@ -3,9 +3,12 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   adminRoles,
+  adminRoleCapabilities,
   adminUserRoles,
   adminUsers,
   auditLogs,
+  vendors,
+  vendorMemberships,
   privateSchema,
 } from '../schema/admin-identity';
 import { ADMIN_ROLES_SEED } from '../admin-identity-seed';
@@ -22,7 +25,7 @@ const SCHEMA_SOURCE = readFileSync(resolve(__dirname, '../schema/admin-identity.
 const SEED_SOURCE = readFileSync(resolve(__dirname, '../admin-identity-seed.ts'), 'utf-8');
 
 describe('db · esquema declarativo de identidad', () => {
-  it('declara las cuatro tablas en el schema private', () => {
+  it('declara las tablas de identidad, capacidades y vendedores en private', () => {
     // El nombre de tabla existe en runtime de Drizzle; el acceso se hace
     // con cast porque el tipo público no lo expone.
     const tableName = (table: unknown) =>
@@ -33,6 +36,9 @@ describe('db · esquema declarativo de identidad', () => {
     expect(tableName(adminRoles)).toBe('admin_roles');
     expect(tableName(adminUserRoles)).toBe('admin_user_roles');
     expect(tableName(auditLogs)).toBe('audit_logs');
+    expect(tableName(adminRoleCapabilities)).toBe('admin_role_capabilities');
+    expect(tableName(vendors)).toBe('vendors');
+    expect(tableName(vendorMemberships)).toBe('vendor_memberships');
   });
 
   it('los tres estados de usuario son exactamente los actuales', () => {
@@ -40,7 +46,7 @@ describe('db · esquema declarativo de identidad', () => {
     expect(SCHEMA_SOURCE).toMatch(/invited \| active \| suspended/);
   });
 
-  it('el seed contiene exactamente los seis roles actuales', () => {
+  it('el seed contiene los siete roles actuales', () => {
     expect(ADMIN_ROLES_SEED.map((rol) => rol.key)).toEqual([
       'owner',
       'admin',
@@ -48,6 +54,7 @@ describe('db · esquema declarativo de identidad', () => {
       'operador',
       'moderador',
       'lector',
+      'vendedor',
     ]);
   });
 

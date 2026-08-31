@@ -7,10 +7,17 @@ import { and, eq } from 'drizzle-orm';
 
 import { getDb } from '@/db/client';
 import { getAdminRepository } from '@/db/admin-identity-repository';
-import { adminUserRoles, adminUsers } from '@/db/schema/admin-identity';
+import {
+  adminRoleCapabilities,
+  adminUserRoles,
+  adminUsers,
+  vendorMemberships,
+  vendors,
+} from '@/db/schema/admin-identity';
 import { getCurrentAdmin } from '@/lib/auth/authorization';
 import { parseAuditEntry } from './audit';
 import { isLastActiveOwner } from './identity-policy';
+import { ALL_CAPABILITIES } from './permissions';
 
 const userInput = z.object({
   email: z.string().trim().toLowerCase().email(),
@@ -24,6 +31,25 @@ const statusInput = z.object({
 const roleInput = z.object({
   userId: z.string().uuid(),
   roleId: z.string().uuid(),
+  reason: z.string().trim().min(3).max(300),
+});
+const roleCapabilitiesInput = z.object({
+  roleId: z.string().uuid(),
+  capabilities: z.array(z.string()).max(ALL_CAPABILITIES.length),
+  reason: z.string().trim().min(3).max(300),
+});
+const vendorInput = z.object({
+  userId: z.string().uuid(),
+  name: z.string().trim().min(2).max(120),
+  email: z.union([z.string().trim().toLowerCase().email(), z.literal('')]).optional(),
+  phone: z.string().trim().max(40).optional(),
+  commissionPercent: z.coerce.number().min(0).max(100),
+  reason: z.string().trim().min(3).max(300),
+});
+const vendorUpdateInput = z.object({
+  vendorId: z.string().uuid(),
+  status: z.enum(['active', 'suspended']),
+  commissionPercent: z.coerce.number().min(0).max(100),
   reason: z.string().trim().min(3).max(300),
 });
 
@@ -60,10 +86,12 @@ async function requireUsersManager() {
 export async function listAdminUsers() {
   const admin = await requireUsersManager();
   const repository = getAdminRepository();
-  if (!repository.listUsers || !repository.listRoles)
-    throw new Error('Repositorio de identidad incompleto.');
-  const [users, roles] = await Promise.all([repository.listUsers(), repository.listRoles()]);
-  return { admin, users, roles };
+  const [users, roles, vendorList] = await Promise.all([
+    repository.listUsers(),
+    repository.listRoles(),
+    repository.listVendors(),
+  ]);
+  return { admin, users, roles, vendors: vendorList, capabilities: ALL_CAPABILITIES };
 }
 
 export async function inviteAdminUser(input: unknown, reason: string) {
@@ -152,6 +180,9 @@ export async function assignAdminRole(input: unknown) {
   if (target.roleIds.includes(parsed.roleId)) {
     throw new Error('409: el usuario ya tiene ese rol.');
   }
+  if (role.key === 'vendedor') {
+    throw new Error('409: vincula el usuario desde la sección Vendedores para asignar este rol.');
+  }
   return getDb().transaction(async (tx) => {
     await tx
       .insert(adminUserRoles)
@@ -168,6 +199,139 @@ export async function assignAdminRole(input: unknown) {
         occurredAt: new Date().toISOString(),
         reason: parsed.reason,
         metadata: { role: role.key },
+      }),
+      tx,
+    );
+    revalidatePath('/admin/usuarios');
+    return { ok: true as const };
+  });
+}
+
+/** Cambia las capacidades efectivas de un rol no propietario. */
+export async function updateRoleCapabilities(input: unknown) {
+  const admin = await requireUsersManager();
+  const parsed = roleCapabilitiesInput.parse(input);
+  const repository = getAdminRepository();
+  const role = (await repository.listRoles()).find((item) => item.id === parsed.roleId);
+  if (!role) throw new Error('404: rol no encontrado.');
+  if (role.key === 'owner') throw new Error('409: las capacidades de owner son inmutables.');
+
+  const known = new Set<string>(ALL_CAPABILITIES);
+  const capabilities = Array.from(new Set(parsed.capabilities));
+  if (capabilities.some((capability) => !known.has(capability))) {
+    throw new Error('400: se recibió una capacidad desconocida.');
+  }
+  if (!capabilities.includes('admin.access')) {
+    throw new Error('400: todo rol del panel debe conservar admin.access.');
+  }
+
+  return getDb().transaction(async (tx) => {
+    await tx.delete(adminRoleCapabilities).where(eq(adminRoleCapabilities.roleId, role.id));
+    await tx
+      .insert(adminRoleCapabilities)
+      .values(capabilities.map((capability) => ({ roleId: role.id, capability })));
+    await repository.appendAudit(
+      parseAuditEntry({
+        id: randomUUID(),
+        actorUserId: admin.id,
+        actorEmail: admin.email,
+        action: 'role.capabilities_updated',
+        targetType: 'admin_role',
+        targetId: role.id,
+        occurredAt: new Date().toISOString(),
+        reason: parsed.reason,
+        metadata: { role: role.key, capabilities },
+      }),
+      tx,
+    );
+    revalidatePath('/admin/usuarios');
+    return { ok: true as const };
+  });
+}
+
+/** Crea el alcance vendedor, lo vincula a una identidad y asigna el rol. */
+export async function createVendorMembership(input: unknown) {
+  const admin = await requireUsersManager();
+  const parsed = vendorInput.parse(input);
+  const repository = getAdminRepository();
+  const [users, roles, currentVendor] = await Promise.all([
+    repository.listUsers(),
+    repository.listRoles(),
+    repository.findVendorByUserId(parsed.userId),
+  ]);
+  const user = users.find((item) => item.id === parsed.userId);
+  if (!user) throw new Error('404: usuario no encontrado.');
+  if (currentVendor) throw new Error('409: ese usuario ya está vinculado a un vendedor.');
+  const sellerRole = roles.find((item) => item.key === 'vendedor');
+  if (!sellerRole) throw new Error('409: falta el rol vendedor en la base de datos.');
+  const vendorId = randomUUID();
+  const commissionBps = Math.round(parsed.commissionPercent * 100);
+
+  return getDb().transaction(async (tx) => {
+    await tx.insert(vendors).values({
+      id: vendorId,
+      name: parsed.name,
+      email: parsed.email || null,
+      phone: parsed.phone || null,
+      commissionBps,
+      status: 'active',
+      createdBy: admin.id,
+    });
+    await tx.insert(vendorMemberships).values({
+      vendorId,
+      userId: user.id,
+      createdBy: admin.id,
+    });
+    await tx
+      .insert(adminUserRoles)
+      .values({ userId: user.id, roleId: sellerRole.id })
+      .onConflictDoNothing();
+    await repository.appendAudit(
+      parseAuditEntry({
+        id: randomUUID(),
+        actorUserId: admin.id,
+        actorEmail: admin.email,
+        action: 'vendor.created',
+        targetType: 'vendor',
+        targetId: vendorId,
+        occurredAt: new Date().toISOString(),
+        reason: parsed.reason,
+        metadata: { userId: user.id, commissionBps },
+      }),
+      tx,
+    );
+    revalidatePath('/admin/usuarios');
+    return { ok: true as const };
+  });
+}
+
+export async function updateVendor(input: unknown) {
+  const admin = await requireUsersManager();
+  const parsed = vendorUpdateInput.parse(input);
+  const repository = getAdminRepository();
+  const vendor = (await repository.listVendors()).find((item) => item.id === parsed.vendorId);
+  if (!vendor) throw new Error('404: vendedor no encontrado.');
+  const commissionBps = Math.round(parsed.commissionPercent * 100);
+
+  return getDb().transaction(async (tx) => {
+    await tx
+      .update(vendors)
+      .set({ status: parsed.status, commissionBps, updatedAt: new Date() })
+      .where(eq(vendors.id, vendor.id));
+    await repository.appendAudit(
+      parseAuditEntry({
+        id: randomUUID(),
+        actorUserId: admin.id,
+        actorEmail: admin.email,
+        action: 'vendor.updated',
+        targetType: 'vendor',
+        targetId: vendor.id,
+        occurredAt: new Date().toISOString(),
+        reason: parsed.reason,
+        metadata: {
+          status: { from: vendor.status, to: parsed.status },
+          commissionBps: { from: vendor.commissionBps, to: commissionBps },
+        },
       }),
       tx,
     );

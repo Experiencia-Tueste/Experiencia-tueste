@@ -2,7 +2,7 @@
 /**
  * Bootstrap idempotente del panel administrativo.
  * ---------------------------------------------------------------------
- * - Inserta los seis roles iniciales (fuente única: admin-roles.mjs).
+ * - Inserta los roles y capacidades iniciales (fuente única: admin-roles.mjs).
  * - Crea el primer administrador (ADMIN_BOOTSTRAP_EMAIL, estado active)
  *   y le asigna el rol `owner`.
  * - NO se ejecuta automáticamente: requiere ADMIN_BOOTSTRAP_EMAIL.
@@ -15,7 +15,7 @@
  */
 import pg from 'pg';
 
-import { ADMIN_ROLES_META } from '../src/db/admin-roles.mjs';
+import { ADMIN_CAPABILITIES, ADMIN_ROLES_META } from '../src/db/admin-roles.mjs';
 
 const { Pool } = pg;
 
@@ -38,13 +38,22 @@ async function main() {
     await pool.query('BEGIN');
 
     // Roles iniciales (idempotente por key única).
-    for (const { key, name, description } of ADMIN_ROLES_META) {
+    for (const { key, name, description, capabilities } of ADMIN_ROLES_META) {
       await pool.query(
         `INSERT INTO private.admin_roles (id, key, name, description, created_at)
          VALUES (gen_random_uuid(), $1, $2, $3, now())
          ON CONFLICT (key) DO NOTHING`,
         [key, name, description],
       );
+      const resolvedCapabilities = capabilities === '*' ? ADMIN_CAPABILITIES : capabilities;
+      for (const capability of resolvedCapabilities) {
+        await pool.query(
+          `INSERT INTO private.admin_role_capabilities (role_id, capability, created_at)
+           SELECT id, $2, now() FROM private.admin_roles WHERE key = $1
+           ON CONFLICT (role_id, capability) DO NOTHING`,
+          [key, capability],
+        );
+      }
     }
 
     // Primer administrador (idempotente por email único).

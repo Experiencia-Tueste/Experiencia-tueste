@@ -3,7 +3,7 @@ import { ROLE_CAPABILITIES } from '@/features/admin/permissions';
 import type { AdminCapability, AdminRole } from '@/features/admin/permissions';
 
 /**
- * Datos puros de los seis roles del panel — sin persistencia.
+ * Datos puros de los roles canónicos del panel — sin persistencia.
  * ---------------------------------------------------------------------
  * Nombres y descripciones provienen de `admin-roles.mjs` (fuente única,
  * compartida con el bootstrap); las capacidades se derivan de

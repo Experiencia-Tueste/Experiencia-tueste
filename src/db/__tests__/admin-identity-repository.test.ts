@@ -31,11 +31,21 @@ describe('db · repositorio de identidad (server-only)', () => {
     }
   });
 
-  it('implementa el contrato AdminIdentityRepository con los cuatro métodos', () => {
-    for (const metodo of ['findUserByEmail', 'findUserById', 'findRolesByUserId', 'appendAudit']) {
+  it('implementa identidad, capacidades, vendedores y auditoría', () => {
+    for (const metodo of [
+      'findUserByEmail',
+      'findUserById',
+      'findRolesByUserId',
+      'listRoles',
+      'listVendors',
+      'findVendorByUserId',
+      'listAudit',
+      'appendAudit',
+    ]) {
       expect(SOURCE).toContain(`async ${metodo}(`);
     }
     expect(SOURCE).toContain('implements AdminIdentityRepository');
+    expect(SOURCE).toContain('adminRoleCapabilities');
   });
 
   it('no ejecuta consultas al importar el módulo (todo vive en métodos)', () => {

@@ -177,16 +177,16 @@ administración.
 
 ## 9. Roadmap por fases
 
-| Prioridad | Módulo                                   | Resultado de negocio                              | Dependencias                                   |
-| --------- | ---------------------------------------- | ------------------------------------------------- | ---------------------------------------------- |
-| 1         | **Fundación segura**                     | Acceso privado, roles, auditoría y shell interno. | Google OAuth, base de datos.                   |
-| 2         | **Contenido y activos**                  | Equipo puede actualizar la web sin deploy.        | Assets, revisión editorial.                    |
-| 3         | **CRM B2B y eventos**                    | Ninguna conversación o reserva se pierde.         | Contactos, actividades, notificaciones.        |
-| 4         | **Tueste Tree operativo**                | Seguimiento editorial de lotes/adopciones.        | Validación legal y modelo de datos.            |
-| 5         | **Mercado y Radio**                      | Operación de vendedores y canales B2B.            | CRM y políticas comerciales.                   |
-| 6         | **Comunidad y analítica**                | Moderación y decisiones de contenido.             | Eventos de producto y consentimiento.          |
-| 7         | **Mercado Pago y pagos**                 | Cobros.                                           | Flujos aprobados, webhooks y legal.            |
-| 8         | **Subastas, TuesteX y automatizaciones** | Experiencias especiales.                          | Auditoría, pagos y reglas de negocio cerradas. |
+| Prioridad | Módulo                                   | Resultado de negocio                              | Dependencias                                       |
+| --------- | ---------------------------------------- | ------------------------------------------------- | -------------------------------------------------- |
+| 1         | **Fundación segura**                     | Acceso privado, roles, auditoría y shell interno. | Google OAuth, base de datos.                       |
+| 2         | **Contenido y activos**                  | Equipo puede actualizar la web sin deploy.        | Assets, revisión editorial.                        |
+| 3         | **CRM B2B y eventos**                    | Ninguna conversación o reserva se pierde.         | Contactos, actividades, notificaciones.            |
+| 4         | **Tueste Tree operativo**                | Seguimiento editorial de lotes/adopciones.        | Validación legal y modelo de datos.                |
+| 5         | **Mercado y Radio**                      | Operación de vendedores y canales B2B.            | CRM y políticas comerciales.                       |
+| 6         | **Comunidad y analítica**                | Moderación y decisiones de contenido.             | Eventos de producto y consentimiento.              |
+| 7         | **Pagos con backend Spring Boot**        | Cobros aislados del frontend.                     | JWT de corta duración, webhooks, secretos y legal. |
+| 8         | **Subastas, TuesteX y automatizaciones** | Experiencias especiales.                          | Auditoría, pagos y reglas de negocio cerradas.     |
 
 ### Fase 1.1 — Fundación segura (HISTORIAL)
 

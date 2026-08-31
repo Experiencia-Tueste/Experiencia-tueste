@@ -1,12 +1,12 @@
 import { listAdminSettings } from '@/features/admin/config-service';
 import { AdminShell } from '../AdminShell';
-import { updateSettingAction } from './actions';
+import { updateIntegrationAction, updateSettingAction, upsertCouponAction } from './actions';
 import styles from './page.module.css';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ConfiguracionPage() {
-  const { admin, settings } = await listAdminSettings();
+  const { admin, settings, integrations, coupons } = await listAdminSettings();
   const groups = Map.groupBy(settings, (setting) => setting.group);
 
   return (
@@ -76,6 +76,163 @@ export default async function ConfiguracionPage() {
               </div>
             </section>
           ))}
+          <section className={styles.group}>
+            <header className={styles.groupHeader}>
+              <h2>Estado de integraciones</h2>
+              <span>{integrations.length} registradas</span>
+            </header>
+            <p className={styles.description}>
+              Solo guarda estado y referencias públicas. Los tokens continúan en Railway.
+            </p>
+            <div className={styles.cards}>
+              {[
+                ...integrations,
+                {
+                  id: 'new',
+                  provider: '',
+                  label: '',
+                  status: 'disconnected' as const,
+                  publicReference: '',
+                  updatedAt: '',
+                },
+              ].map((integration) => (
+                <article className={styles.card} key={integration.id}>
+                  <h3>{integration.label || 'Añadir integración'}</h3>
+                  <form action={updateIntegrationAction} className={styles.form}>
+                    <label className={styles.label}>
+                      Proveedor
+                      <input
+                        className={styles.input}
+                        name="provider"
+                        defaultValue={integration.provider}
+                        required
+                        pattern="[a-z0-9_-]+"
+                        readOnly={integration.id !== 'new'}
+                      />
+                    </label>
+                    <label className={styles.label}>
+                      Nombre visible
+                      <input
+                        className={styles.input}
+                        name="label"
+                        defaultValue={integration.label}
+                        required
+                      />
+                    </label>
+                    <label className={styles.label}>
+                      Estado
+                      <select
+                        className={styles.input}
+                        name="status"
+                        defaultValue={integration.status}
+                      >
+                        <option value="disconnected">Sin conectar</option>
+                        <option value="configured">Configurada</option>
+                        <option value="degraded">Degradada</option>
+                        <option value="disabled">Deshabilitada</option>
+                      </select>
+                    </label>
+                    <label className={styles.label}>
+                      Referencia pública
+                      <input
+                        className={styles.input}
+                        name="publicReference"
+                        defaultValue={integration.publicReference ?? ''}
+                        maxLength={500}
+                      />
+                    </label>
+                    <label className={styles.label}>
+                      Razón
+                      <input
+                        className={styles.input}
+                        name="reason"
+                        required
+                        minLength={3}
+                        maxLength={300}
+                      />
+                    </label>
+                    <button className={styles.button} type="submit">
+                      Guardar integración
+                    </button>
+                  </form>
+                </article>
+              ))}
+            </div>
+          </section>
+          <section className={styles.group}>
+            <header className={styles.groupHeader}>
+              <h2>Referencias de cupones</h2>
+              <span>{coupons.length} códigos</span>
+            </header>
+            <div className={styles.cards}>
+              {[
+                ...coupons,
+                {
+                  id: 'new',
+                  code: '',
+                  label: '',
+                  externalId: '',
+                  status: 'active' as const,
+                  updatedAt: '',
+                },
+              ].map((coupon) => (
+                <article className={styles.card} key={coupon.id}>
+                  <h3>{coupon.code || 'Añadir referencia'}</h3>
+                  <form action={upsertCouponAction} className={styles.form}>
+                    <label className={styles.label}>
+                      Código
+                      <input
+                        className={styles.input}
+                        name="code"
+                        defaultValue={coupon.code}
+                        required
+                        pattern="[A-Za-z0-9_-]+"
+                        readOnly={coupon.id !== 'new'}
+                      />
+                    </label>
+                    <label className={styles.label}>
+                      Etiqueta
+                      <input
+                        className={styles.input}
+                        name="label"
+                        defaultValue={coupon.label}
+                        required
+                      />
+                    </label>
+                    <label className={styles.label}>
+                      ID externo
+                      <input
+                        className={styles.input}
+                        name="externalId"
+                        defaultValue={coupon.externalId ?? ''}
+                      />
+                    </label>
+                    <label className={styles.label}>
+                      Estado
+                      <select className={styles.input} name="status" defaultValue={coupon.status}>
+                        <option value="active">Activo</option>
+                        <option value="inactive">Inactivo</option>
+                        <option value="expired">Expirado</option>
+                      </select>
+                    </label>
+                    <label className={styles.label}>
+                      Razón
+                      <input
+                        className={styles.input}
+                        name="reason"
+                        required
+                        minLength={3}
+                        maxLength={300}
+                      />
+                    </label>
+                    <button className={styles.button} type="submit">
+                      Guardar cupón
+                    </button>
+                  </form>
+                </article>
+              ))}
+            </div>
+          </section>
         </div>
       </main>
     </AdminShell>

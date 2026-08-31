@@ -51,6 +51,7 @@ export const ADMIN_ROLE_KEYS = [
   'operador',
   'moderador',
   'lector',
+  'vendedor',
 ] as const satisfies readonly AdminRoleKey[];
 
 const ISO_DATE_SCHEMA = z.string().datetime();
@@ -82,3 +83,17 @@ export const ADMIN_ROLE_SCHEMA = z.object({
 
 export type AdminUserInput = z.infer<typeof ADMIN_USER_SCHEMA>;
 export type AdminRoleInput = z.infer<typeof ADMIN_ROLE_SCHEMA>;
+
+export type VendorStatus = 'active' | 'suspended';
+
+export interface Vendor {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  status: VendorStatus;
+  commissionBps: number;
+  createdAt: string;
+  updatedAt: string;
+  userIds: string[];
+}

@@ -24,6 +24,8 @@ export interface CurrentAdmin {
   role: AdminRoleKey;
   /** Capacidades combinadas de todos los roles del usuario. */
   capabilities: AdminCapability[];
+  /** Alcance comercial obligatorio cuando se opera como vendedor. */
+  vendorId?: string;
 }
 
 /** Orden de jerarquía de roles (mayor primero) para el rol visible. */
@@ -33,11 +35,9 @@ const ROLE_PRIORITY: readonly AdminRoleKey[] = [
   'editor',
   'operador',
   'moderador',
+  'vendedor',
   'lector',
 ];
-
-/** Capacidades efectivas por clave de rol (fuente única). */
-import { ROLE_CAPABILITIES } from './permissions';
 
 /**
  * Decide el administrador a partir del usuario persistente y sus roles.
@@ -54,6 +54,7 @@ import { ROLE_CAPABILITIES } from './permissions';
 export function resolvePersistedAdmin(
   user: AdminUser | null,
   roles: AdminRole[],
+  vendorId?: string,
 ): CurrentAdmin | null {
   if (user === null) return null;
   if (user.status !== 'active') return null;
@@ -62,7 +63,17 @@ export function resolvePersistedAdmin(
   const role = ROLE_PRIORITY.find((candidate) => roles.some((r) => r.key === candidate));
   if (role === undefined) return null;
 
-  const capabilities = Array.from(new Set(roles.flatMap((r) => ROLE_CAPABILITIES[r.key] ?? [])));
+  if (roles.some((item) => item.key === 'vendedor') && !vendorId) return null;
 
-  return { id: user.id, email: user.email, name: user.displayName ?? null, role, capabilities };
+  const capabilities = Array.from(new Set(roles.flatMap((item) => item.capabilities)));
+  if (!capabilities.includes('admin.access')) return null;
+
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.displayName ?? null,
+    role,
+    capabilities,
+    ...(vendorId ? { vendorId } : {}),
+  };
 }

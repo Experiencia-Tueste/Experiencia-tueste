@@ -6,6 +6,9 @@ import {
   changeAdminUserStatus,
   inviteAdminUser,
   revokeAdminRole,
+  updateRoleCapabilities,
+  createVendorMembership,
+  updateVendor,
 } from '@/features/admin/identity-service';
 
 export async function inviteUserAction(formData: FormData) {
@@ -17,6 +20,37 @@ export async function inviteUserAction(formData: FormData) {
   } catch (error) {
     throw new Error(error instanceof Error ? error.message : 'No se pudo invitar al usuario.');
   }
+  revalidatePath('/admin/usuarios');
+}
+
+export async function updateRoleCapabilitiesAction(formData: FormData) {
+  await updateRoleCapabilities({
+    roleId: String(formData.get('roleId') ?? ''),
+    capabilities: formData.getAll('capability').map(String),
+    reason: String(formData.get('reason') ?? ''),
+  });
+  revalidatePath('/admin/usuarios');
+}
+
+export async function createVendorAction(formData: FormData) {
+  await createVendorMembership({
+    userId: String(formData.get('userId') ?? ''),
+    name: String(formData.get('name') ?? ''),
+    email: String(formData.get('email') ?? ''),
+    phone: String(formData.get('phone') ?? ''),
+    commissionPercent: String(formData.get('commissionPercent') ?? '0'),
+    reason: String(formData.get('reason') ?? ''),
+  });
+  revalidatePath('/admin/usuarios');
+}
+
+export async function updateVendorAction(formData: FormData) {
+  await updateVendor({
+    vendorId: String(formData.get('vendorId') ?? ''),
+    status: String(formData.get('status') ?? ''),
+    commissionPercent: String(formData.get('commissionPercent') ?? '0'),
+    reason: String(formData.get('reason') ?? ''),
+  });
   revalidatePath('/admin/usuarios');
 }
 

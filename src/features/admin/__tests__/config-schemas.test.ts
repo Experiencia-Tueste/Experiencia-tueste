@@ -4,6 +4,8 @@ import {
   ADMIN_SETTING_DEFINITIONS,
   ADMIN_SETTING_INPUT_SCHEMA,
   ADMIN_SETTING_KEYS,
+  ADMIN_INTEGRATION_INPUT_SCHEMA,
+  COUPON_REFERENCE_INPUT_SCHEMA,
 } from '../config-schemas';
 
 describe('configuración administrativa', () => {
@@ -53,6 +55,45 @@ describe('configuración administrativa', () => {
         key: 'brand.tagline',
         value: 'Origen',
         reason: '',
+      }),
+    ).toThrow();
+  });
+
+  it('valida referencias públicas de integraciones y cupones', () => {
+    expect(
+      ADMIN_INTEGRATION_INPUT_SCHEMA.parse({
+        provider: 'shopify',
+        label: 'Shopify',
+        status: 'configured',
+        publicReference: 'tueste.myshopify.com',
+        reason: 'Registrar estado operativo',
+      }).provider,
+    ).toBe('shopify');
+    expect(
+      COUPON_REFERENCE_INPUT_SCHEMA.parse({
+        code: 'bienvenida-10',
+        label: 'Bienvenida',
+        status: 'active',
+        reason: 'Referencia comercial aprobada',
+      }).code,
+    ).toBe('BIENVENIDA-10');
+  });
+
+  it('rechaza proveedores y cupones con caracteres no permitidos', () => {
+    expect(() =>
+      ADMIN_INTEGRATION_INPUT_SCHEMA.parse({
+        provider: 'Shopify URL',
+        label: 'Shopify',
+        status: 'configured',
+        reason: 'Prueba inválida',
+      }),
+    ).toThrow();
+    expect(() =>
+      COUPON_REFERENCE_INPUT_SCHEMA.parse({
+        code: 'CUPON CON ESPACIOS',
+        label: 'Cupón',
+        status: 'active',
+        reason: 'Prueba inválida',
       }),
     ).toThrow();
   });

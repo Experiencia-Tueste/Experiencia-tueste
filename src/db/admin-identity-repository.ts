@@ -1,15 +1,23 @@
 import 'server-only';
 
-import { desc, eq, ilike } from 'drizzle-orm';
+import { and, desc, eq, gte, ilike, inArray, lte } from 'drizzle-orm';
 
 import { getDb } from './client';
 import type { DbClient } from './db-types';
-import { adminRoles, adminUserRoles, adminUsers, auditLogs } from './schema/admin-identity';
-import { ROLE_CAPABILITIES } from '@/features/admin/permissions';
-import type { AdminUser, AdminRole as PersistedAdminRole } from '@/features/admin/identity';
+import {
+  adminRoleCapabilities,
+  adminRoles,
+  adminUserRoles,
+  adminUsers,
+  auditLogs,
+  vendorMemberships,
+  vendors,
+} from './schema/admin-identity';
+import { ALL_CAPABILITIES } from '@/features/admin/permissions';
+import type { AdminUser, AdminRole as PersistedAdminRole, Vendor } from '@/features/admin/identity';
 import { assertRoleKey } from './admin-identity-seed';
 import type { AuditLogEntry } from '@/features/admin/audit';
-import type { AdminIdentityRepository } from '@/features/admin/repository';
+import type { AdminIdentityRepository, AuditFilters } from '@/features/admin/repository';
 import { parseAuditEntry } from '@/features/admin/audit';
 
 /**
@@ -17,8 +25,8 @@ import { parseAuditEntry } from '@/features/admin/audit';
  * sobre las tablas ya migradas (schema `private`).
  *
  * - Server-only: nunca llega al cliente.
- * - Las capacidades de cada rol se derivan del contrato
- *   (`ROLE_CAPABILITIES` por clave), no se duplican en base de datos.
+ * - Las capacidades se leen de PostgreSQL y se validan contra el
+ *   catálogo conocido antes de autorizar (fail closed).
  * - `appendAudit` valida la entrada con `parseAuditEntry` (reason,
  *   metadata segura) antes de insertar: append-only, sin actualizaciones.
  */
@@ -31,6 +39,20 @@ function mapStatus(status: string): AdminUser['status'] {
 }
 
 export class DrizzleAdminIdentityRepository implements AdminIdentityRepository {
+  private mapCapabilities(rows: { roleId: string; capability: string }[]) {
+    const known = new Set<string>(ALL_CAPABILITIES);
+    const byRole = new Map<string, PersistedAdminRole['capabilities']>();
+    for (const row of rows) {
+      if (!known.has(row.capability)) {
+        throw new Error(`Capacidad desconocida persistida: «${row.capability}».`);
+      }
+      const capabilities = byRole.get(row.roleId) ?? [];
+      capabilities.push(row.capability as PersistedAdminRole['capabilities'][number]);
+      byRole.set(row.roleId, capabilities);
+    }
+    return byRole;
+  }
+
   private mapUser(row: typeof adminUsers.$inferSelect, roleIds: string[] = []): AdminUser {
     return {
       id: row.id,
@@ -82,7 +104,11 @@ export class DrizzleAdminIdentityRepository implements AdminIdentityRepository {
 
   async listRoles(): Promise<PersistedAdminRole[]> {
     const db = getDb();
-    const rows = await db.select().from(adminRoles).orderBy(adminRoles.key);
+    const [rows, capabilityRows] = await Promise.all([
+      db.select().from(adminRoles).orderBy(adminRoles.key),
+      db.select().from(adminRoleCapabilities),
+    ]);
+    const capabilitiesByRole = this.mapCapabilities(capabilityRows);
     return rows.map((row) => {
       const key = assertRoleKey(row.key);
       return {
@@ -90,18 +116,27 @@ export class DrizzleAdminIdentityRepository implements AdminIdentityRepository {
         key,
         name: row.name,
         description: row.description,
-        capabilities: [...ROLE_CAPABILITIES[key]],
+        capabilities: capabilitiesByRole.get(row.id) ?? [],
       };
     });
   }
 
-  async listAudit(filters: { action?: string; limit?: number } = {}): Promise<AuditLogEntry[]> {
+  async listAudit(filters: AuditFilters = {}): Promise<AuditLogEntry[]> {
     const db = getDb();
     const limit = Math.min(Math.max(filters.limit ?? 100, 1), 200);
+    const conditions = [
+      filters.action ? ilike(auditLogs.action, `%${filters.action}%`) : undefined,
+      filters.actor ? ilike(auditLogs.actorEmail, `%${filters.actor}%`) : undefined,
+      filters.targetType ? ilike(auditLogs.targetType, `%${filters.targetType}%`) : undefined,
+      filters.from
+        ? gte(auditLogs.createdAt, new Date(`${filters.from}T00:00:00.000Z`))
+        : undefined,
+      filters.to ? lte(auditLogs.createdAt, new Date(`${filters.to}T23:59:59.999Z`)) : undefined,
+    ].filter((condition) => condition !== undefined);
     const rows = await db
       .select()
       .from(auditLogs)
-      .where(filters.action ? ilike(auditLogs.action, `%${filters.action}%`) : undefined)
+      .where(conditions.length ? and(...conditions) : undefined)
       .orderBy(desc(auditLogs.createdAt))
       .limit(limit);
     return rows.map((row) =>
@@ -132,9 +167,22 @@ export class DrizzleAdminIdentityRepository implements AdminIdentityRepository {
       .innerJoin(adminRoles, eq(adminUserRoles.roleId, adminRoles.id))
       .where(eq(adminUserRoles.userId, userId));
 
+    const capabilityRows = rows.length
+      ? await db
+          .select()
+          .from(adminRoleCapabilities)
+          .where(
+            inArray(
+              adminRoleCapabilities.roleId,
+              rows.map((row) => row.id),
+            ),
+          )
+      : [];
+    const capabilitiesByRole = this.mapCapabilities(capabilityRows);
+
     return rows.map((row) => {
       // Cast controlado: `assertRoleKey` valida la clave contra el
-      // contrato (ROLE_CAPABILITIES) antes de tiparla; si la BD tuviera
+      // catálogo canónico antes de tiparla; si la BD tuviera
       // una clave desconocida, lanza (fail closed, sin capacidades).
       const key = assertRoleKey(row.key);
       return {
@@ -142,10 +190,50 @@ export class DrizzleAdminIdentityRepository implements AdminIdentityRepository {
         key,
         name: row.name,
         description: row.description,
-        // Capacidades derivadas del contrato por clave (sin duplicar en BD).
-        capabilities: [...ROLE_CAPABILITIES[key]],
+        capabilities: capabilitiesByRole.get(row.id) ?? [],
       };
     });
+  }
+
+  async listVendors(): Promise<Vendor[]> {
+    const db = getDb();
+    const [rows, memberships] = await Promise.all([
+      db.select().from(vendors).orderBy(vendors.name),
+      db.select().from(vendorMemberships),
+    ]);
+    return rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      email: row.email ?? undefined,
+      phone: row.phone ?? undefined,
+      status: row.status === 'active' ? 'active' : 'suspended',
+      commissionBps: row.commissionBps,
+      createdAt: row.createdAt.toISOString(),
+      updatedAt: row.updatedAt.toISOString(),
+      userIds: memberships.filter((item) => item.vendorId === row.id).map((item) => item.userId),
+    }));
+  }
+
+  async findVendorByUserId(userId: string): Promise<Vendor | null> {
+    const db = getDb();
+    const [row] = await db
+      .select({ vendor: vendors })
+      .from(vendorMemberships)
+      .innerJoin(vendors, eq(vendorMemberships.vendorId, vendors.id))
+      .where(eq(vendorMemberships.userId, userId))
+      .limit(1);
+    if (!row) return null;
+    return {
+      id: row.vendor.id,
+      name: row.vendor.name,
+      email: row.vendor.email ?? undefined,
+      phone: row.vendor.phone ?? undefined,
+      status: row.vendor.status === 'active' ? 'active' : 'suspended',
+      commissionBps: row.vendor.commissionBps,
+      createdAt: row.vendor.createdAt.toISOString(),
+      updatedAt: row.vendor.updatedAt.toISOString(),
+      userIds: [userId],
+    };
   }
 
   async appendAudit(entry: AuditLogEntry, tx?: DbClient): Promise<void> {

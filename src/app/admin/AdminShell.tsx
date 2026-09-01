@@ -40,7 +40,9 @@ export function AdminShell({ admin, currentPath, children }: AdminShellProps) {
                 {navigation
                   .filter((item) => item.group === group)
                   .map((item) => {
-                    const active = item.href === currentPath;
+                    const active =
+                      item.href === currentPath ||
+                      (item.href !== '/admin' && currentPath.startsWith(`${item.href}/`));
                     return (
                       <li key={item.href}>
                         <Link

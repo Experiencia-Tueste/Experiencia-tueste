@@ -1,0 +1,18 @@
+# Publicador programado de Tueste. Railway ejecuta esta imagen como cron,
+# separada del servidor Next.js, y solo le inyecta DATABASE_URL en runtime.
+ARG NODE_VERSION=24.20.0
+
+FROM node:${NODE_VERSION}-bookworm-slim
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev --ignore-scripts
+
+COPY scripts/lib ./scripts/lib
+COPY scripts/publish-scheduled.mjs ./scripts/publish-scheduled.mjs
+
+USER node
+
+CMD ["node", "./scripts/publish-scheduled.mjs"]

@@ -5,9 +5,6 @@ import { cartTotal, formatoCOP, getProduct } from '@/features/commerce';
 import type { CartItem } from '@/features/commerce';
 import styles from './CartDrawer.module.css';
 
-const MENSAJE_CHECKOUT =
-  'El canal operativo aún no está habilitado. La compra estará disponible próximamente.';
-
 export interface CartDrawerProps {
   open: boolean;
   items: CartItem[];
@@ -26,6 +23,8 @@ export default function CartDrawer({ open, items, onClose, onQty }: CartDrawerPr
   const drawerRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const [mensaje, setMensaje] = useState<string | null>(null);
+  const [procesando, setProcesando] = useState(false);
+  const checkoutRequestRef = useRef<{ fingerprint: string; id: string } | null>(null);
   const total = cartTotal(items);
 
   // Foco inicial, Escape y focus trap mientras está abierto.
@@ -68,6 +67,53 @@ export default function CartDrawer({ open, items, onClose, onQty }: CartDrawerPr
         ? `${p?.name ?? productId}: ${nuevo} ${nuevo === 1 ? 'unidad' : 'unidades'} en tu selección.`
         : `${p?.name ?? productId} eliminado de tu selección.`,
     );
+  };
+
+  const iniciarPago = async () => {
+    if (procesando || items.length === 0) return;
+    setProcesando(true);
+    setMensaje('Preparando tu pago seguro…');
+
+    const fingerprint = JSON.stringify(items);
+    if (checkoutRequestRef.current?.fingerprint !== fingerprint) {
+      checkoutRequestRef.current = { fingerprint, id: crypto.randomUUID() };
+    }
+
+    try {
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientRequestId: checkoutRequestRef.current.id,
+          items,
+        }),
+      });
+      const body = (await response.json().catch(() => null)) as {
+        checkoutUrl?: unknown;
+        message?: unknown;
+      } | null;
+
+      if (response.status === 401) {
+        setMensaje('Inicia sesión con tu cuenta Tueste para continuar con el pago.');
+        window.location.replace('/cuenta/iniciar-sesion?next=/experiencia%23merch');
+        return;
+      }
+      if (!response.ok || typeof body?.checkoutUrl !== 'string') {
+        setMensaje(
+          typeof body?.message === 'string'
+            ? body.message
+            : 'No fue posible iniciar el pago. Inténtalo de nuevo.',
+        );
+        return;
+      }
+
+      setMensaje('Listo. Te llevamos a Mercado Pago…');
+      window.location.assign(body.checkoutUrl);
+    } catch {
+      setMensaje('No pudimos conectar con el servicio de pagos. Inténtalo de nuevo.');
+    } finally {
+      setProcesando(false);
+    }
   };
 
   return (
@@ -157,11 +203,14 @@ export default function CartDrawer({ open, items, onClose, onQty }: CartDrawerPr
               <button
                 type="button"
                 className={styles.checkout}
-                onClick={() => setMensaje(MENSAJE_CHECKOUT)}
+                onClick={iniciarPago}
+                disabled={procesando}
               >
-                Próximamente
+                {procesando ? 'Preparando pago…' : 'Pagar con Mercado Pago'}
               </button>
-              <p className={styles.note}>La página no procesa pagos.</p>
+              <p className={styles.note}>
+                Pago seguro en Mercado Pago. Tueste no recibe datos de tarjeta.
+              </p>
             </>
           ) : null}
           <p className={styles.live} role="status" aria-live="polite">

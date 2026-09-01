@@ -1,7 +1,11 @@
-# Infraestructura AWS — blueprint reproducible (sin aprovisionar)
+# Infraestructura histórica AWS — no utilizar
+
+> Este blueprint se conserva únicamente como referencia histórica. El destino
+> aprobado es Latinoamérica Hosting; no se debe ejecutar OpenTofu/Terraform de
+> este directorio ni provisionar recursos AWS.
 
 Este directorio contiene la base de **infraestructura como código** para
-la arquitectura objetivo. Nada de lo aquí escrito se ha ejecutado: no
+una arquitectura anterior. Nada de lo aquí escrito se ha ejecutado: no
 hay recursos creados, no hay credenciales usadas y no hay dominios
 conectados.
 

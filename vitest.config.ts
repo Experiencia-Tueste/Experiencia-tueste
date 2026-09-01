@@ -23,7 +23,7 @@ export default defineConfig({
     },
   },
   test: {
-    include: ['src/**/*.test.{ts,tsx}'],
+    include: ['src/**/*.test.{ts,tsx}', 'scripts/**/*.test.mjs'],
     environmentMatchGlobs: [['src/**/*.test.tsx', 'jsdom']],
     environmentOptions: {
       jsdom: { url: 'http://localhost:3000' },

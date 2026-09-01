@@ -50,7 +50,7 @@ export default function ShopCard({ storeUrl }: ShopCardProps) {
           height={1086}
           className={styles.art}
           sizes="(max-width: 780px) 100vw, 574px"
-          priority={false}
+          priority
         />
       </div>
       <h2 className={styles.title}>Tienda Tueste Co</h2>

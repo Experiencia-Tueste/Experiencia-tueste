@@ -15,8 +15,8 @@ describe('RootLayout (SSR sin hydration mismatch)', () => {
     </RootLayout>,
   );
 
-  it('entrega <html lang="es" class="js"> desde el servidor', () => {
-    expect(markup).toContain('<html lang="es" class="js">');
+  it('entrega idioma, clase JS y contrato de scroll desde el servidor', () => {
+    expect(markup).toContain('<html lang="es" class="js" data-scroll-behavior="smooth">');
   });
 
   it('incluye un fallback <noscript> para [data-reveal]', () => {

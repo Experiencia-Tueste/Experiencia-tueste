@@ -1,0 +1,120 @@
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.wide {
+  grid-column: 1 / -1;
+}
+
+.cardHeader,
+.metaRow,
+.actionRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.meta,
+.muted {
+  color: rgba(var(--cream-rgb), 0.56);
+  font-size: 0.83rem;
+  line-height: 1.55;
+}
+
+.metaRow {
+  padding-block: 12px;
+  border-block: 1px solid rgba(var(--cream-rgb), 0.08);
+}
+
+.metaRow div {
+  min-width: 0;
+}
+
+.metaRow span,
+.metaRow strong {
+  display: block;
+}
+
+.metaRow span {
+  margin-bottom: 4px;
+  color: rgba(var(--cream-rgb), 0.42);
+  font-family: var(--font-mono);
+  font-size: 0.54rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.actionForm {
+  display: grid;
+  grid-template-columns: minmax(130px, 0.8fr) minmax(180px, 1.4fr) auto;
+  align-items: end;
+  gap: 10px;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.notice {
+  padding: 14px 16px;
+  border-left: 3px solid var(--amber);
+  border-radius: 0 12px 12px 0;
+  background: rgba(var(--amber-rgb, 251, 169, 34), 0.07);
+  color: rgba(var(--cream-rgb), 0.68);
+  line-height: 1.55;
+}
+
+.pipeline {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.pipeline > div {
+  padding: 16px;
+  border: 1px solid rgba(var(--cream-rgb), 0.11);
+  border-radius: 14px;
+  background: rgba(var(--cream-rgb), 0.03);
+}
+
+.pipeline strong,
+.pipeline span {
+  display: block;
+}
+
+.pipeline strong {
+  font-family: var(--font-serif);
+  font-size: 1.8rem;
+}
+
+.pipeline span {
+  color: rgba(var(--cream-rgb), 0.5);
+  font-family: var(--font-mono);
+  font-size: 0.52rem;
+  text-transform: uppercase;
+}
+
+@media (max-width: 820px) {
+  .pipeline {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .actionForm {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .wide {
+    grid-column: auto;
+  }
+}

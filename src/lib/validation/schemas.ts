@@ -62,7 +62,7 @@ export const newsletterLeadSchema = z.object({
   source: z.string().max(40).optional(),
 });
 
-/* ── Comercio (base, sin pagos todavía) ──────────────────────────────── */
+/* ── Comercio (el pago real usa el contrato privado de payments) ────── */
 
 export const cartItemSchema = z.object({
   productId: z.string().min(1),

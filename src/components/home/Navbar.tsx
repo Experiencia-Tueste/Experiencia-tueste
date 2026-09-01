@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { SECTION_IDS, sectionsIn } from '@/features/site';
+import PortalAuthNav from '@/features/portal/components/PortalAuthNav';
 import Sun from '../brand/Sun';
 import ThemeToggle from './ThemeToggle';
 import styles from './Navbar.module.css';
@@ -145,6 +146,7 @@ export default function Navbar() {
           </a>
         </div>
 
+        <PortalAuthNav authenticatedOnly />
         <ThemeToggle />
 
         <button

@@ -1,0 +1,127 @@
+.groups {
+  display: grid;
+  gap: 22px;
+}
+
+.group {
+  display: grid;
+  gap: 18px;
+  padding: clamp(20px, 3vw, 28px);
+  border: 1px solid rgba(var(--cream-rgb), 0.12);
+  border-radius: var(--radius-xl);
+  background: rgba(var(--void-rgb), 0.38);
+}
+
+.groupHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(var(--cream-rgb), 0.09);
+}
+
+.groupHeader h2,
+.card h3 {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 500;
+}
+
+.groupHeader span,
+.meta {
+  color: rgba(var(--cream-rgb), 0.48);
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.card {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid rgba(var(--cream-rgb), 0.1);
+  border-radius: var(--radius-lg);
+  background: rgba(var(--cream-rgb), 0.025);
+}
+
+.description {
+  min-height: 42px;
+  margin: 0;
+  color: rgba(var(--cream-rgb), 0.58);
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.form,
+.label {
+  display: grid;
+  gap: 9px;
+}
+
+.label {
+  color: rgba(var(--cream-rgb), 0.52);
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.input {
+  width: 100%;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid rgba(var(--cream-rgb), 0.18);
+  border-radius: 10px;
+  background: rgba(var(--void-rgb), 0.45);
+  color: var(--cream);
+}
+
+.input:focus {
+  border-color: var(--amber);
+  outline: 2px solid rgba(var(--amber-rgb, 251, 169, 34), 0.18);
+  outline-offset: 2px;
+}
+
+.button {
+  justify-self: start;
+  padding: 9px 15px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--amber);
+  color: var(--ink);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.notice {
+  margin: 0;
+  padding: 14px 16px;
+  border-left: 3px solid var(--teal-bright);
+  background: rgba(var(--teal-bright-rgb, 83, 218, 196), 0.06);
+  color: rgba(var(--cream-rgb), 0.7);
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+@media (max-width: 760px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+
+  .description {
+    min-height: auto;
+  }
+}

@@ -1,0 +1,101 @@
+.welcome {
+  position: fixed;
+  top: 92px;
+  right: clamp(18px, 4vw, 56px);
+  z-index: calc(var(--z-nav) - 1);
+  width: min(calc(100vw - 36px), 430px);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid rgba(251, 169, 34, 0.45);
+  border-radius: var(--radius-xl);
+  padding: 14px 14px 14px 16px;
+  color: var(--cream);
+  background:
+    radial-gradient(circle at 10% 10%, rgba(251, 169, 34, 0.22), transparent 50%),
+    rgba(29, 5, 38, 0.91);
+  box-shadow:
+    0 22px 70px rgba(var(--void-rgb), 0.42),
+    var(--glass-inset);
+  backdrop-filter: blur(18px);
+  animation: welcome-in 520ms var(--ease-out) both;
+}
+
+.avatar {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--ink);
+  background: linear-gradient(145deg, var(--cream), var(--amber));
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.copy strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-serif);
+  font-size: 1.06rem;
+}
+
+.copy > span:last-child {
+  color: rgba(var(--cream-rgb), 0.7);
+  font-size: 0.77rem;
+}
+
+.eyebrow {
+  color: var(--amber);
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.welcome button {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: rgba(var(--cream-rgb), 0.64);
+  background: rgba(var(--cream-rgb), 0.06);
+  font-size: 1.15rem;
+}
+
+.welcome button:hover {
+  color: var(--cream);
+  background: rgba(var(--cream-rgb), 0.12);
+}
+
+@keyframes welcome-in {
+  from {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .welcome {
+    top: 76px;
+    right: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .welcome {
+    animation: none;
+  }
+}

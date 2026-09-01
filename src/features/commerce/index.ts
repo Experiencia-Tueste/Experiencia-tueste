@@ -1,9 +1,8 @@
 /**
  * Feature: commerce
  * ---------------------------------------------------------------------
- * Catálogo, carrito y pedido (MVP WhatsApp-first). SIN pagos todavía:
- * el checkout real se activa cuando el negocio confirme operación,
- * logística y método de pago (plan, Fase 5).
+ * Catálogo, carrito y pedido. El checkout seguro se inicia desde el BFF
+ * de Next.js y lo procesa el servicio privado de pagos con Mercado Pago.
  *
  * Regla del plan: el navegador presenta; el servidor decide. Los
  * precios finales y la validación de cupones viven en rutas de servidor.

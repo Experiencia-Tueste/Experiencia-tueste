@@ -39,7 +39,7 @@ accesibilidad.
 npm install
 ```
 
-## Contenedor de producción (ECS Fargate)
+## Contenedor de producción (Latinoamérica Hosting)
 
 La salida es `standalone` de Next.js (compatible con SSR, autenticación
 y Route Handlers futuros; no se usa `output: 'export'`).
@@ -52,12 +52,12 @@ docker run --rm -p 3000:3000 tueste-web
 - `SITE_URL` es pública y se usa durante el build para canonical y
   metadata; se pasa como build arg (no secreto) con fallback demo si
   no se entrega. Los secretos **no** se pasan como build args ni por
-  `--env-file`: ECS/Fargate los recibirá únicamente mediante IAM +
-  AWS Secrets Manager en una fase posterior.
+  `--env-file`: Latinoamérica Hosting los inyectará mediante su
+  configuración segura de variables de entorno.
 - La imagen multi-stage instala con `npm ci`, compila y copia solo
   `public`, `.next/static` y el servidor standalone; corre como usuario
   no-root en el puerto `3000`.
-- El health check inicial de AWS puede usar `GET /` (no se crea un
+- El health check inicial de Latinoamérica Hosting puede usar `GET /` (no se crea un
   endpoint artificial para ello todavía).
 
 ## Comandos
@@ -139,7 +139,7 @@ payment=(), usb=()` — desactiva permisos sensibles no usados.
   `security-headers.mjs`.
 
 Pendiente, a propósito: **HSTS** (solo cuando exista un dominio HTTPS
-de producción confirmado en AWS). No existe monitoreo externo todavía.
+de producción confirmado en Latinoamérica Hosting). No existe monitoreo externo todavía.
 
 ### Contrato obligatorio para futuros Route Handlers y Server Actions
 
@@ -154,21 +154,64 @@ deberá cumplir, sin excepciones:
    con tope explícito **a validar en staging**).
 5. CORS cerrado por origen y método; nunca `Access-Control-Allow-Origin: *`.
 6. Responder `429` ante abuso (el rate limiting real de perímetro vive
-   en CloudFront + AWS WAF; no usar limitadores locales en memoria).
+   en el proxy perimetral de Latinoamérica Hosting; no usar limitadores locales en memoria).
 7. Aplicar timeout a integraciones externas (p. ej. 5 s inicial, **a
    validar en staging**).
 8. No registrar secretos, tokens, cookies ni payload sensible en logs.
 
-### Preparación para AWS
+### Preparación para Latinoamérica Hosting
 
-Arquitectura prevista (Route 53 → CloudFront + AWS WAF + Shield
-Standard → ALB privado → ECS Fargate con Next.js → Secrets Manager +
-CloudWatch):
+Latinoamérica Hosting ejecutará el contenedor standalone de Next.js detrás
+de HTTPS y su proxy perimetral. El proveedor deberá permitir variables
+privadas, logs y tareas programadas.
 
-- **Secrets Manager** guardará los secretos reales (nada de secretos en
-  variables `NEXT_PUBLIC_*` ni en el repositorio).
-- **GitHub Actions** usará OIDC federado, sin access keys permanentes.
-- **AWS WAF** aplicará rate limits y reglas administradas; CloudFront
-  absorberá y cacheará las rutas estáticas.
+- Los secretos reales vivirán únicamente en la configuración privada del
+  proveedor, nunca en variables `NEXT_PUBLIC_*` ni en el repositorio.
+- El despliegue podrá integrarse con GitHub Actions usando el mecanismo
+  oficial del proveedor.
 - **HSTS** se habilitará solo al confirmar el dominio HTTPS propio.
 - Antes de producción habrá **staging** y **pruebas de carga**.
+
+## Panel administrativo (estado actual)
+
+- **RBAC persistente implementado**: acceso por usuario `active` con rol
+  en PostgreSQL (schema `private`); sin allowlist.
+- **Fase 2 parcialmente implementada**: contratos Zod, servicio con
+  auditoría append-only en transacciones y ruta `/admin/contenido`.
+- Migración `0001_blue_tarantula.sql` generada y aplicada con
+  `npm run db:migrate`.
+- Storage y biblioteca multimedia implementados; programación temporal y
+  proyección pública de contenido publicado conectadas. El ejecutor se activa
+  con `npm run db:publish-scheduled` en un cron independiente.
+
+## Panel administrativo (Fase 1.2.2)
+
+- La base administrativa usa **PostgreSQL de Supabase** (datos en el
+  schema privado `private`).
+- Las migraciones se generan con `npm run db:generate` y se aplican con
+  `npm run db:migrate` (ambas leen `DATABASE_URL` desde `.env.local`).
+- `.env.local` **nunca se sube al repositorio**.
+- Esquema declarativo en `src/db/schema/admin-identity.ts`; cliente
+  server-only en `src/db/client.ts`.
+
+## Despliegue
+
+- Contrato portable de despliegue para Railway y Latinoamérica Hosting:
+  [`docs/deployment-latinoamerica-hosting.md`](docs/deployment-latinoamerica-hosting.md).
+- Configuración de Railway sin secretos en `railway.json`.
+
+## Panel administrativo (Fase 1.2.1) — HISTORIAL
+
+> **Historial:** fase previa a la conexión de base de datos. Desde la
+> Fase 1.2.2 existen cliente PostgreSQL, migraciones y las cuatro tablas
+> en Supabase; el contenido siguiente se conserva como registro.
+
+- Esquema declarativo de identidad en `src/db/schema/admin-identity.ts`
+  (Drizzle ORM, schema `private`): `admin_users`, `admin_roles`,
+  `admin_user_roles`, `audit_logs`.
+- **Sin conexión de base de datos todavía**: no hay `DATABASE_URL`,
+  cliente SQL, migraciones ni tablas creadas.
+- Semilla pura de roles en `src/db/admin-identity-seed.ts`.
+- La siguiente fase configurará `DATABASE_URL` de forma privada y
+  aplicará migraciones controladas. Auth.js + Google sigue siendo la
+  autenticación del panel.

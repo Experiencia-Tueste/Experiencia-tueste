@@ -22,6 +22,22 @@ export interface SupabasePublicConfig {
 export type PublicEnv = Record<string, string | undefined>;
 
 /**
+ * Lee las variables públicas con acceso LITERAL a `process.env.*`.
+ * ---------------------------------------------------------------------
+ * Next.js reemplaza estáticamente `process.env.NEXT_PUBLIC_*` en el
+ * bundle cliente: por eso el acceso literal debe vivir aquí (dentro del
+ * contrato de configuración) y no en los consumidores, para que los
+ * valores se inyecten en el navegador sin romper la frontera
+ * cliente/servidor.
+ */
+export function supabasePublicEnv(): PublicEnv {
+  return {
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  };
+}
+
+/**
  * Lee y valida la configuración pública de Supabase.
  *
  * @param env Entorno a leer (por defecto `process.env`); inyectable para

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   addToCart,
   cartCount,
@@ -16,22 +16,57 @@ import Reveal from './Reveal';
 import SectionGhost from './SectionGhost';
 import styles from './Tienda.module.css';
 
-const MENSAJE_PAGOS = 'La página no procesa pagos.';
+const MENSAJE_PAGOS =
+  'Pago seguro con Mercado Pago. Los precios y el total se validan nuevamente en el servidor.';
+const CART_STORAGE_KEY = 'tueste:cart:v1';
 
 /**
  * Sección «07 / TIENDA» · Objetos del universo (#merch).
  * Catálogo de seis productos (PRODUCTS de features/commerce) con visual
  * SVG determinista, precio COP formateado con Intl (es-CO) y botón
  * «Agregar» que actualiza el contador y anuncia en aria-live. La
- * selección vive solo en memoria del componente cliente (sin
- * localStorage, cookies, APIs ni pagos); el drawer es accesible y el
- * cierre de compra solo anuncia que el canal aún no está habilitado.
+ * selección se conserva localmente para sobrevivir al inicio de sesión;
+ * el checkout autenticado crea una orden server-side y delega el cobro a
+ * Mercado Pago.
  */
 export default function Tienda() {
   const [items, setItems] = useState<CartItem[]>([]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [anuncio, setAnuncio] = useState<string | null>(null);
   const abridorRef = useRef<HTMLButtonElement>(null);
+  const cartHydrated = useRef(false);
+
+  useEffect(() => {
+    try {
+      const stored = JSON.parse(window.localStorage.getItem(CART_STORAGE_KEY) ?? '[]') as unknown;
+      if (Array.isArray(stored)) {
+        const safe = stored.filter(
+          (item): item is CartItem =>
+            typeof item === 'object' &&
+            item !== null &&
+            typeof (item as CartItem).productId === 'string' &&
+            getProduct((item as CartItem).productId) !== undefined &&
+            Number.isInteger((item as CartItem).qty) &&
+            (item as CartItem).qty > 0 &&
+            (item as CartItem).qty <= 20,
+        );
+        queueMicrotask(() => {
+          cartHydrated.current = true;
+          setItems(safe);
+        });
+      } else {
+        cartHydrated.current = true;
+      }
+    } catch {
+      window.localStorage.removeItem(CART_STORAGE_KEY);
+      cartHydrated.current = true;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!cartHydrated.current) return;
+    window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+  }, [items]);
 
   const count = cartCount(items);
 

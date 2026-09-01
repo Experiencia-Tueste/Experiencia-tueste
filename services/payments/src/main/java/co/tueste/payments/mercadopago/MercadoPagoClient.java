@@ -39,7 +39,7 @@ public class MercadoPagoClient {
     body.put("external_reference", order.id().toString());
     body.put("description", "Pedido Tueste " + order.id());
     body.put("expiration_time", "P1D");
-    body.put("payer", Map.of("email", order.customerEmail()));
+    body.put("payer", Map.of("email", payerEmail(order)));
     body.put("items", order.items().stream().map(this::itemBody).toList());
     body.put(
         "config",
@@ -107,6 +107,13 @@ public class MercadoPagoClient {
   private String resultUrl(CheckoutOrder order, String result) {
     String base = properties.siteUrl().replaceAll("/$", "");
     return base + "/cuenta/pagos/resultado?order=" + order.id() + "&result=" + result;
+  }
+
+  String payerEmail(CheckoutOrder order) {
+    String testPayerEmail = properties.mercadoPagoTestPayerEmail();
+    return testPayerEmail == null || testPayerEmail.isBlank()
+        ? order.customerEmail()
+        : testPayerEmail;
   }
 
   private String amount(long value) {

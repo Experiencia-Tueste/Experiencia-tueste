@@ -10,6 +10,8 @@ Servicio privado Spring Boot que crea órdenes de Mercado Pago y procesa sus web
 - Spring valida firma, issuer, audience, `jti`, `sub` y `order_id`; cada `jti` solo se consume una vez.
 - Solo un webhook válido seguido de `GET /v1/orders/{id}` actualiza el estado definitivo.
 - No se almacenan números de tarjeta, CVV ni payloads completos del proveedor.
+- En pruebas, `MP_TEST_PAYER_EMAIL` permite usar un pagador sintético de Mercado Pago sin
+  reemplazar la identidad real del cliente en Tueste. La variable debe eliminarse en producción.
 
 ## Claves entre servicios
 

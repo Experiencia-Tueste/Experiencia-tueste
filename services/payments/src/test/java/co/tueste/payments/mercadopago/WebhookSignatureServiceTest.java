@@ -12,6 +12,7 @@ class WebhookSignatureServiceTest {
               "https://api.mercadopago.com",
               "token",
               "secret",
+              "",
               "https://tueste.test",
               "https://payments.test/webhooks/mercadopago",
               "issuer",

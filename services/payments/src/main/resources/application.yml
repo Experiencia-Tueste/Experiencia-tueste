@@ -38,6 +38,7 @@ tueste:
     mercado-pago-api-url: ${MP_API_URL:https://api.mercadopago.com}
     mercado-pago-access-token: ${MP_ACCESS_TOKEN}
     mercado-pago-webhook-secret: ${MP_WEBHOOK_SECRET}
+    mercado-pago-test-payer-email: ${MP_TEST_PAYER_EMAIL:}
     site-url: ${TUESTE_SITE_URL}
     notification-url: ${MP_NOTIFICATION_URL}
     jwt-issuer: ${PAYMENTS_JWT_ISSUER:tueste-web}

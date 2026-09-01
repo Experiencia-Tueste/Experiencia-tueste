@@ -18,6 +18,7 @@ export default defineConfig({
     './src/db/schema/admin-compliance.ts',
     './src/db/schema/admin-community.ts',
     './src/db/schema/admin-radio.ts',
+    './src/db/schema/payments.ts',
   ],
   out: './drizzle',
   dbCredentials: {

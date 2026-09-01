@@ -228,6 +228,13 @@
   box-shadow: 0 16px 38px -12px rgba(15, 162, 149, 0.65);
 }
 
+.checkout:disabled {
+  cursor: wait;
+  opacity: 0.65;
+  transform: none;
+  box-shadow: none;
+}
+
 .note {
   font-family: var(--font-mono);
   font-size: 0.57rem;

@@ -5,6 +5,8 @@ out/
 build/
 coverage/
 dist/
+target/
+.m2/
 
 # Entorno: excluye CUALQUIER .env*; solo .env.example es rastreable.
 .env*

@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import ThemeToggle from '@/components/home/ThemeToggle';
+import TuesteTreeIdentity from './TuesteTreeIdentity';
 import styles from '../tueste-tree.module.css';
 
 /**
@@ -28,6 +29,7 @@ export default function TuesteTreeTopbar() {
       </Link>
 
       <div className={styles.adoptTopbarTools} aria-label="Controles de Tueste Tree">
+        <TuesteTreeIdentity returnTo="/tueste-tree/adoptar" />
         <Link
           href="/experiencia#escucha"
           className={styles.adoptAudioLink}

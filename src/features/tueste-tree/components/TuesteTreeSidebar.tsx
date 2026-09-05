@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import ThemeToggle from '@/components/home/ThemeToggle';
 import { SIDEBAR_GROUPS } from '../data/content';
+import TuesteTreeIdentity from './TuesteTreeIdentity';
 import styles from '../tueste-tree.module.css';
 
 export interface TuesteTreeSidebarProps {
@@ -172,6 +173,7 @@ export default function TuesteTreeSidebar({ active }: TuesteTreeSidebarProps) {
       </nav>
 
       <div className={styles.sidebarFoot}>
+        <TuesteTreeIdentity returnTo="/tueste-tree" />
         <a className={styles.sidebarFrequency} href="/experiencia#escucha">
           <span className={styles.audioBars} aria-hidden="true">
             <i />

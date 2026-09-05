@@ -7,7 +7,7 @@ describe('Portal de entrada (metadata)', () => {
   it('expone la metadata específica del portal', () => {
     expect(metadata.title).toBe('Tueste · Elige tu camino');
     expect(metadata.description).toBe(
-      'Tienda Tueste Co y Experiencia Origen Tostado: dos caminos nacidos del mismo origen.',
+      'Tienda Tueste Co, Experiencia Origen Tostado y Tueste Tree: tres caminos nacidos del mismo origen.',
     );
   });
 });
@@ -27,11 +27,11 @@ describe('Portal de entrada (contenido)', () => {
   it('presenta el kicker, el titular y el subtítulo del hero', () => {
     render(<Home />);
 
-    expect(screen.getByText('TUESTE · DOS CAMINOS, UN ORIGEN')).toBeInTheDocument();
+    expect(screen.getByText('TUESTE · TRES CAMINOS, UN ORIGEN')).toBeInTheDocument();
     expect(
       screen.getByRole('heading', { level: 1, name: 'El café también se escucha.' }),
     ).toBeInTheDocument();
-    expect(screen.getByText('Dos caminos nacidos del mismo origen.')).toBeInTheDocument();
+    expect(screen.getByText('Tres caminos nacidos del mismo origen.')).toBeInTheDocument();
   });
 
   it('presenta las dos tarjetas con su contenido', () => {
@@ -47,6 +47,10 @@ describe('Portal de entrada (contenido)', () => {
     expect(
       screen.getByText('Música, frecuencias y territorio para escuchar el café.'),
     ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'Tueste Tree' })).toBeInTheDocument();
+    expect(
+      screen.getByText('Adopta un árbol y acompaña el origen desde la finca.'),
+    ).toBeInTheDocument();
   });
 
   it('la tarjeta Experiencia enlaza a /experiencia', () => {
@@ -54,6 +58,15 @@ describe('Portal de entrada (contenido)', () => {
 
     const link = screen.getByRole('link', { name: /Experiencia Origen Tostado/ });
     expect(link).toHaveAttribute('href', '/experiencia');
+  });
+
+  it('la tarjeta Tueste Tree enlaza a /tueste-tree', () => {
+    render(<Home />);
+
+    expect(screen.getByRole('link', { name: /Tueste Tree/ })).toHaveAttribute(
+      'href',
+      '/tueste-tree',
+    );
   });
 
   it('sin SHOPIFY_STORE_URL muestra «Tienda próximamente» sin enlace roto', () => {
@@ -66,7 +79,7 @@ describe('Portal de entrada (contenido)', () => {
   it('cierra con la línea editorial del portal', () => {
     render(<Home />);
 
-    expect(screen.getByText('UN SOLO ORIGEN · DOS FORMAS DE VIVIRLO')).toBeInTheDocument();
+    expect(screen.getByText('UN SOLO ORIGEN · TRES FORMAS DE VIVIRLO')).toBeInTheDocument();
   });
 
   it('no renderiza el footer ni secciones de la experiencia', () => {
@@ -87,10 +100,11 @@ describe('Portal de entrada (contenido)', () => {
     expect(srcs.some((s) => s.includes('/images/portal/portal-experiencia-artwork-v1.webp'))).toBe(
       true,
     );
+    expect(srcs.some((s) => s.includes('/images/tueste-tree/lote-000-cafetal-v1.png'))).toBe(true);
 
     for (const img of images) {
       const src = decodeURIComponent(img.getAttribute('src') ?? '');
-      if (src.includes('/images/portal/')) {
+      if (src.includes('/images/portal/') || src.includes('/images/tueste-tree/')) {
         expect(img.getAttribute('alt')).toBe('');
         expect(img.closest('[aria-hidden="true"]')).not.toBeNull();
       }

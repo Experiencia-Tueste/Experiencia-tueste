@@ -140,7 +140,12 @@ export default function MercadoOrigen() {
               <p className={styles.desc}>{item.descripcion}</p>
               <div className={styles.foot}>
                 <span className={styles.price}>{formatoCOP(item.precio)}</span>
-                <button type="button" className={styles.buy} onClick={() => comprar(item)}>
+                <button
+                  type="button"
+                  className={styles.buy}
+                  onClick={() => comprar(item)}
+                  data-commercial-intent={`availability-${item.marca.toLowerCase().replace(/\s+/g, '-')}`}
+                >
                   <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path
                       d="M6 8h12l-1 12a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L6 8Zm3 0V6a3 3 0 0 1 6 0v2"

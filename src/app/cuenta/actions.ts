@@ -5,24 +5,40 @@ import { loadSiteUrl } from '@/lib/config/env-server';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { customerCredentialsSchema } from '@/features/customer-auth/schemas';
 import { getAdminByEmail } from '@/lib/auth/authorization';
-import { postSignInDestination } from '@/features/customer-auth/post-sign-in';
+import { postSignInDestination, safePostSignInPath } from '@/features/customer-auth/post-sign-in';
 
 export interface CustomerAuthState {
   status: 'idle' | 'error' | 'success';
   message: string;
 }
 
+function authPage(
+  pathname: '/cuenta/registro' | '/cuenta/iniciar-sesion',
+  params: Record<string, string>,
+) {
+  const search = new URLSearchParams(params);
+  return `${pathname}?${search.toString()}`;
+}
+
+function destinationHref(pathname: string, searchParams?: Record<string, string>) {
+  const search = new URLSearchParams(searchParams);
+  return search.size > 0 ? `${pathname}?${search.toString()}` : pathname;
+}
+
 export async function loginWithGoogleAction(formData: FormData) {
-  const fallbackPath =
-    formData.get('fallback') === 'registro'
-      ? '/cuenta/registro?oauth=fallido'
-      : '/cuenta/iniciar-sesion?oauth=fallido';
+  const nextPath = safePostSignInPath(formData.get('next'));
+  const fallbackPath = authPage(
+    formData.get('fallback') === 'registro' ? '/cuenta/registro' : '/cuenta/iniciar-sesion',
+    { oauth: 'fallido', ...(nextPath ? { next: nextPath } : {}) },
+  );
   const supabase = await createServerSupabase();
   if (!supabase) {
     redirect(fallbackPath);
   }
 
-  const redirectTo = new URL('/auth/confirm', loadSiteUrl()).toString();
+  const redirectTarget = new URL('/auth/confirm', loadSiteUrl());
+  if (nextPath) redirectTarget.searchParams.set('next', nextPath);
+  const redirectTo = redirectTarget.toString();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: { redirectTo },
@@ -64,9 +80,8 @@ export async function loginCustomerAction(
 
   const { data: verified } = await supabase.auth.getUser();
   const admin = await getAdminByEmail(verified.user?.email);
-  const destination = postSignInDestination(admin);
-  const query = destination.searchParams ? '?bienvenida=1' : '';
-  redirect(`${destination.pathname}${query}`);
+  const destination = postSignInDestination(admin, formData.get('next'));
+  redirect(destinationHref(destination.pathname, destination.searchParams));
 }
 
 export async function registerCustomerAction(
@@ -83,7 +98,10 @@ export async function registerCustomerAction(
     return { status: 'error', message: 'El registro de clientes aún no está disponible.' };
   }
 
-  const emailRedirectTo = new URL('/auth/confirm', loadSiteUrl()).toString();
+  const nextPath = safePostSignInPath(formData.get('next'));
+  const emailRedirectTarget = new URL('/auth/confirm', loadSiteUrl());
+  if (nextPath) emailRedirectTarget.searchParams.set('next', nextPath);
+  const emailRedirectTo = emailRedirectTarget.toString();
   const { error } = await supabase.auth.signUp({
     ...parsed.data,
     options: { emailRedirectTo },

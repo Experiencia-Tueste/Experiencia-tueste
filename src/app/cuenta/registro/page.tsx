@@ -2,6 +2,7 @@ import Link from 'next/link';
 import CustomerAuthForm from '../CustomerAuthForm';
 import { GoogleCustomerAuth } from '../GoogleCustomerAuth';
 import { registerCustomerAction } from '../actions';
+import { safePostSignInPath } from '@/features/customer-auth/post-sign-in';
 import styles from '../customer-auth.module.css';
 
 export const metadata = { title: 'Crear cuenta · Tueste' };
@@ -9,13 +10,16 @@ export const metadata = { title: 'Crear cuenta · Tueste' };
 export default async function CustomerRegisterPage({
   searchParams,
 }: {
-  searchParams: Promise<{ oauth?: string }>;
+  searchParams: Promise<{ oauth?: string; next?: string }>;
 }) {
-  const { oauth } = await searchParams;
+  const { oauth, next: requestedPath } = await searchParams;
+  const nextPath = safePostSignInPath(requestedPath) ?? undefined;
+  const accountQuery = nextPath ? `?next=${encodeURIComponent(nextPath)}` : '';
+  const backHref = nextPath?.startsWith('/tueste-tree') ? '/tueste-tree' : '/';
   return (
     <main className={styles.page}>
       <section className={styles.card}>
-        <Link className={styles.back} href="/">
+        <Link className={styles.back} href={backHref}>
           ← Volver a Tueste
         </Link>
         <p className={styles.kicker}>Tueste · Comunidad</p>
@@ -28,10 +32,11 @@ export default async function CustomerRegisterPage({
             No pudimos continuar con Google. Inténtalo de nuevo en unos minutos.
           </p>
         ) : null}
-        <GoogleCustomerAuth fallback="registro" />
-        <CustomerAuthForm mode="register" action={registerCustomerAction} />
+        <GoogleCustomerAuth fallback="registro" nextPath={nextPath} />
+        <CustomerAuthForm mode="register" action={registerCustomerAction} nextPath={nextPath} />
         <p className={styles.switch}>
-          ¿Ya tienes cuenta? <Link href="/cuenta/iniciar-sesion">Inicia sesión</Link>
+          ¿Ya tienes cuenta?{' '}
+          <Link href={`/cuenta/iniciar-sesion${accountQuery}`}>Inicia sesión</Link>
         </p>
       </section>
     </main>

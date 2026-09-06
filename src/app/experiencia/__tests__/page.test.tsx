@@ -1,7 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { dynamic, ExperienceView as Home, metadata } from '../page';
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn() }),
+}));
 
 describe('Experiencia (metadata)', () => {
   it('expone la metadata explícita de la experiencia', () => {

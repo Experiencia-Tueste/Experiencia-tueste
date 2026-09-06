@@ -53,6 +53,7 @@ describe('admin · navegación por capacidades', () => {
       'audit.read',
     ] as const;
 
-    expect(getVisibleAdminNavigation(all)).toHaveLength(16);
+    expect(getVisibleAdminNavigation(all)).toHaveLength(17);
+    expect(getVisibleAdminNavigation(all).map((item) => item.href)).toContain('/admin/contactos');
   });
 });

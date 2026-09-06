@@ -46,13 +46,10 @@ describe('feature events', () => {
     expect(isReservable('past')).toBe(false);
   });
 
-  it('reservaMensaje anuncia el CTA y el título sin canales externos', () => {
+  it('reservaMensaje deja claro que una solicitud no es todavía una reserva', () => {
     const msg = reservaMensaje(EVENTS[0]);
-    expect(msg).toContain(EVENTS[0].cta);
     expect(msg).toContain(EVENTS[0].title);
-    expect(msg).toContain(
-      'se habilitará cuando el cliente confirme la operación y el canal de contacto',
-    );
+    expect(msg).toContain('confirmará disponibilidad');
     expect(msg).not.toMatch(/whatsapp|wa\.me|\+57|tel:/i);
   });
 });

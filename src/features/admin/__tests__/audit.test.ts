@@ -78,6 +78,7 @@ describe('admin · auditoría (reason obligatoria)', () => {
       'auction.bid_recorded',
       'backstage.pass_created',
       'backstage.pass_status_changed',
+      'engagement.status_changed',
     ]);
   });
 

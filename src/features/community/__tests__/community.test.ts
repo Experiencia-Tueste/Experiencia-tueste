@@ -26,13 +26,12 @@ describe('feature community', () => {
     expect(COMUNIDAD_CTA.volver).toBe('Volver a la escucha');
     expect(COMUNIDAD_CTA.texto).toMatch(/frecuencias/i);
     expect(COMUNIDAD_CTA.texto).toContain('Casa Cántara');
-    expect(COMUNIDAD_CTA.aviso).toContain('no se envía ni se guarda');
+    expect(COMUNIDAD_CTA.aviso).toContain('correo verificado');
   });
 
-  it('el mensaje de activación es genérico y no contiene correos ni canales externos', () => {
+  it('el mensaje de activación confirma una solicitud sin exponer correos ni canales externos', () => {
     const msg = comunidadMensaje();
-    expect(msg).toContain('se habilitará cuando el cliente confirme el flujo');
-    expect(msg).toContain('tratamiento de datos');
+    expect(msg).toContain('solicitud');
     expect(msg).not.toMatch(/[\w.+-]+@[\w-]+\.[\w.]+/);
     expect(msg).not.toMatch(/whatsapp|wa\.me|\+57|tel:|http/i);
   });

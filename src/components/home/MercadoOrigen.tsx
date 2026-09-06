@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { formatoCOP } from '@/features/commerce';
 import {
   AVISO_MERCADO,
@@ -8,12 +9,11 @@ import {
   MERCADO_ITEMS,
   MERCADO_PASOS,
   MERCADO_TIPOS,
-  consultaMensaje,
   esTipoValido,
   parsearPrecio,
-  publicacionMensaje,
 } from '@/features/mercado';
 import type { MercadoItem, PublicacionPreview } from '@/features/mercado';
+import { loginPath, submitEngagement } from './engagement-client';
 import MercadoVisual from './MercadoVisual';
 import Reveal from './Reveal';
 import SectionGhost from './SectionGhost';
@@ -21,23 +21,33 @@ import styles from './MercadoOrigen.module.css';
 
 /**
  * Sección «09 / MERCADO DE ORIGEN» (#mercado): mercado curado de marcas
- * de café colombiano con catálogo demo, pasos del modelo de venta
- * directa y el formulario «Publica tu producto» como vista previa local.
- *
- * Todo está en modo demo y pendiente de habilitación: los CTA solo
- * anuncian en aria-live que la consulta comercial se habilitará cuando
- * el cliente confirme el flujo (sin WhatsApp, pagos, auth, APIs ni envío
- * de datos). El formulario valida con HTML nativo y guarda la vista
- * previa solo en memoria; el catálogo de Mercado no se mezcla con el
- * carrito de Tienda.
+ * de café colombiano con pasos del modelo de venta directa. Las consultas
+ * y solicitudes de publicación se guardan para revisión comercial; no
+ * crean una publicación ni un pedido por sí solas.
  */
 export default function MercadoOrigen() {
   const [anuncio, setAnuncio] = useState<string | null>(null);
   const [preview, setPreview] = useState<PublicacionPreview | null>(null);
+  const [pending, setPending] = useState(false);
+  const router = useRouter();
 
-  const comprar = (item: MercadoItem) => setAnuncio(consultaMensaje(item));
+  const comprar = async (item: MercadoItem) => {
+    setPending(true);
+    const result = await submitEngagement({
+      type: 'market',
+      reference: `availability:${item.marca.toLowerCase().replace(/\\s+/g, '-')}`,
+      details: `${item.marca} · ${item.tipo} · ${item.origen}`,
+    });
+    setPending(false);
+    if (result.kind === 'login') {
+      setAnuncio('Inicia sesión con tu cuenta Tueste para consultar disponibilidad.');
+      router.push(loginPath('mercado'));
+      return;
+    }
+    setAnuncio(result.message);
+  };
 
-  const publicar = (e: React.FormEvent<HTMLFormElement>) => {
+  const publicar = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const marca = String(fd.get('marca') ?? '').trim();
@@ -53,7 +63,19 @@ export default function MercadoOrigen() {
 
     const nueva: PublicacionPreview = { marca, tipo, origen, precio, descripcion };
     setPreview(nueva);
-    setAnuncio(publicacionMensaje(nueva, formatoCOP(precio)));
+    setPending(true);
+    const result = await submitEngagement({
+      type: 'market',
+      reference: 'seller-onboarding',
+      details: `${marca} · ${tipo} · ${origen} · ${formatoCOP(precio)}${descripcion ? ` · ${descripcion}` : ''}`,
+    });
+    setPending(false);
+    if (result.kind === 'login') {
+      setAnuncio('Inicia sesión con tu cuenta Tueste para solicitar una publicación.');
+      router.push(loginPath('mercado'));
+      return;
+    }
+    setAnuncio(result.message);
   };
 
   return (
@@ -73,8 +95,9 @@ export default function MercadoOrigen() {
         <p className={styles.lead}>
           El mercado curado de Tueste para marcas de café colombiano: tostado, molido, en verde,
           cápsulas, métodos y accesorios. Con una suscripción de USD 10 al mes podrás publicar tu
-          producto y vender directo. Tueste es el puente — la venta será tuya. Todo lo que ves aquí
-          es una vista demostrativa: la operación se habilitará cuando el cliente confirme el flujo.
+          producto y vender directo. Tueste es el puente — la venta será tuya. Envía tu solicitud
+          con la cuenta Tueste y el equipo revisará la marca antes de publicar o confirmar un paso
+          comercial.
         </p>
       </Reveal>
 
@@ -140,7 +163,13 @@ export default function MercadoOrigen() {
               <p className={styles.desc}>{item.descripcion}</p>
               <div className={styles.foot}>
                 <span className={styles.price}>{formatoCOP(item.precio)}</span>
-                <button type="button" className={styles.buy} onClick={() => comprar(item)}>
+                <button
+                  type="button"
+                  className={styles.buy}
+                  onClick={() => comprar(item)}
+                  disabled={pending}
+                  data-commercial-intent={`availability-${item.marca.toLowerCase().replace(/\s+/g, '-')}`}
+                >
                   <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path
                       d="M6 8h12l-1 12a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L6 8Zm3 0V6a3 3 0 0 1 6 0v2"
@@ -155,7 +184,7 @@ export default function MercadoOrigen() {
                 </button>
               </div>
               <span className={styles.seller}>
-                Vendedor de ejemplo · vista demostrativa de la compra directa
+                Catálogo editorial · consulta revisada por Tueste
               </span>
             </article>
           ))}
@@ -169,9 +198,8 @@ export default function MercadoOrigen() {
             <span>USD 10 / mes · solo café y relacionados</span>
           </div>
           <p>
-            Llena los datos y mira la vista previa de tu tarjeta en el mercado. Es una vista
-            demostrativa: la publicación real se habilitará cuando el cliente confirme la operación.
-            No se envía ni se guarda nada en esta página.
+            Completa los datos y envía una solicitud. El equipo valida cada marca antes de crear una
+            publicación visible en el mercado.
           </p>
           <form className={styles.form} onSubmit={publicar}>
             <label className={styles.field}>
@@ -217,7 +245,7 @@ export default function MercadoOrigen() {
               />
             </label>
             <button type="submit" className={styles.pub}>
-              Publicar vista previa
+              {pending ? 'Enviando…' : 'Solicitar publicación'}
             </button>
           </form>
           <p className={styles.note}>{AVISO_MERCADO}</p>

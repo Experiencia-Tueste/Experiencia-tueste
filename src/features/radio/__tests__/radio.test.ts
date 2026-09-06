@@ -36,11 +36,11 @@ describe('feature radio', () => {
     expect(senal.features[0]).not.toContain('Todo lo del plan');
   });
 
-  it('el mensaje de suscripción anuncia la confirmación futura sin canales externos', () => {
+  it('el mensaje de suscripción aclara que el plan requiere confirmación', () => {
     const msg = suscripcionMensaje(RADIO_PLANS[1]);
     expect(msg).toContain('Diseñada por Tueste');
     expect(msg).toContain('USD 20/mes');
-    expect(msg).toContain('se habilitarán cuando el cliente confirme el flujo');
+    expect(msg).toContain('confirmará la operación');
     expect(msg).not.toMatch(/whatsapp|wa\.me|\+57|tel:/i);
   });
 });

@@ -1,0 +1,137 @@
+.summary {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.summary strong {
+  color: var(--amber);
+  font-family: var(--font-serif);
+  font-size: 2.4rem;
+}
+
+.summary span,
+.empty,
+.card p,
+.details {
+  color: rgba(var(--cream-rgb), 0.7);
+}
+
+.form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 10px;
+  border-top: 1px solid rgba(var(--cream-rgb), 0.1);
+  padding-top: 14px;
+}
+
+.form label {
+  display: grid;
+  gap: 5px;
+  color: rgba(var(--cream-rgb), 0.65);
+  font-size: 0.76rem;
+}
+
+.form input,
+.form select {
+  min-width: 0;
+  border: 1px solid rgba(var(--cream-rgb), 0.22);
+  border-radius: 8px;
+  padding: 8px;
+  color: var(--ink);
+}
+
+.form button {
+  align-self: end;
+  border: 1px solid var(--amber);
+  border-radius: 999px;
+  padding: 9px 12px;
+  color: var(--ink);
+  background: var(--amber);
+  cursor: pointer;
+}
+
+@media (max-width: 620px) {
+  .form {
+    grid-template-columns: 1fr;
+  }
+
+  .form button {
+    justify-self: start;
+  }
+}
+
+.list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  display: grid;
+  gap: 16px;
+  border: 1px solid rgba(var(--cream-rgb), 0.14);
+  border-radius: 18px;
+  padding: 20px;
+  background: rgba(var(--void-rgb), 0.32);
+}
+
+.card header,
+.card dl {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.card h2,
+.card p,
+.card dl,
+.card dd,
+.card dt {
+  margin: 0;
+}
+
+.card h2 {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+}
+
+.type,
+.status,
+.card dt {
+  color: var(--teal-bright);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.status {
+  height: fit-content;
+  border: 1px solid rgba(var(--teal-rgb), 0.4);
+  border-radius: 999px;
+  padding: 5px 9px;
+}
+
+.card dl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.card dl div {
+  display: grid;
+  gap: 5px;
+}
+
+.card dd {
+  font-size: 0.88rem;
+  overflow-wrap: anywhere;
+}
+
+.details {
+  border-top: 1px solid rgba(var(--cream-rgb), 0.1);
+  padding-top: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}

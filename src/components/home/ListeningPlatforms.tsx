@@ -5,10 +5,10 @@ import styles from './ListeningPlatforms.module.css';
 /**
  * Bloque «Llévatelo a donde escuches» (paridad con el master, dentro de
  * Lanzamientos). Cinco tarjetas editoriales de vidrio oscuro con icono,
- * nombre y subtítulo. Solo Spotify es un enlace real (URL oficial del
- * artista en el master); las otras cuatro son elementos no interactivos
- * hasta que el cliente proporcione URLs reales: sin href="#", sin
- * window.open ni URLs inventadas.
+ * nombre y subtítulo. Las cinco son enlaces reales a las plataformas
+ * oficiales de Tueste / Origen Tostado: <a> semánticos que abren una
+ * pestaña nueva (target=_blank, rel="noopener noreferrer"), sin SDKs,
+ * embeds, window.open ni botones falsos.
  */
 export interface Platform {
   id: string;
@@ -33,22 +33,28 @@ export const PLATFORMS: readonly Platform[] = [
     nombre: 'Apple Music',
     subtitulo: 'AÑADIR A BIBLIOTECA',
     accent: '#FA57C1',
-    url: null,
+    url: 'https://music.apple.com/co/artist/origen-tostado/1875514832',
   },
-  { id: 'beatport', nombre: 'Beatport', subtitulo: 'EXTENDED MIXES', accent: '#19c9b8', url: null },
+  {
+    id: 'beatport',
+    nombre: 'Beatport',
+    subtitulo: 'EXTENDED MIXES',
+    accent: '#19c9b8',
+    url: 'https://www.beatport.com/es/label/logik-pro/26143',
+  },
   {
     id: 'youtube',
     nombre: 'YouTube',
     subtitulo: 'VISUALIZERS · LIVES',
     accent: '#FF0000',
-    url: null,
+    url: 'https://youtube.com/channel/UCQ50GL0flNpt4SdWpnUFU8g?si=ZkhIxWQWY3mXVTLN',
   },
   {
     id: 'soundcloud',
     nombre: 'SoundCloud',
     subtitulo: 'SETS · DEMOS',
     accent: '#FBA922',
-    url: null,
+    url: 'https://soundcloud.com/tueste',
   },
 ];
 
@@ -108,6 +114,7 @@ export default function ListeningPlatforms() {
                 href={p.url}
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label={`Abrir perfil oficial de Origen Tostado en ${p.nombre}`}
                 data-platform={p.id}
               >
                 {inner}

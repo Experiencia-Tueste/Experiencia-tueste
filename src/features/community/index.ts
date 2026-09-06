@@ -38,15 +38,13 @@ export interface ComunidadCTA {
   mensaje: string;
   /** Texto de pertenencia (frecuencias privadas, drops, rituales, Casa Cántara). */
   texto: string;
-  /** Placeholder del campo de correo. */
-  placeholderCorreo: string;
   /** Etiqueta del botón del formulario. */
   cta: string;
   /** Cierre editorial. */
   cierre: string;
   /** Etiqueta del enlace de regreso a la escucha. */
   volver: string;
-  /** Aviso visible: el correo no se envía ni se guarda. */
+  /** Aviso visible sobre la identidad usada para la solicitud. */
   aviso: string;
 }
 
@@ -56,11 +54,10 @@ export const COMUNIDAD_CTA: ComunidadCTA = {
   mensaje: 'No solo lo escuchas. Lo vives.',
   texto:
     'Esto no termina en una compra: empieza en una pertenencia. Frecuencias privadas, drops de árboles, acceso anticipado a rituales y, pronto, las puertas de Casa Cántara. El origen se cuida entre muchos.',
-  placeholderCorreo: 'tu@correo.com',
   cta: 'Unirme',
   cierre: 'El café también se escucha.',
   volver: 'Volver a la escucha',
-  aviso: 'Tu correo no se envía ni se guarda en esta demostración.',
+  aviso: 'Usaremos el correo verificado de tu cuenta Tueste para confirmar la solicitud.',
 };
 
 /**
@@ -70,7 +67,7 @@ export const COMUNIDAD_CTA: ComunidadCTA = {
  * ingresado, y no menciona canales externos, CRM ni analytics.
  */
 export function comunidadMensaje(): string {
-  return 'Gracias por unirte. La comunidad se habilitará cuando el cliente confirme el flujo y el tratamiento de datos.';
+  return 'Tu solicitud de comunidad fue recibida.';
 }
 
 /** Posts de ejemplo (datos del mockup). */

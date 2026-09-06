@@ -1,10 +1,9 @@
 /**
  * Feature: mercado
  * ---------------------------------------------------------------------
- * Mercado de Origen (09): catálogo demo de marcas de café colombiano y
- * pasos del modelo de venta directa. SIN operación real todavía: los CTA
- * de compra solo anuncian que la consulta comercial se habilitará cuando
- * el cliente confirme el flujo (sin WhatsApp, pagos, auth ni APIs).
+ * Mercado de Origen (09): catálogo editorial de marcas de café colombiano
+ * y pasos del modelo de venta directa. Las acciones públicas registran
+ * solicitudes para revisión; no crean compras ni publicaciones visibles.
  *
  * El catálogo de Mercado es independiente del carrito de Tienda
  * (features/commerce): aquí no hay carrito, solo presentación.
@@ -50,9 +49,9 @@ export interface PublicacionPreview {
   descripcion: string;
 }
 
-/** Aviso visible de la sección (sin prometer operación activa). */
+/** Aviso visible de la sección. */
 export const AVISO_MERCADO =
-  'Las publicaciones y la operación comercial se habilitarán cuando el cliente confirme el flujo.';
+  'Las solicitudes se revisan antes de publicar una marca o confirmar una venta.';
 
 /** Tipos disponibles en el formulario de publicación (orden del mockup). */
 export const MERCADO_TIPOS: MercadoTipo[] = [
@@ -84,13 +83,13 @@ export const MERCADO_PASOS: MercadoPaso[] = [
     num: '2',
     titulo: 'Publica',
     texto:
-      'Cuando la publicación se habilite, tu producto aparecerá en el mercado con tu marca, origen, precio y tu número de ventas.',
+      'Tueste revisa la solicitud y, una vez aprobada, tu producto aparece con marca, origen, precio y número de ventas.',
   },
   {
     num: '3',
     titulo: 'Vende directo',
     texto:
-      'El botón de compra abrirá la consulta directa con el vendedor. El pago y el envío se acordarán entre tú y tu cliente, sin comisiones de Tueste.',
+      'El cliente puede solicitar disponibilidad. El pago y el envío se acuerdan después entre vendedor y cliente, sin comisiones de Tueste.',
   },
 ];
 
@@ -141,12 +140,12 @@ export function parsearPrecio(texto: string): number | null {
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
-/** Mensaje aria-live del CTA «Comprar» de una tarjeta demo. */
+/** Mensaje de consulta comercial de una tarjeta del catálogo. */
 export function consultaMensaje(item: MercadoItem): string {
-  return `Consulta comercial por «${item.marca} · ${item.tipo}» (${item.origen}): se habilitará cuando el cliente confirme el flujo.`;
+  return `Solicitud de disponibilidad para «${item.marca} · ${item.tipo}» (${item.origen}) recibida. El equipo confirmará el siguiente paso.`;
 }
 
-/** Mensaje aria-live al crear la vista previa local (no se publica nada). */
+/** Mensaje de solicitud de publicación, sin prometer que el catálogo ya cambió. */
 export function publicacionMensaje(preview: PublicacionPreview, precioTexto: string): string {
-  return `Vista previa local creada para «${preview.marca}» (${preview.tipo} · ${preview.origen} · ${precioTexto}). No se envió ni se guardó: las publicaciones se habilitarán cuando el cliente confirme el flujo.`;
+  return `Solicitud de publicación para «${preview.marca}» (${preview.tipo} · ${preview.origen} · ${precioTexto}) recibida. El equipo la revisará antes de mostrarla en el mercado.`;
 }

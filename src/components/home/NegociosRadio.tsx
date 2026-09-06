@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { getChannel, getTrack } from '@/features/audio';
 import type { TrackId } from '@/lib/audio';
-import { RADIO_PLANS, suscripcionMensaje } from '@/features/radio';
+import { RADIO_PLANS } from '@/features/radio';
 import type { RadioPlan } from '@/features/radio';
+import { loginPath, submitEngagement } from './engagement-client';
 import SectionGhost from './SectionGhost';
 import Reveal from './Reveal';
 import styles from './NegociosRadio.module.css';
@@ -25,13 +27,13 @@ export interface NegociosRadioProps {
  * Bloque B2B (#negocios) + sección «08 / RADIO ORIGEN» (#radio).
  * «Probar la Señal Café» selecciona el primer track del canal `cafe`
  * (RADIO_CHANNELS/getChannel de features/audio) y anuncia el resultado
- * localmente, sin reproducir audio real. Cada CTA de suscripción anuncia
- * en aria-live que el registro, la operación y los pagos se habilitarán
- * cuando el cliente confirme el flujo: sin WhatsApp, enlaces externos,
- * APIs, autenticación ni pagos.
+ * localmente. Los planes registran una solicitud autenticada: el equipo
+ * confirma operación y condiciones antes de activar una suscripción.
  */
 export default function NegociosRadio({ onSelect }: NegociosRadioProps) {
   const [anuncio, setAnuncio] = useState<string | null>(null);
+  const [pendingPlan, setPendingPlan] = useState<string | null>(null);
+  const router = useRouter();
 
   const probarSenal = () => {
     const canal = getChannel('cafe');
@@ -41,7 +43,21 @@ export default function NegociosRadio({ onSelect }: NegociosRadioProps) {
     setAnuncio(`Señal Café seleccionada en el reproductor${nombre ? `: «${nombre}»` : ''}.`);
   };
 
-  const suscribir = (plan: RadioPlan) => setAnuncio(suscripcionMensaje(plan));
+  const suscribir = async (plan: RadioPlan) => {
+    setPendingPlan(plan.id);
+    const result = await submitEngagement({
+      type: 'radio',
+      reference: plan.id,
+      details: `${plan.nombre} · USD ${plan.priceUsd}/mes`,
+    });
+    setPendingPlan(null);
+    if (result.kind === 'login') {
+      setAnuncio('Inicia sesión con tu cuenta Tueste para solicitar este plan.');
+      router.push(loginPath('radio'));
+      return;
+    }
+    setAnuncio(result.message);
+  };
 
   return (
     <>
@@ -79,8 +95,8 @@ export default function NegociosRadio({ onSelect }: NegociosRadioProps) {
             La plataforma de streaming de Origen Tostado para espacios: eliges tu señal y suena en
             continuo, con música original libre de líos de derechos. Tres niveles: la señal
             predeterminada, una diseñada por Tueste según tu tipo de negocio, o un canal totalmente
-            personalizado. Servicio para usuarios registrados — el registro y el pago se habilitan
-            cuando el cliente confirme el flujo.
+            personalizado. Servicio para usuarios registrados: solicita el plan y el equipo confirma
+            el alcance antes de activar cualquier suscripción.
           </p>
         </Reveal>
 
@@ -119,8 +135,13 @@ export default function NegociosRadio({ onSelect }: NegociosRadioProps) {
                     <li key={f}>{f}</li>
                   ))}
                 </ul>
-                <button type="button" className={styles.btn} onClick={() => suscribir(plan)}>
-                  Suscribirme
+                <button
+                  type="button"
+                  className={styles.btn}
+                  onClick={() => suscribir(plan)}
+                  disabled={pendingPlan === plan.id}
+                >
+                  {pendingPlan === plan.id ? 'Enviando…' : 'Solicitar plan'}
                 </button>
               </article>
             ))}
@@ -129,9 +150,9 @@ export default function NegociosRadio({ onSelect }: NegociosRadioProps) {
 
         <Reveal>
           <p className={styles.note}>
-            Servicio para usuarios registrados · sin permanencia · el registro, la facturación y el
-            soporte se habilitan cuando el cliente confirme el flujo. Todos los planes suenan en
-            continuo, 24/7, desde cualquier dispositivo; pruébalos en el reproductor de la página.
+            Servicio para usuarios registrados · sin permanencia · tu solicitud se revisa antes de
+            cualquier facturación o activación. Todos los planes suenan en continuo, 24/7, desde
+            cualquier dispositivo; pruébalos en el reproductor de la página.
           </p>
         </Reveal>
 

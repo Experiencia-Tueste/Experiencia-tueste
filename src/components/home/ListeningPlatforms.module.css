@@ -1,6 +1,6 @@
 /* Bloque «Llévatelo a donde escuches» (paridad con el master .subblock).
-   Tarjetas editoriales de vidrio oscuro: solo la tarjeta de Spotify es
-   interactiva (enlace real); las demás no fingen enlaces. */
+   Cinco tarjetas editoriales de vidrio oscuro, todas enlaces reales a
+   las plataformas oficiales. */
 
 .block {
   max-width: 900px;
@@ -33,6 +33,7 @@
   min-width: 200px;
   color: var(--cream);
   text-decoration: none;
+  cursor: pointer;
 }
 
 .plat svg {
@@ -63,8 +64,8 @@
   color: rgba(var(--cream-rgb), 0.55);
 }
 
-/* Solo el enlace real (Spotify) reacciona; las tarjetas sin URL no
-   fingen interactividad. */
+/* Las tarjetas reaccionan al hover y conservan foco visible coherente
+   con el sistema visual (sin subrayados ni estilos de navegador). */
 a.plat:hover {
   transform: translateY(-5px);
   border-color: var(--accent);

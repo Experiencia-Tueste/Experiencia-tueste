@@ -109,9 +109,8 @@ export const RESERVABLE: readonly EventStatus[] = ['few', 'open', 'wait'];
 export const isReservable = (status: EventStatus): boolean => status !== 'past';
 
 /**
- * Mensaje aria-live local de reserva (sin WhatsApp, pagos ni
- * formularios): la reserva se habilitará cuando el cliente confirme la
- * operación y el canal de contacto.
+ * Mensaje de la acción de cupo: la solicitud no equivale a una reserva
+ * ni a un ticket. La confirmación es siempre posterior y humana.
  */
 export const reservaMensaje = (ev: EventItem): string =>
-  `${ev.cta} para «${ev.title}»: la reserva se habilitará cuando el cliente confirme la operación y el canal de contacto.`;
+  `Solicitud de cupo para «${ev.title}» recibida. El equipo confirmará disponibilidad antes de emitir una reserva.`;

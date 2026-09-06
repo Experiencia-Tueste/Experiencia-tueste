@@ -71,16 +71,16 @@ describe('feature mercado', () => {
     expect(parsearPrecio('0')).toBeNull();
   });
 
-  it('el mensaje de compra anuncia la consulta futura sin canales externos', () => {
+  it('el mensaje de compra registra una solicitud de disponibilidad sin canales externos', () => {
     const msg = consultaMensaje(MERCADO_ITEMS[0]);
     expect(msg).toContain('Finca La Aurora');
     expect(msg).toContain('Café tostado');
     expect(msg).toContain('Huila');
-    expect(msg).toContain('cuando el cliente confirme el flujo');
+    expect(msg).toContain('Solicitud de disponibilidad');
     expect(msg).not.toMatch(/whatsapp|wa\.me|\+57|tel:/i);
   });
 
-  it('el mensaje de vista previa local no promete publicación real', () => {
+  it('el mensaje de publicación no promete que el catálogo ya cambió', () => {
     const msg = publicacionMensaje(
       {
         marca: 'Finca El Roble',
@@ -91,16 +91,16 @@ describe('feature mercado', () => {
       },
       'COP 48.000',
     );
-    expect(msg).toContain('Vista previa local');
+    expect(msg).toContain('Solicitud de publicación');
     expect(msg).toContain('Finca El Roble');
     expect(msg).toContain('COP 48.000');
-    expect(msg).toContain('No se envió ni se guardó');
+    expect(msg).toContain('revisará');
     expect(msg).not.toMatch(/whatsapp|wa\.me|\+57|tel:/i);
   });
 
-  it('el aviso visible usa la frase exacta del plan', () => {
+  it('el aviso visible aclara que existe revisión antes de publicar', () => {
     expect(AVISO_MERCADO).toBe(
-      'Las publicaciones y la operación comercial se habilitarán cuando el cliente confirme el flujo.',
+      'Las solicitudes se revisan antes de publicar una marca o confirmar una venta.',
     );
   });
 });

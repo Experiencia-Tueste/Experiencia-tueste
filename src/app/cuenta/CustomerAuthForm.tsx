@@ -12,14 +12,16 @@ const initialCustomerAuthState: CustomerAuthState = {
 interface CustomerAuthFormProps {
   mode: 'login' | 'register';
   action: (state: CustomerAuthState, formData: FormData) => Promise<CustomerAuthState>;
+  nextPath?: string;
 }
 
-export default function CustomerAuthForm({ mode, action }: CustomerAuthFormProps) {
+export default function CustomerAuthForm({ mode, action, nextPath }: CustomerAuthFormProps) {
   const [state, formAction, pending] = useActionState(action, initialCustomerAuthState);
   const register = mode === 'register';
 
   return (
     <form action={formAction} className={styles.form}>
+      {nextPath ? <input type="hidden" name="next" value={nextPath} /> : null}
       <label className={styles.field}>
         <span>Correo electrónico</span>
         <input

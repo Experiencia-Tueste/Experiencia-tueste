@@ -14,6 +14,12 @@ export type AdminNavigationItem = {
  */
 export const ADMIN_NAVIGATION: readonly AdminNavigationItem[] = [
   { href: '/admin', label: 'Resumen', group: 'General' },
+  {
+    href: '/admin/contactos',
+    label: 'Solicitudes del sitio',
+    group: 'General',
+    capability: 'crm.read',
+  },
   { href: '/admin/adopciones', label: 'Tueste Tree', group: 'Operación', capability: 'tree.read' },
   {
     href: '/admin/cumplimiento',

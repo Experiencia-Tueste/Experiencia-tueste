@@ -72,9 +72,8 @@ export const RADIO_PLANS: readonly RadioPlan[] = [
 ];
 
 /**
- * Mensaje aria-live de suscripción: el registro, la operación y los
- * pagos se habilitarán cuando el cliente confirme el flujo. Sin
- * WhatsApp, enlaces externos ni canales de contacto.
+ * Mensaje de solicitud de plan: no activa una suscripción ni inicia un
+ * cobro. El equipo confirma el alcance comercial posteriormente.
  */
 export const suscripcionMensaje = (plan: RadioPlan): string =>
-  `Suscripción a «${plan.nombre}» (USD ${plan.priceUsd}/mes): el registro, la operación y los pagos se habilitarán cuando el cliente confirme el flujo.`;
+  `Solicitud para «${plan.nombre}» (USD ${plan.priceUsd}/mes) recibida. El equipo confirmará la operación antes de activar una suscripción.`;

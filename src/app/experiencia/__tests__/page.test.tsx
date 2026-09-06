@@ -1,7 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { dynamic, ExperienceView as Home, metadata } from '../page';
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn() }),
+}));
 
 describe('Experiencia (metadata)', () => {
   it('expone la metadata explícita de la experiencia', () => {
@@ -183,6 +187,35 @@ describe('Página pública (números fantasma de sección)', () => {
     const comunidad = document.getElementById('comunidad')!;
     const ghost = comunidad.querySelector('[data-section-ghost="10"]')!;
     expect(ghost.className).toContain('start');
+  });
+});
+
+describe('Página pública (CTA comerciales sin pagos)', () => {
+  it('los lanzamientos exponen intención comercial estable y no fingen compra', () => {
+    render(<Home />);
+
+    const proximamente = document.querySelectorAll('[data-commercial-intent^="release-"]');
+    expect(proximamente.length).toBeGreaterThan(0);
+    for (const el of proximamente) {
+      expect(el.getAttribute('data-commercial-intent')).toMatch(/^release-[a-z0-9-]+$/);
+    }
+    // Sin enlaces vacíos ni javascript:.
+    const enlaces = Array.from(document.querySelectorAll('a'));
+    for (const a of enlaces) {
+      expect(a.getAttribute('href')).not.toBe('#');
+      expect(a.getAttribute('href')).not.toMatch(/^javascript:/);
+    }
+  });
+
+  it('la tienda y el mercado exponen intención comercial estable', () => {
+    render(<Home />);
+
+    expect(document.querySelectorAll('[data-commercial-intent^="merch-"]').length).toBeGreaterThan(
+      0,
+    );
+    expect(
+      document.querySelectorAll('[data-commercial-intent^="availability-"]').length,
+    ).toBeGreaterThan(0);
   });
 });
 

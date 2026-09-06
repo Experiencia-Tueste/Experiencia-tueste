@@ -14,7 +14,7 @@ describe('ListeningPlatforms (Llévatelo a donde escuches)', () => {
     }
   });
 
-  it('Spotify es un enlace seguro a la URL oficial del artista', () => {
+  it('Spotify conserva su enlace oficial y seguro', () => {
     render(<ListeningPlatforms />);
 
     const spotify = screen.getByRole('link', { name: /Spotify/ });
@@ -26,18 +26,41 @@ describe('ListeningPlatforms (Llévatelo a donde escuches)', () => {
     expect(spotify).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
-  it('las otras cuatro plataformas no fingen enlaces', () => {
-    const { container } = render(<ListeningPlatforms />);
+  it('las cuatro plataformas usan sus URLs oficiales exactas', () => {
+    render(<ListeningPlatforms />);
 
-    const noInteractivas = PLATFORMS.filter((p) => p.url === null);
-    expect(noInteractivas).toHaveLength(4);
+    const esperadas: Record<string, string> = {
+      'Apple Music': 'https://music.apple.com/co/artist/origen-tostado/1875514832',
+      YouTube: 'https://youtube.com/channel/UCQ50GL0flNpt4SdWpnUFU8g?si=ZkhIxWQWY3mXVTLN',
+      Beatport: 'https://www.beatport.com/es/label/logik-pro/26143',
+      SoundCloud: 'https://soundcloud.com/tueste',
+    };
 
-    for (const p of noInteractivas) {
-      const tarjeta = container.querySelector(`[data-platform="${p.id}"]`);
-      expect(tarjeta, `tarjeta de ${p.nombre}`).not.toBeNull();
-      expect(tarjeta!.querySelector('a'), `${p.nombre} no debe contener enlaces`).toBeNull();
-      expect(tarjeta!.hasAttribute('href'), `${p.nombre} no debe tener href`).toBe(false);
-      expect(tarjeta!.hasAttribute('tabindex'), `${p.nombre} no debe ser enfocable`).toBe(false);
+    for (const [nombre, url] of Object.entries(esperadas)) {
+      const link = screen.getByRole('link', { name: new RegExp(nombre) });
+      expect(link, `enlace de ${nombre}`).toHaveAttribute('href', url);
+    }
+  });
+
+  it('todos los enlaces abren pestaña nueva de forma segura', () => {
+    render(<ListeningPlatforms />);
+
+    const enlaces = screen.getAllByRole('link');
+    expect(enlaces).toHaveLength(5);
+    for (const link of enlaces) {
+      expect(link).toHaveAttribute('target', '_blank');
+      expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    }
+  });
+
+  it('cada enlace tiene un nombre accesible claro', () => {
+    render(<ListeningPlatforms />);
+
+    for (const nombre of ['Spotify', 'Apple Music', 'Beatport', 'YouTube', 'SoundCloud']) {
+      const link = screen.getByRole('link', {
+        name: `Abrir perfil oficial de Origen Tostado en ${nombre}`,
+      });
+      expect(link).toBeInTheDocument();
     }
   });
 });

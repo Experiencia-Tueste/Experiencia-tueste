@@ -16,10 +16,10 @@ function publicRedirect(pathname: string, searchParams?: Record<string, string>)
   return NextResponse.redirect(destination);
 }
 
-async function redirectAuthenticatedUser(supabase: SupabaseClient) {
+async function redirectAuthenticatedUser(supabase: SupabaseClient, requestedPath: string | null) {
   const { data, error } = await supabase.auth.getUser();
   const admin = error ? null : await getAdminByEmail(data.user?.email);
-  const destination = postSignInDestination(admin);
+  const destination = postSignInDestination(admin, requestedPath);
   return publicRedirect(destination.pathname, destination.searchParams);
 }
 
@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get('code');
   const tokenHash = request.nextUrl.searchParams.get('token_hash');
   const type = request.nextUrl.searchParams.get('type') as EmailOtpType | null;
+  const requestedPath = request.nextUrl.searchParams.get('next');
 
   // Flujo PKCE predeterminado de @supabase/ssr + ConfirmationURL.
   if (code) {
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
       const supabase = await createServerSupabase();
       if (supabase) {
         const { error } = await supabase.auth.exchangeCodeForSession(code);
-        if (!error) return redirectAuthenticatedUser(supabase);
+        if (!error) return redirectAuthenticatedUser(supabase, requestedPath);
       }
     } catch {
       // Un código inválido o una indisponibilidad temporal nunca debe
@@ -48,7 +49,7 @@ export async function GET(request: NextRequest) {
       const supabase = await createServerSupabase();
       if (supabase) {
         const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
-        if (!error) return redirectAuthenticatedUser(supabase);
+        if (!error) return redirectAuthenticatedUser(supabase, requestedPath);
       }
     } catch {
       // Mismo comportamiento seguro para tokens vencidos o malformados.

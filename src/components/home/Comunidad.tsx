@@ -1,30 +1,34 @@
 'use client';
 
 import { useState } from 'react';
-import { COMUNIDAD_CTA, comunidadMensaje } from '@/features/community';
+import { useRouter } from 'next/navigation';
+import { COMUNIDAD_CTA } from '@/features/community';
+import { loginPath, submitEngagement } from './engagement-client';
 import Reveal from './Reveal';
 import SectionGhost from './SectionGhost';
 import styles from './Comunidad.module.css';
 
 /**
  * Sección «10 / COMUNIDAD» (#comunidad): CTA público de pertenencia con
- * formulario compacto de correo. Sin foro, posts ni reacciones todavía:
- * esta fase es solo la invitación pública.
- *
- * El formulario usa validación nativa de correo y no guarda, envía ni
- * persiste ningún dato. En un submit válido se resetea el formulario y se
- * anuncia en aria-live un mensaje genérico (sin repetir el correo) que
- * la comunidad se habilitará cuando el cliente confirme el flujo y el
- * tratamiento de datos. Sin CRM, Supabase, auth, WhatsApp, localStorage,
- * cookies, APIs, analytics, pagos ni enlaces externos.
+ * mediante la cuenta Tueste ya autenticada. No se pide ni se acepta un
+ * correo ajeno: el servidor deriva la identidad desde la sesión.
  */
 export default function Comunidad() {
   const [anuncio, setAnuncio] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+  const router = useRouter();
 
-  const unirme = (e: React.FormEvent<HTMLFormElement>) => {
+  const unirme = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setAnuncio(comunidadMensaje());
-    e.currentTarget.reset();
+    setPending(true);
+    const result = await submitEngagement({ type: 'community', reference: 'membership' });
+    setPending(false);
+    if (result.kind === 'login') {
+      setAnuncio('Inicia sesión con tu cuenta Tueste para unirte a la comunidad.');
+      router.push(loginPath('comunidad'));
+      return;
+    }
+    setAnuncio(result.message);
   };
 
   return (
@@ -49,19 +53,8 @@ export default function Comunidad() {
 
         <Reveal>
           <form className={styles.signup} onSubmit={unirme}>
-            <label className={styles.srOnly} htmlFor="comunidad-correo">
-              Correo
-            </label>
-            <input
-              id="comunidad-correo"
-              type="email"
-              name="correo"
-              required
-              autoComplete="email"
-              placeholder={COMUNIDAD_CTA.placeholderCorreo}
-            />
-            <button type="submit" className={styles.btn}>
-              {COMUNIDAD_CTA.cta}
+            <button type="submit" className={styles.btn} disabled={pending}>
+              {pending ? 'Enviando…' : 'Unirme con mi cuenta'}
             </button>
           </form>
         </Reveal>

@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { EVENTS, reservaMensaje } from '@/features/events';
+import { useRouter } from 'next/navigation';
+import { EVENTS } from '@/features/events';
 import type { EventItem } from '@/features/events';
+import { loginPath, submitEngagement } from './engagement-client';
 import EventRow from './EventRow';
 import Reveal from './Reveal';
 import SectionGhost from './SectionGhost';
@@ -10,15 +12,29 @@ import styles from './Eventos.module.css';
 
 /**
  * Sección «05 / EN VIVO» · Acto III · La pertenencia (#eventos).
- * Agenda pública con los cuatro eventos del mockup. Cada CTA solicita
- * la reserva y solo anuncia en un área aria-live local que la reserva
- * se habilitará cuando el cliente confirme la operación y el canal de
- * contacto: sin WhatsApp, teléfonos, pagos ni formularios.
+ * Agenda editorial. Las acciones guardan una solicitud autenticada para
+ * que el equipo confirme cupo y condiciones antes de emitir una reserva.
  */
 export default function Eventos() {
   const [anuncio, setAnuncio] = useState<string | null>(null);
+  const [pendingId, setPendingId] = useState<string | null>(null);
+  const router = useRouter();
 
-  const handleReserva = (ev: EventItem) => setAnuncio(reservaMensaje(ev));
+  const handleReserva = async (ev: EventItem) => {
+    setPendingId(ev.id);
+    const result = await submitEngagement({
+      type: 'event',
+      reference: ev.id,
+      details: `${ev.title} · ${ev.city} · ${ev.dateTime}`,
+    });
+    setPendingId(null);
+    if (result.kind === 'login') {
+      setAnuncio('Inicia sesión con tu cuenta Tueste para solicitar un cupo.');
+      router.push(loginPath('eventos'));
+      return;
+    }
+    setAnuncio(result.message);
+  };
 
   return (
     <section id="eventos" className={styles.section} aria-labelledby="ev-titulo">
@@ -47,7 +63,7 @@ export default function Eventos() {
       <Reveal>
         <div className={styles.events}>
           {EVENTS.map((ev) => (
-            <EventRow key={ev.id} ev={ev} onReserva={handleReserva} />
+            <EventRow key={ev.id} ev={ev} onReserva={handleReserva} loading={pendingId === ev.id} />
           ))}
         </div>
       </Reveal>

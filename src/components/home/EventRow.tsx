@@ -5,8 +5,9 @@ import styles from './EventRow.module.css';
 
 export interface EventRowProps {
   ev: EventItem;
-  /** Solicita la reserva; el aria-live local lo gestiona la sección. */
-  onReserva: (ev: EventItem) => void;
+  /** Solicita un cupo; el equipo confirma luego una reserva real. */
+  onReserva: (ev: EventItem) => Promise<void>;
+  loading?: boolean;
 }
 
 /** Variante del botón según estado; `open` usa el estilo base ámbar. */
@@ -23,7 +24,7 @@ const VARIANT: Record<EventStatus, string> = {
  * pasado queda atenuado con la acción deshabilitada; los demás solicitan
  * la reserva a la sección (sin WhatsApp, pagos ni formularios).
  */
-export default function EventRow({ ev, onReserva }: EventRowProps) {
+export default function EventRow({ ev, onReserva, loading = false }: EventRowProps) {
   const reservable = ev.status !== 'past';
 
   return (
@@ -55,12 +56,12 @@ export default function EventRow({ ev, onReserva }: EventRowProps) {
         <button
           type="button"
           className={`${styles.btn} ${VARIANT[ev.status]}`}
-          disabled={!reservable}
+          disabled={!reservable || loading}
           onClick={() => {
             if (reservable) onReserva(ev);
           }}
         >
-          {ev.cta}
+          {loading ? 'Enviando…' : ev.cta}
         </button>
       </div>
     </article>

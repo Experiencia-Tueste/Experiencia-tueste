@@ -17,7 +17,7 @@ describe('ShopCard (comportamiento del CTA de la tienda)', () => {
     const link = screen.getByRole('link', { name: /Entrar a la tienda/ });
     expect(link).toHaveAttribute('href', 'https://tienda.tueste.co');
     expect(link).toHaveAttribute('target', '_blank');
-    expect(link).toHaveAttribute('rel', 'noreferrer');
+    expect(link).toHaveAttribute('rel', 'noreferrer noopener');
     expect(screen.getByText('Entrar a la tienda')).toBeInTheDocument();
     expect(screen.queryByText('Tienda próximamente')).not.toBeInTheDocument();
   });

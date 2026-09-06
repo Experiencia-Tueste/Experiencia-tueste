@@ -2,6 +2,7 @@ import Link from 'next/link';
 import CustomerAuthForm from '../CustomerAuthForm';
 import { GoogleCustomerAuth } from '../GoogleCustomerAuth';
 import { loginCustomerAction } from '../actions';
+import { safePostSignInPath } from '@/features/customer-auth/post-sign-in';
 import styles from '../customer-auth.module.css';
 
 export const metadata = { title: 'Iniciar sesión · Tueste' };
@@ -9,13 +10,16 @@ export const metadata = { title: 'Iniciar sesión · Tueste' };
 export default async function CustomerLoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ oauth?: string }>;
+  searchParams: Promise<{ oauth?: string; next?: string }>;
 }) {
-  const { oauth } = await searchParams;
+  const { oauth, next: requestedPath } = await searchParams;
+  const nextPath = safePostSignInPath(requestedPath) ?? undefined;
+  const accountQuery = nextPath ? `?next=${encodeURIComponent(nextPath)}` : '';
+  const backHref = nextPath?.startsWith('/tueste-tree') ? '/tueste-tree' : '/';
   return (
     <main className={styles.page}>
       <section className={styles.card}>
-        <Link className={styles.back} href="/">
+        <Link className={styles.back} href={backHref}>
           ← Volver a Tueste
         </Link>
         <p className={styles.kicker}>Tueste · Comunidad</p>
@@ -28,10 +32,10 @@ export default async function CustomerLoginPage({
             No pudimos iniciar con Google. Inténtalo de nuevo en unos minutos.
           </p>
         ) : null}
-        <GoogleCustomerAuth fallback="login" />
-        <CustomerAuthForm mode="login" action={loginCustomerAction} />
+        <GoogleCustomerAuth fallback="login" nextPath={nextPath} />
+        <CustomerAuthForm mode="login" action={loginCustomerAction} nextPath={nextPath} />
         <p className={styles.switch}>
-          ¿Aún no tienes cuenta? <Link href="/cuenta/registro">Regístrate</Link>
+          ¿Aún no tienes cuenta? <Link href={`/cuenta/registro${accountQuery}`}>Regístrate</Link>
         </p>
       </section>
     </main>

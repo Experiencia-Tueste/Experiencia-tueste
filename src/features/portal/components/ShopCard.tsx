@@ -56,7 +56,7 @@ export default function ShopCard({ storeUrl }: ShopCardProps) {
       <h2 className={styles.title}>Tienda Tueste Co</h2>
       <p className={styles.desc}>Café, objetos y rituales para llevar el origen contigo.</p>
       {resolvedUrl ? (
-        <a className={styles.cta} href={resolvedUrl} target="_blank" rel="noreferrer">
+        <a className={styles.cta} href={resolvedUrl} target="_blank" rel="noreferrer noopener">
           Entrar a la tienda
           <span className={styles.arrow} aria-hidden="true">
             ↗

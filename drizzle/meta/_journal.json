@@ -127,6 +127,13 @@
       "when": 1788757577499,
       "tag": "0017_fixed_jean_grey",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1788759903345,
+      "tag": "0018_community_consent",
+      "breakpoints": true
     }
   ]
 }

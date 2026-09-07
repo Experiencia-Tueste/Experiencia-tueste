@@ -3,15 +3,21 @@ import 'server-only';
 import { and, desc, eq, sql } from 'drizzle-orm';
 import { getDb } from './client';
 import type { DbClient } from './db-types';
-import { communityMembers, communityPosts, communityReports } from './schema/admin-community';
+import {
+  communityConsentEvents,
+  communityMembers,
+  communityPosts,
+  communityReports,
+} from './schema/admin-community';
 
 export class DrizzleAdminCommunityRepository {
   async workspace() {
     const db = getDb();
-    const [members, posts, reports] = await Promise.all([
+    const [members, posts, reports, consentEvents] = await Promise.all([
       db.select().from(communityMembers).orderBy(desc(communityMembers.createdAt)),
       db.select().from(communityPosts).orderBy(desc(communityPosts.createdAt)),
       db.select().from(communityReports).orderBy(desc(communityReports.createdAt)),
+      db.select().from(communityConsentEvents).orderBy(desc(communityConsentEvents.occurredAt)),
     ]);
     return {
       members: members.map(serialize),
@@ -19,6 +25,10 @@ export class DrizzleAdminCommunityRepository {
       reports: reports.map((row) => ({
         ...serialize(row),
         resolvedAt: row.resolvedAt?.toISOString() ?? null,
+      })),
+      consentEvents: consentEvents.map((row) => ({
+        ...row,
+        occurredAt: row.occurredAt.toISOString(),
       })),
     };
   }
@@ -41,6 +51,9 @@ export class DrizzleAdminCommunityRepository {
       .values({
         displayName: input.displayName,
         email: input.email,
+        consentStatus: 'withdrawn',
+        consentedAt: null,
+        withdrawnAt: new Date(),
         notes: input.notes,
         createdBy: input.actorId,
       })

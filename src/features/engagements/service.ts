@@ -11,6 +11,7 @@ import { parseAuditEntry } from '@/features/admin/audit';
 import { isEventPast } from '@/features/events';
 import { MERCADO_ITEMS } from '@/features/mercado';
 import { RADIO_PLANS } from '@/features/radio';
+import { saveCommunityConsentInTransaction } from '@/features/community/consent-service';
 import {
   engagementInputSchema,
   marketApplicationStageSchema,
@@ -159,7 +160,7 @@ async function createEngagementRequestInTransaction(
 ) {
   const canonical = await canonicalize(parsed, tx);
   const requesterName = user.email.split('@')[0] || 'Cliente Tueste';
-  return getEngagementRepository().createOrGet(
+  const result = await getEngagementRepository().createOrGet(
     {
       type: parsed.type,
       requesterUserId: user.id,
@@ -176,6 +177,22 @@ async function createEngagementRequestInTransaction(
     },
     tx,
   );
+  if (parsed.type === 'community') {
+    const refreshed = await getEngagementRepository().updateCommunityPayload(
+      result.request.id,
+      canonical.details,
+      canonical.payload,
+      tx,
+    );
+    await saveCommunityConsentInTransaction(
+      { id: user.id, email: user.email, name: requesterName },
+      parsed.payload,
+      tx,
+      result.request.id,
+    );
+    return { request: refreshed ?? result.request, created: result.created };
+  }
+  return result;
 }
 
 export async function createPendingEngagementIntent(input: EngagementInput) {

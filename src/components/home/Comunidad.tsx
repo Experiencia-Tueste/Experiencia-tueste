@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { COMUNIDAD_CTA } from '@/features/community';
 import { COMMUNITY_PREFERENCES, type CommunityPreference } from '@/features/engagements';
@@ -19,7 +19,34 @@ export default function Comunidad() {
   const [pending, setPending] = useState(false);
   const [preferences, setPreferences] = useState<CommunityPreference[]>(['general']);
   const [consent, setConsent] = useState(false);
+  const [hasMembership, setHasMembership] = useState(false);
+  const [loadingConsent, setLoadingConsent] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    let mounted = true;
+    void fetch('/api/community/consent')
+      .then(async (response) => {
+        if (!response.ok) return null;
+        const body = (await response.json()) as {
+          state?: {
+            consentStatus: 'active' | 'withdrawn';
+            preferences: CommunityPreference[];
+          } | null;
+        };
+        return body.state ?? null;
+      })
+      .then((state) => {
+        if (!mounted || !state) return;
+        setHasMembership(true);
+        setConsent(state.consentStatus === 'active');
+        setPreferences(state.preferences as CommunityPreference[]);
+      })
+      .catch(() => undefined);
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const unirme = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -35,7 +62,26 @@ export default function Comunidad() {
       router.push(loginPath('comunidad'));
       return;
     }
+    if (result.kind === 'ok') setHasMembership(true);
     setAnuncio(result.message);
+  };
+
+  const retirarConsentimiento = async () => {
+    setLoadingConsent(true);
+    try {
+      const response = await fetch('/api/community/consent', { method: 'DELETE' });
+      const body = (await response.json().catch(() => null)) as { message?: string } | null;
+      setConsent(false);
+      setAnuncio(
+        response.ok
+          ? 'Retiraste tu consentimiento. No enviaremos nuevas comunicaciones de comunidad.'
+          : (body?.message ?? 'No pudimos retirar tu consentimiento.'),
+      );
+    } catch {
+      setAnuncio('No pudimos retirar tu consentimiento.');
+    } finally {
+      setLoadingConsent(false);
+    }
   };
 
   return (
@@ -95,10 +141,24 @@ export default function Comunidad() {
               Acepto recibir comunicaciones según mis preferencias.
             </label>
             <button type="submit" className={styles.btn} disabled={pending || !consent}>
-              {pending ? 'Enviando…' : 'Unirme con mi cuenta'}
+              {pending
+                ? 'Enviando…'
+                : hasMembership
+                  ? 'Guardar preferencias'
+                  : 'Unirme con mi cuenta'}
             </button>
           </form>
         </Reveal>
+        {hasMembership && consent ? (
+          <button
+            type="button"
+            className={styles.withdraw}
+            onClick={retirarConsentimiento}
+            disabled={loadingConsent}
+          >
+            {loadingConsent ? 'Actualizando…' : 'Retirar consentimiento'}
+          </button>
+        ) : null}
         <p className={styles.aviso}>{COMUNIDAD_CTA.aviso}</p>
 
         <p className={styles.live} role="status" aria-live="polite">

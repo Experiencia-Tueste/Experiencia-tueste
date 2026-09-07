@@ -14,11 +14,14 @@ describe('Comunidad', () => {
 
   it('mantiene el CTA bloqueado hasta aceptar comunicaciones y envía preferencias', async () => {
     const user = userEvent.setup();
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      if (url === '/api/community/consent') {
+        return Promise.resolve(new Response(JSON.stringify({ state: null }), { status: 200 }));
+      }
+      return Promise.resolve(
         new Response(JSON.stringify({ message: 'Recibimos tu solicitud.' }), { status: 200 }),
       );
+    });
     vi.stubGlobal('fetch', fetchMock);
 
     render(<Comunidad />);
@@ -29,8 +32,9 @@ describe('Comunidad', () => {
     await user.click(screen.getByRole('checkbox', { name: /recibir comunicaciones/i }));
     await user.click(submit);
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-    const request = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    const engagementCall = fetchMock.mock.calls.find(([url]) => url === '/api/engagements');
+    const request = JSON.parse(engagementCall?.[1].body as string);
     expect(request).toMatchObject({
       type: 'community',
       reference: 'membership',

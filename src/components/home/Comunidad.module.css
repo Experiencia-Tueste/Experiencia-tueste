@@ -152,6 +152,23 @@
   transition: 0.3s;
 }
 
+.withdraw {
+  display: block;
+  margin: 1rem auto 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink-soft, #8c8174);
+  cursor: pointer;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.withdraw:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
 .btn:hover {
   background: var(--paper);
   transform: translateY(-2px);

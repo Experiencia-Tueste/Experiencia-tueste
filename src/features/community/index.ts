@@ -1,3 +1,28 @@
+import { z } from 'zod';
+
+export const COMMUNITY_CONSENT_VERSION = 1;
+
+export const communityConsentInputSchema = z.object({
+  preferences: z
+    .array(z.enum(['events', 'releases', 'coffee', 'tree', 'general']))
+    .min(1)
+    .max(5),
+  consent: z.literal(true),
+});
+
+export type CommunityConsentInput = z.infer<typeof communityConsentInputSchema>;
+
+export function normalizeCommunityPreferences(preferences: readonly string[]) {
+  const unique = [...new Set(preferences)].filter((preference) =>
+    ['events', 'releases', 'coffee', 'tree', 'general'].includes(preference),
+  );
+  return unique.length ? unique : ['general'];
+}
+
+export function isCommunityCommunicationAllowed(state: { consentStatus: string; status: string }) {
+  return state.consentStatus === 'active' && state.status === 'active';
+}
+
 /**
  * Feature: community
  * ---------------------------------------------------------------------

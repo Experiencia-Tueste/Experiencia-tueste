@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { COMUNIDAD_CTA, comunidadMensaje, SEED_POSTS, toggleLike } from '../index';
+import {
+  COMUNIDAD_CTA,
+  comunidadMensaje,
+  isCommunityCommunicationAllowed,
+  normalizeCommunityPreferences,
+  SEED_POSTS,
+  toggleLike,
+} from '../index';
 
 describe('feature community', () => {
   it('alterna el like de forma idempotente', () => {
@@ -34,5 +41,25 @@ describe('feature community', () => {
     expect(msg).toContain('solicitud');
     expect(msg).not.toMatch(/[\w.+-]+@[\w-]+\.[\w.]+/);
     expect(msg).not.toMatch(/whatsapp|wa\.me|\+57|tel:|http/i);
+  });
+
+  it('normaliza preferencias sin duplicados y conserva general como mínimo', () => {
+    expect(normalizeCommunityPreferences(['general', 'events', 'events'])).toEqual([
+      'general',
+      'events',
+    ]);
+    expect(normalizeCommunityPreferences([])).toEqual(['general']);
+  });
+
+  it('cierra la puerta de comunicación al retirar o moderar la cuenta', () => {
+    expect(isCommunityCommunicationAllowed({ consentStatus: 'active', status: 'active' })).toBe(
+      true,
+    );
+    expect(isCommunityCommunicationAllowed({ consentStatus: 'withdrawn', status: 'active' })).toBe(
+      false,
+    );
+    expect(isCommunityCommunicationAllowed({ consentStatus: 'active', status: 'banned' })).toBe(
+      false,
+    );
   });
 });

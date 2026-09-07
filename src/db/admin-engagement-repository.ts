@@ -85,6 +85,20 @@ export class DrizzleEngagementRepository {
     return { request: serialize(existing), created: false };
   }
 
+  async updateCommunityPayload(
+    id: string,
+    details: string | null,
+    payload: EngagementRequest['payload'],
+    tx: DbClient,
+  ) {
+    const [row] = await tx
+      .update(engagementRequests)
+      .set({ details, payload, updatedAt: new Date() })
+      .where(and(eq(engagementRequests.id, id), eq(engagementRequests.type, 'community')))
+      .returning();
+    return row ? serialize(row) : null;
+  }
+
   async createPendingIntent(
     input: { tokenHash: string; payload: unknown; expiresAt: Date },
     tx: DbClient,

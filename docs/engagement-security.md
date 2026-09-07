@@ -44,3 +44,31 @@ mutación y auditoría dentro de la misma transacción existente.
 La migración `drizzle/0017_fixed_jean_grey.sql` debe aplicarse mediante el
 procedimiento controlado de migraciones antes de desplegar esta ruta. No se
 ejecuta DDL manual en producción.
+
+## Evidencia remota y aprobación G2
+
+El 7 de septiembre de 2026 se aplicó `drizzle/0017_fixed_jean_grey.sql` al
+proyecto Supabase `eekhplpnrskiipdmbnbq` mediante el procedimiento controlado.
+Supabase la registró como `20260907051511 / request_security_phase_2`.
+
+La prueba controlada se ejecutó dentro de una transacción usando únicamente
+claves sintéticas y verificó:
+
+- existencia de las dos tablas, sus índices y los `REVOKE` para `anon` y
+  `authenticated`;
+- consumo único de una intención pendiente y rechazo de una intención
+  expirada;
+- incremento atómico del bucket, incluido el tope configurado;
+- rollback de una inserción después de una excepción controlada.
+
+La operación terminó correctamente y la comprobación posterior confirmó cero
+filas sintéticas residuales en ambas tablas. La verificación local de Fase 2
+queda respaldada por 99 archivos de prueba, 586 pruebas y build de Next.js
+exitoso.
+
+Con esta evidencia se aprueba formalmente `G2` el 7 de septiembre de 2026.
+La Fase 3 no se inicia automáticamente: la siguiente fase requiere su propia
+apertura y checkpoint. El advisor de Supabase mantiene el warning externo de
+protección contra contraseñas filtradas, documentado en
+`docs/supabase-advisories.md`; no fue causado por esta migración y permanece
+pendiente de habilitar el plan Pro o superior.

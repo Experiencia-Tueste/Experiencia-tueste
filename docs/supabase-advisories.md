@@ -37,6 +37,22 @@ permanezca desactivada.
 > esta tarea ni considerar cerrado el advisory mientras el advisor siga
 > reportando `auth_leaked_password_protection`.
 
+## Limitación por licencia Pro+
+
+No fue posible completar la corrección del advisory porque el proyecto está
+en el plan Free. La interfaz de Supabase permite ver el control, pero impide
+guardarlo mientras `Prevent use of leaked passwords` requiere Pro o superior.
+Por ese motivo no se pudo habilitar la protección, cerrar el warning ni
+demostrar una nueva ejecución del advisor sin el hallazgo. Una migración SQL o
+un cambio en la aplicación no sustituye esta configuración gestionada por
+Supabase Auth.
+
+La tarea queda diferida hasta contratar Pro+: actualizar el plan, activar el
+control, guardar, ejecutar nuevamente el advisor de seguridad y adjuntar el
+resultado al checkpoint correspondiente. Mientras tanto, el warning se acepta
+como limitación externa documentada y sigue bloqueando la promoción a
+producción.
+
 ## Aprobación de G1
 
 El responsable del proyecto aprobó en este hilo el checkpoint de Fase 1 el 7
@@ -44,6 +60,11 @@ de septiembre de 2026 y autorizó continuar con la Fase 2. La aprobación no
 autoriza promover a producción: esa promoción continúa condicionada a activar
 la protección de contraseñas filtradas en un plan Pro+ o a una aceptación de
 riesgo separada y explícita.
+
+El checkpoint G2 también queda aprobado el 7 de septiembre de 2026. La
+migración remota `request_security_phase_2` y la prueba controlada de sus
+tablas están documentadas en `docs/engagement-security.md`; esta aprobación no
+cierra ni elimina el advisory bloqueado por licencia.
 
 Para los avisos de rendimiento se conservan las referencias oficiales del
 linter: [claves foráneas sin índice](https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys)

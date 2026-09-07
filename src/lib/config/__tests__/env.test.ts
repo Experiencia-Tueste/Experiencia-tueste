@@ -2,7 +2,12 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { loadPublicConfig } from '../env-public';
-import { loadAdminStorageConfig, loadShopifyStoreUrl, loadSiteUrl } from '../env-server';
+import {
+  loadAdminStorageConfig,
+  loadCheckoutConfig,
+  loadShopifyStoreUrl,
+  loadSiteUrl,
+} from '../env-server';
 
 /**
  * Pruebas del contrato de configuración. Nunca dependen del entorno
@@ -93,6 +98,34 @@ describe('loadShopifyStoreUrl (URL pública de la tienda)', () => {
       /SHOPIFY_STORE_URL/,
     );
     expect(() => loadShopifyStoreUrl({ SHOPIFY_STORE_URL: 'http://tueste.com' })).toThrow(
+      /SHOPIFY_STORE_URL/,
+    );
+  });
+});
+
+describe('loadCheckoutConfig (canal comercial explícito)', () => {
+  it('usa disabled por defecto y no promete un proveedor', () => {
+    expect(loadCheckoutConfig({})).toEqual({
+      mode: 'disabled',
+      externalShopifyUrl: null,
+    });
+  });
+
+  it('permite el enlace externo de Shopify solo con URL válida', () => {
+    expect(
+      loadCheckoutConfig({
+        CHECKOUT_MODE: 'external_shopify',
+        SHOPIFY_STORE_URL: 'https://tueste.myshopify.com',
+      }),
+    ).toEqual({
+      mode: 'external_shopify',
+      externalShopifyUrl: 'https://tueste.myshopify.com',
+    });
+  });
+
+  it('rechaza modo desconocido o externo sin tienda', () => {
+    expect(() => loadCheckoutConfig({ CHECKOUT_MODE: 'fake' })).toThrow(/CHECKOUT_MODE/);
+    expect(() => loadCheckoutConfig({ CHECKOUT_MODE: 'external_shopify' })).toThrow(
       /SHOPIFY_STORE_URL/,
     );
   });

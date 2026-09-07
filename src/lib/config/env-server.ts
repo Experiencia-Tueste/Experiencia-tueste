@@ -2,6 +2,12 @@ import 'server-only';
 
 import { z } from 'zod';
 
+import {
+  CHECKOUT_MODES,
+  DEFAULT_CHECKOUT_CONFIG,
+  type CheckoutConfig,
+  type CheckoutMode,
+} from '@/features/commerce/checkout';
 import type { PublicEnv } from './env-public';
 
 /**
@@ -32,10 +38,35 @@ const SUPABASE_STORAGE_URL_SCHEMA = z
     message: 'la URL no debe contener espacios, corchetes ni formato Markdown',
   });
 
+const CHECKOUT_MODE_SCHEMA = z.enum(CHECKOUT_MODES);
+
 export interface AdminStorageConfig {
   supabaseUrl: string;
   adminKey: string;
   bucket: string;
+}
+
+/** Configuración explícita del canal comercial visible en la experiencia. */
+export function loadCheckoutConfig(env: PublicEnv = process.env): CheckoutConfig {
+  const rawMode = env.CHECKOUT_MODE?.trim() || DEFAULT_CHECKOUT_CONFIG.mode;
+  const parsedMode = CHECKOUT_MODE_SCHEMA.safeParse(rawMode);
+  if (!parsedMode.success) {
+    throw new Error(
+      `CHECKOUT_MODE no es válido: «${rawMode}». Usa disabled, external_shopify, mercadopago_legacy o shopify.`,
+    );
+  }
+
+  const storeUrl = loadShopifyStoreUrl(env);
+  if (parsedMode.data === 'external_shopify' && !storeUrl) {
+    throw new Error(
+      'CHECKOUT_MODE=external_shopify requiere SHOPIFY_STORE_URL con una URL pública https:// válida.',
+    );
+  }
+
+  return {
+    mode: parsedMode.data as CheckoutMode,
+    externalShopifyUrl: parsedMode.data === 'external_shopify' ? storeUrl : null,
+  };
 }
 
 /**

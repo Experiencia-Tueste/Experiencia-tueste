@@ -2,13 +2,20 @@
 
 import { useEffect, useRef, useState } from 'react';
 import {
+  MAX_CART_QTY,
   addToCart,
   cartCount,
   changeQty,
   formatoCOP,
   getProduct,
   PRODUCTS,
+  sanitizeCart,
 } from '@/features/commerce';
+import {
+  createCheckoutGateway,
+  DEFAULT_CHECKOUT_CONFIG,
+  type CheckoutConfig,
+} from '@/features/commerce/checkout';
 import type { CartItem } from '@/features/commerce';
 import CartDrawer from './CartDrawer';
 import ProductVisual from './ProductVisual';
@@ -16,9 +23,16 @@ import Reveal from './Reveal';
 import SectionGhost from './SectionGhost';
 import styles from './Tienda.module.css';
 
-const MENSAJE_PAGOS =
-  'Pago seguro con Mercado Pago. Los precios y el total se validan nuevamente en el servidor.';
 const CART_STORAGE_KEY = 'tueste:cart:v1';
+
+function paymentMessage(mode: CheckoutConfig['mode']) {
+  if (mode === 'external_shopify') return 'El pago continúa en la tienda segura de Shopify.';
+  if (mode === 'mercadopago_legacy') {
+    return 'Pago seguro con Mercado Pago. Los precios y el total se validan nuevamente en el servidor.';
+  }
+  if (mode === 'shopify') return 'El checkout de Shopify estará disponible próximamente.';
+  return 'El checkout está desactivado por ahora. Tu selección se conserva para más adelante.';
+}
 
 /**
  * Sección «07 / TIENDA» · Objetos del universo (#merch).
@@ -26,61 +40,67 @@ const CART_STORAGE_KEY = 'tueste:cart:v1';
  * SVG determinista, precio COP formateado con Intl (es-CO) y botón
  * «Agregar» que actualiza el contador y anuncia en aria-live. La
  * selección se conserva localmente para sobrevivir al inicio de sesión;
- * el checkout autenticado crea una orden server-side y delega el cobro a
- * Mercado Pago.
+ * el checkout se delega al gateway configurado sin prometer un proveedor
+ * que no esté habilitado.
  */
-export default function Tienda() {
+export default function Tienda({
+  checkoutConfig = DEFAULT_CHECKOUT_CONFIG,
+}: {
+  checkoutConfig?: CheckoutConfig;
+}) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [anuncio, setAnuncio] = useState<string | null>(null);
   const abridorRef = useRef<HTMLButtonElement>(null);
+  const cartButtonRef = useRef<HTMLButtonElement>(null);
   const cartHydrated = useRef(false);
 
   useEffect(() => {
     try {
       const stored = JSON.parse(window.localStorage.getItem(CART_STORAGE_KEY) ?? '[]') as unknown;
-      if (Array.isArray(stored)) {
-        const safe = stored.filter(
-          (item): item is CartItem =>
-            typeof item === 'object' &&
-            item !== null &&
-            typeof (item as CartItem).productId === 'string' &&
-            getProduct((item as CartItem).productId) !== undefined &&
-            Number.isInteger((item as CartItem).qty) &&
-            (item as CartItem).qty > 0 &&
-            (item as CartItem).qty <= 20,
-        );
-        queueMicrotask(() => {
-          cartHydrated.current = true;
-          setItems(safe);
-        });
-      } else {
+      queueMicrotask(() => {
         cartHydrated.current = true;
-      }
+        setItems(sanitizeCart(stored));
+      });
     } catch {
-      window.localStorage.removeItem(CART_STORAGE_KEY);
+      try {
+        window.localStorage.removeItem(CART_STORAGE_KEY);
+      } catch {
+        // El almacenamiento puede estar bloqueado; el carrito sigue en memoria.
+      }
       cartHydrated.current = true;
     }
   }, []);
 
   useEffect(() => {
     if (!cartHydrated.current) return;
-    window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+    try {
+      window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+    } catch {
+      // El almacenamiento puede estar lleno o bloqueado sin interrumpir la compra.
+    }
   }, [items]);
 
   const count = cartCount(items);
 
-  const agregar = (productId: string) => {
+  const gateway = createCheckoutGateway(checkoutConfig);
+
+  const agregar = (productId: string, opener: HTMLButtonElement) => {
+    abridorRef.current = opener;
     setItems((prev) => addToCart(prev, productId));
     const p = getProduct(productId);
     setAnuncio(`${p?.name ?? productId} agregado a tu selección.`);
+    setDrawerOpen(true);
   };
 
   const cambiarQty = (productId: string, delta: number) => {
     setItems((prev) => changeQty(prev, productId, delta));
   };
 
-  const abrirDrawer = () => setDrawerOpen(true);
+  const abrirDrawer = () => {
+    abridorRef.current = cartButtonRef.current;
+    setDrawerOpen(true);
+  };
 
   const cerrarDrawer = () => {
     setDrawerOpen(false);
@@ -105,7 +125,7 @@ export default function Tienda() {
             </h2>
           </div>
           <button
-            ref={abridorRef}
+            ref={cartButtonRef}
             type="button"
             className={styles.cartbtn}
             onClick={abrirDrawer}
@@ -142,7 +162,7 @@ export default function Tienda() {
                   <button
                     type="button"
                     className={styles.add}
-                    onClick={() => agregar(p.id)}
+                    onClick={(event) => agregar(p.id, event.currentTarget)}
                     data-commercial-intent={`merch-${p.id}`}
                   >
                     Agregar
@@ -155,14 +175,21 @@ export default function Tienda() {
       </Reveal>
 
       <Reveal>
-        <p className={styles.note}>{MENSAJE_PAGOS}</p>
+        <p className={styles.note}>{paymentMessage(checkoutConfig.mode)}</p>
       </Reveal>
 
       <p className={styles.live} role="status" aria-live="polite">
         {anuncio ?? '\u00A0'}
       </p>
 
-      <CartDrawer open={drawerOpen} items={items} onClose={cerrarDrawer} onQty={cambiarQty} />
+      <CartDrawer
+        open={drawerOpen}
+        items={items}
+        onClose={cerrarDrawer}
+        onQty={cambiarQty}
+        gateway={gateway}
+        maxQty={MAX_CART_QTY}
+      />
     </section>
   );
 }

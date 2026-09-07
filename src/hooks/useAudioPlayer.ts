@@ -30,6 +30,10 @@ export interface AudioPlayerResult {
   select: (id: TrackId) => void;
   /** Reproduce una pista desde el comienzo (nueva pista, aunque esté pausado). */
   play: (id: TrackId) => void;
+  /** Reproduce una cola de pistas y avanza cuando cada preview termina. */
+  playQueue: (ids: TrackId[]) => void;
+  /** Reintenta la pista actual después de un error de carga o reproducción. */
+  retry: () => void;
   seek: (t: number) => void;
   /** Elige una señal de Radio Demo (o «Escucha libre»). */
   selectChannel: (option: RadioDemoOption) => void;
@@ -58,6 +62,7 @@ export function useAudioPlayer(): AudioPlayerResult {
   const trackIdRef = useRef<TrackId>(TRACKS[0]?.id ?? '');
   const playingRef = useRef(false);
   const channelRef = useRef<RadioChannelId | null>(null);
+  const queueRef = useRef<TrackId[]>([]);
 
   const [trackId, setTrackId] = useState<TrackId>(TRACKS[0]?.id ?? '');
   const [playing, setPlaying] = useState(false);
@@ -108,7 +113,7 @@ export function useAudioPlayer(): AudioPlayerResult {
   }, []);
 
   /** Reproduce una pista desde cero (grafo asegurado + src + play). */
-  const playTrack = useCallback(
+  const playTrackNow = useCallback(
     (id: TrackId) => {
       const track = getTrack(id);
       const audio = audioRef.current;
@@ -132,6 +137,28 @@ export function useAudioPlayer(): AudioPlayerResult {
       });
     },
     [ensureAudioGraph],
+  );
+
+  const playTrack = useCallback(
+    (id: TrackId) => {
+      queueRef.current = [id];
+      channelRef.current = null;
+      setChannelId(null);
+      playTrackNow(id);
+    },
+    [playTrackNow],
+  );
+
+  const playQueue = useCallback(
+    (ids: TrackId[]) => {
+      const valid = ids.filter((id) => getTrack(id));
+      if (valid.length === 0) return;
+      queueRef.current = valid;
+      channelRef.current = null;
+      setChannelId(null);
+      playTrackNow(valid[0]);
+    },
+    [playTrackNow],
   );
 
   const togglePlay = useCallback(() => {
@@ -167,6 +194,7 @@ export function useAudioPlayer(): AudioPlayerResult {
       setHasInteracted(true);
       channelRef.current = null;
       setChannelId(null);
+      queueRef.current = [id];
       trackIdRef.current = id;
       setTrackId(id);
       setError(null);
@@ -212,6 +240,7 @@ export function useAudioPlayer(): AudioPlayerResult {
         if (!track) return;
         trackIdRef.current = id;
         setTrackId(id);
+        queueRef.current = [id];
         setError(null);
         setCurrentTime(0);
         audio.src = track.src;
@@ -232,11 +261,17 @@ export function useAudioPlayer(): AudioPlayerResult {
       }
       channelRef.current = option.channel;
       setChannelId(option.channel);
-      playTrack(radioDemoTrackId(option));
+      const channel = getChannel(option.channel);
+      queueRef.current = channel?.queue ?? [radioDemoTrackId(option)];
+      playTrackNow(radioDemoTrackId(option));
       setMensaje(`Señal «${option.label}» activa en continuo.`);
     },
-    [ensureAudioGraph, playTrack],
+    [ensureAudioGraph, playTrackNow],
   );
+
+  const retry = useCallback(() => {
+    playTrackNow(trackIdRef.current);
+  }, [playTrackNow]);
 
   useEffect(() => {
     const audio = new Audio();
@@ -266,7 +301,15 @@ export function useAudioPlayer(): AudioPlayerResult {
         const ch = getChannel(canal);
         const next = ch ? nextInQueue(ch, trackIdRef.current) : undefined;
         if (next) {
-          playTrack(next.id);
+          playTrackNow(next.id);
+          return;
+        }
+      } else {
+        const idx = queueRef.current.indexOf(trackIdRef.current);
+        const nextId = idx >= 0 ? queueRef.current[idx + 1] : undefined;
+        const next = nextId ? getTrack(nextId) : undefined;
+        if (next) {
+          playTrackNow(next.id);
           return;
         }
       }
@@ -306,7 +349,7 @@ export function useAudioPlayer(): AudioPlayerResult {
       analyserRef.current = null;
       ctxRef.current = null;
     };
-  }, [playTrack]);
+  }, [playTrackNow]);
 
   return {
     trackId,
@@ -322,6 +365,8 @@ export function useAudioPlayer(): AudioPlayerResult {
     togglePlay,
     select,
     play: playTrack,
+    playQueue,
+    retry,
     seek,
     selectChannel,
   };

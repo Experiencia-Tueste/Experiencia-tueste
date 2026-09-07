@@ -1,6 +1,7 @@
 import { createOrGetCheckoutOrder } from '@/db/payment-repository';
 import { getProduct } from '@/features/commerce';
 import { checkoutRequestSchema } from '@/features/payments/schemas';
+import { loadCheckoutConfig } from '@/lib/config/env-server';
 import { loadPaymentsServiceConfig } from '@/lib/config/payments-env';
 import { createPaymentCheckout, PaymentServiceError } from '@/lib/payments/payment-service-client';
 import { createServerSupabase } from '@/lib/supabase/server';
@@ -8,6 +9,13 @@ import { createServerSupabase } from '@/lib/supabase/server';
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
+  const checkoutConfig = loadCheckoutConfig();
+  if (checkoutConfig.mode !== 'mercadopago_legacy') {
+    return Response.json(
+      { message: 'El checkout no está habilitado para este canal.' },
+      { status: 503 },
+    );
+  }
   const paymentsConfig = loadPaymentsServiceConfig();
   if (!paymentsConfig) {
     return Response.json(

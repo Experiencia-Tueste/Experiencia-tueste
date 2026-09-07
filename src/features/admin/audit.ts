@@ -67,6 +67,8 @@ export const AUDIT_ACTIONS = [
   'backstage.pass_created',
   'backstage.pass_status_changed',
   'engagement.status_changed',
+  'engagement.radio_stage_changed',
+  'engagement.market_stage_changed',
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

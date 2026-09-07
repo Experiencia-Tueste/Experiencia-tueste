@@ -51,7 +51,7 @@ export interface PublicacionPreview {
 
 /** Aviso visible de la sección. */
 export const AVISO_MERCADO =
-  'Las solicitudes se revisan antes de publicar una marca o confirmar una venta.';
+  'Enviar esta solicitud no genera ningún cobro. Tueste revisa la marca antes de publicar.';
 
 /** Tipos disponibles en el formulario de publicación (orden del mockup). */
 export const MERCADO_TIPOS: MercadoTipo[] = [
@@ -77,7 +77,7 @@ export const MERCADO_PASOS: MercadoPaso[] = [
     num: '1',
     titulo: 'Regístrate',
     texto:
-      'Con la suscripción de USD 10/mes por marca podrás publicar. Solo café y productos relacionados; la curaduría la hace Tueste.',
+      'Al ser aprobado, la suscripción de USD 10/mes por marca permitirá publicar. Enviar la solicitud no genera ningún cobro.',
   },
   {
     num: '2',

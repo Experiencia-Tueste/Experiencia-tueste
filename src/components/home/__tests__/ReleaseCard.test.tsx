@@ -1,5 +1,6 @@
 import { createElement } from 'react';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { RELEASES } from '@/features/music';
 import type { Release } from '@/features/music';
@@ -16,11 +17,20 @@ vi.mock('next/image', () => ({
     createElement('img', { src: props.src, alt: props.alt ?? '' }),
 }));
 
-const onSelect = vi.fn();
+const onPlay = vi.fn();
 
 describe('ReleaseCard (compra)', () => {
+  it('los CTA «Escuchar» reproducen la pista asociada', async () => {
+    const user = userEvent.setup();
+    render(<ReleaseCard release={RELEASES[0]} onPlay={onPlay} />);
+
+    await user.click(screen.getByRole('link', { name: 'Escuchar' }));
+
+    expect(onPlay).toHaveBeenCalledWith(RELEASES[0].trackId);
+  });
+
   it('con purchaseStatus unavailable muestra «Compra próximamente» deshabilitado', () => {
-    render(<ReleaseCard release={RELEASES[0]} onSelect={onSelect} />);
+    render(<ReleaseCard release={RELEASES[0]} onPlay={onPlay} />);
 
     const boton = screen.getByRole('button', { name: 'Compra próximamente' });
     expect(boton).toBeDisabled();
@@ -34,7 +44,7 @@ describe('ReleaseCard (compra)', () => {
       purchaseStatus: 'available',
       purchaseUrl: 'https://ejemplo.test/compra/from-coffee-to-frequencies',
     };
-    render(<ReleaseCard release={release} onSelect={onSelect} />);
+    render(<ReleaseCard release={release} onPlay={onPlay} />);
 
     const link = screen.getByRole('link', { name: 'Comprar' });
     expect(link).toHaveAttribute('href', 'https://ejemplo.test/compra/from-coffee-to-frequencies');
@@ -44,7 +54,7 @@ describe('ReleaseCard (compra)', () => {
   });
 
   it('Spotify abre en pestaña nueva con rel=noreferrer cuando spotifyUrl existe', () => {
-    render(<ReleaseCard release={RELEASES[0]} onSelect={onSelect} />);
+    render(<ReleaseCard release={RELEASES[0]} onPlay={onPlay} />);
 
     const spotify = screen.getByRole('link', { name: /Escuchar en Spotify/ });
     expect(spotify).toHaveAttribute('target', '_blank');
@@ -52,7 +62,7 @@ describe('ReleaseCard (compra)', () => {
   });
 
   it('sin spotifyUrl no renderiza el enlace de Spotify', () => {
-    render(<ReleaseCard release={RELEASES[3]} onSelect={onSelect} />);
+    render(<ReleaseCard release={RELEASES[3]} onPlay={onPlay} />);
 
     expect(screen.queryByRole('link', { name: /Escuchar en Spotify/ })).not.toBeInTheDocument();
   });
@@ -61,7 +71,7 @@ describe('ReleaseCard (compra)', () => {
 describe('ReleaseCard (portadas)', () => {
   it('sin coverImage usa el fallback editorial SVG (sin imagen rota)', () => {
     const release: Release = { ...RELEASES[0], coverImage: '' };
-    const { container } = render(<ReleaseCard release={release} onSelect={onSelect} />);
+    const { container } = render(<ReleaseCard release={release} onPlay={onPlay} />);
 
     expect(container.querySelector('svg')).not.toBeNull();
     expect(container.querySelector('img')).toBeNull();
@@ -72,7 +82,7 @@ describe('ReleaseCard (portadas)', () => {
       ...RELEASES[0],
       coverImage: '/images/releases/from-coffee-to-frequencies-v1.webp',
     };
-    const { container } = render(<ReleaseCard release={release} onSelect={onSelect} />);
+    const { container } = render(<ReleaseCard release={release} onPlay={onPlay} />);
 
     const img = container.querySelector('img');
     expect(img).not.toBeNull();

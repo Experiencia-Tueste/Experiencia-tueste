@@ -36,7 +36,10 @@ export default function MercadoOrigen() {
     const result = await submitEngagement({
       type: 'market',
       reference: `availability:${item.marca.toLowerCase().replace(/\\s+/g, '-')}`,
-      details: `${item.marca} · ${item.tipo} · ${item.origen}`,
+      payload: {
+        intent: 'availability',
+        itemSlug: item.marca.toLowerCase().replace(/\\s+/g, '-'),
+      },
     });
     setPending(false);
     if (result.kind === 'login') {
@@ -51,13 +54,18 @@ export default function MercadoOrigen() {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const marca = String(fd.get('marca') ?? '').trim();
+    const responsable = String(fd.get('responsable') ?? '').trim();
     const tipo = String(fd.get('tipo') ?? '');
     const origen = String(fd.get('origen') ?? '').trim();
     const precio = parsearPrecio(String(fd.get('precio') ?? ''));
     const descripcion = String(fd.get('descripcion') ?? '').trim();
+    const telefono = String(fd.get('telefono') ?? '').trim();
+    const canales = String(fd.get('canales') ?? '').trim();
 
-    if (!marca || !esTipoValido(tipo) || !origen || precio === null) {
-      setAnuncio('Revisa los campos obligatorios: marca, tipo, origen y un precio válido.');
+    if (!marca || !responsable || !esTipoValido(tipo) || !origen || precio === null) {
+      setAnuncio(
+        'Revisa los campos obligatorios: marca, responsable, tipo, origen y un precio válido.',
+      );
       return;
     }
 
@@ -67,7 +75,18 @@ export default function MercadoOrigen() {
     const result = await submitEngagement({
       type: 'market',
       reference: 'seller-onboarding',
-      details: `${marca} · ${tipo} · ${origen} · ${formatoCOP(precio)}${descripcion ? ` · ${descripcion}` : ''}`,
+      payload: {
+        intent: 'seller_application',
+        brand: marca,
+        responsible: responsable,
+        region: origen,
+        category: tipo,
+        description: descripcion || undefined,
+        priceCop: precio,
+        phone: telefono || undefined,
+        salesChannels: canales || undefined,
+        consent: true,
+      },
     });
     setPending(false);
     if (result.kind === 'login') {
@@ -199,7 +218,7 @@ export default function MercadoOrigen() {
           </div>
           <p>
             Completa los datos y envía una solicitud. El equipo valida cada marca antes de crear una
-            publicación visible en el mercado.
+            publicación visible en el mercado; enviar la solicitud no genera ningún cobro.
           </p>
           <form className={styles.form} onSubmit={publicar}>
             <label className={styles.field}>
@@ -211,6 +230,10 @@ export default function MercadoOrigen() {
                 maxLength={40}
                 placeholder="Finca El Roble"
               />
+            </label>
+            <label className={styles.field}>
+              Responsable *
+              <input type="text" name="responsable" required maxLength={160} />
             </label>
             <label className={styles.field}>
               Tipo de producto *
@@ -243,6 +266,19 @@ export default function MercadoOrigen() {
                 maxLength={90}
                 placeholder="Variedad, proceso y notas — ej: Caturra honey · panela y frutos rojos"
               />
+            </label>
+            <label className={styles.field}>
+              Teléfono
+              <input type="tel" name="telefono" maxLength={40} />
+            </label>
+            <label className={styles.field}>
+              Canales actuales de venta
+              <input type="text" name="canales" maxLength={200} placeholder="Tienda, Instagram…" />
+            </label>
+            <label className={`${styles.consent} ${styles.wide}`}>
+              <input type="checkbox" name="consent" required />
+              Acepto los términos de revisión y entiendo que la solicitud no genera cobro ni
+              publicación automática.
             </label>
             <button type="submit" className={styles.pub}>
               {pending ? 'Enviando…' : 'Solicitar publicación'}

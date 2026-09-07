@@ -1,0 +1,1 @@
+ALTER TABLE "private"."engagement_requests" ADD COLUMN "payload" jsonb DEFAULT '{}'::jsonb NOT NULL;

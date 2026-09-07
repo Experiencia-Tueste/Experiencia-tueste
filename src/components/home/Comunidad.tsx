@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { COMUNIDAD_CTA } from '@/features/community';
+import { COMMUNITY_PREFERENCES, type CommunityPreference } from '@/features/engagements';
 import { loginPath, submitEngagement } from './engagement-client';
 import Reveal from './Reveal';
 import SectionGhost from './SectionGhost';
@@ -16,12 +17,18 @@ import styles from './Comunidad.module.css';
 export default function Comunidad() {
   const [anuncio, setAnuncio] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [preferences, setPreferences] = useState<CommunityPreference[]>(['general']);
+  const [consent, setConsent] = useState(false);
   const router = useRouter();
 
   const unirme = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setPending(true);
-    const result = await submitEngagement({ type: 'community', reference: 'membership' });
+    const result = await submitEngagement({
+      type: 'community',
+      reference: 'membership',
+      payload: { preferences, consent: true },
+    });
     setPending(false);
     if (result.kind === 'login') {
       setAnuncio('Inicia sesión con tu cuenta Tueste para unirte a la comunidad.');
@@ -53,7 +60,41 @@ export default function Comunidad() {
 
         <Reveal>
           <form className={styles.signup} onSubmit={unirme}>
-            <button type="submit" className={styles.btn} disabled={pending}>
+            <fieldset className={styles.preferences}>
+              <legend>Quiero recibir novedades sobre:</legend>
+              <div className={styles.preferenceGrid}>
+                {COMMUNITY_PREFERENCES.filter((preference) => preference !== 'general').map(
+                  (preference) => (
+                    <label key={preference}>
+                      <input
+                        type="checkbox"
+                        checked={preferences.includes(preference)}
+                        onChange={(event) =>
+                          setPreferences((current) => {
+                            if (event.target.checked) {
+                              return [...new Set([...current, preference])];
+                            }
+                            const next = current.filter((item) => item !== preference);
+                            return next.length ? next : ['general'];
+                          })
+                        }
+                      />
+                      {preference === 'tree' ? 'Tueste Tree' : preference}
+                    </label>
+                  ),
+                )}
+              </div>
+            </fieldset>
+            <label className={styles.consent}>
+              <input
+                type="checkbox"
+                checked={consent}
+                onChange={(event) => setConsent(event.target.checked)}
+                required
+              />
+              Acepto recibir comunicaciones según mis preferencias.
+            </label>
+            <button type="submit" className={styles.btn} disabled={pending || !consent}>
               {pending ? 'Enviando…' : 'Unirme con mi cuenta'}
             </button>
           </form>

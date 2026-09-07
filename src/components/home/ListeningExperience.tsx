@@ -1,6 +1,8 @@
 'use client';
 
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
+import { DEFAULT_CHECKOUT_CONFIG, type CheckoutConfig } from '@/features/commerce/checkout';
+import type { EventItem } from '@/features/events';
 import BaristaSonoro from './BaristaSonoro';
 import Comunidad from './Comunidad';
 import EditorialTicker from './EditorialTicker';
@@ -30,20 +32,26 @@ import Tienda from './Tienda';
  * radio encadenan piezas en continuo (ended → nextInQueue). El grafo de
  * audio se crea tras la primera interacción (autoplay policy).
  */
-export default function ListeningExperience() {
+export default function ListeningExperience({
+  checkoutConfig = DEFAULT_CHECKOUT_CONFIG,
+  events = [],
+}: {
+  checkoutConfig?: CheckoutConfig;
+  events?: readonly EventItem[];
+}) {
   const player = useAudioPlayer();
 
   return (
     <>
       <Frecuencias player={player} />
       <Origen player={player} />
-      <Lanzamientos onSelect={player.select} />
-      <BaristaSonoro onSelect={player.select} />
+      <Lanzamientos onPlay={player.play} />
+      <BaristaSonoro onPlay={player.play} onPlayQueue={player.playQueue} />
       <EditorialTicker variant="dim" reverse />
-      <Eventos />
-      <Tienda />
+      <Eventos events={events} />
+      <Tienda checkoutConfig={checkoutConfig} />
       <EditorialTicker variant="amber" reverse alt />
-      <NegociosRadio onSelect={player.select} />
+      <NegociosRadio onSelectChannel={player.selectChannel} />
       <MercadoOrigen />
       <Comunidad />
     </>

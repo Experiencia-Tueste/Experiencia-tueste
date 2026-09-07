@@ -1,5 +1,5 @@
 import { engagementMessage } from '@/features/engagements';
-import { createEngagementRequest } from '@/features/engagements/service';
+import { createEngagementRequest, EngagementDomainError } from '@/features/engagements/service';
 import { createServerSupabase } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
@@ -26,6 +26,9 @@ export async function POST(request: Request) {
       created: result.created,
     });
   } catch (error) {
+    if (error instanceof EngagementDomainError) {
+      return Response.json({ message: error.message }, { status: error.status });
+    }
     if (error instanceof Error && error.name === 'ZodError') {
       return Response.json({ message: 'Revisa la información de la solicitud.' }, { status: 400 });
     }

@@ -61,7 +61,37 @@ export interface Recommendation {
   method: BrewMethod;
   score: number;
   alternative: BrewMethod | null;
+  playlist: TrackId[];
+  explanation: {
+    method: string;
+    frequency: string;
+    playlist: string;
+  };
 }
+
+export interface BaristaInterpretation {
+  answers: BaristaAnswers;
+  summary: string;
+  matched: string[];
+}
+
+export type RecipeAdjustmentId = 'dulce' | 'fuerte' | 'menos-acido' | 'suave' | 'rapido';
+
+export interface RecipeAdjustmentResult {
+  method: BrewMethod;
+  changes: string[];
+}
+
+export const RECIPE_ADJUSTMENTS: ReadonlyArray<{
+  id: RecipeAdjustmentId;
+  label: string;
+}> = [
+  { id: 'dulce', label: 'Más dulce' },
+  { id: 'fuerte', label: 'Más fuerte' },
+  { id: 'menos-acido', label: 'Menos ácido' },
+  { id: 'suave', label: 'Más suave' },
+  { id: 'rapido', label: 'Más rápido' },
+];
 
 /** Paso del flujo de consulta del chat: pregunta + opciones tipadas. */
 export interface ChatStep<K extends keyof BaristaAnswers = keyof BaristaAnswers> {
@@ -445,6 +475,112 @@ export const EQUIPO: Record<Equipo, string[] | null> = {
   todos: null,
 };
 
+const INTENCION_HZ: Record<Intencion, number> = {
+  arraigo: 64,
+  calma: 96,
+  enfoque: 128,
+  energia: 256,
+  creatividad: 320,
+  introspeccion: 432,
+};
+
+const INTENCION_LABEL: Record<Intencion, string> = {
+  arraigo: 'arraigo',
+  calma: 'calma',
+  enfoque: 'enfoque',
+  energia: 'energía',
+  creatividad: 'creatividad',
+  introspeccion: 'introspección',
+};
+
+const SENSORIAL_LABEL: Record<Sensorial, string> = {
+  dulzor: 'dulzor y suavidad',
+  cuerpo: 'cuerpo e intensidad',
+  aroma: 'aroma y brillo',
+  equilibrio: 'equilibrio',
+};
+
+const TIEMPO_LABEL: Record<Tiempo, string> = {
+  rapido: 'poco tiempo',
+  medio: 'un tiempo medio',
+  ritual: 'tiempo sin prisa',
+};
+
+const EQUIPO_LABEL: Record<Equipo, string> = {
+  filtro: 'filtro / V60',
+  aeropress: 'AeroPress',
+  prensa: 'prensa francesa',
+  espresso: 'espresso',
+  ritual: 'un método ritual',
+  todos: 'cualquier equipo',
+};
+
+function includesAny(text: string, terms: readonly string[]) {
+  return terms.some((term) => text.includes(term));
+}
+
+function normalizeText(text: string) {
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+/** Interpreta una frase libre con reglas deterministas y explicables. */
+export function interpretFreeText(text: string): BaristaInterpretation {
+  const normalized = normalizeText(text);
+  const answers: BaristaAnswers = {
+    intencion: includesAny(normalized, ['raiz', 'tierra', 'hogar', 'aterr'])
+      ? 'arraigo'
+      : includesAny(normalized, ['calma', 'tranquil', 'pausa', 'relaj'])
+        ? 'calma'
+        : includesAny(normalized, ['energia', 'despiert', 'activo', 'fuerte'])
+          ? 'energia'
+          : includesAny(normalized, ['creativ', 'crear', 'ideas'])
+            ? 'creatividad'
+            : includesAny(normalized, ['introspec', 'interior', 'medit'])
+              ? 'introspeccion'
+              : 'enfoque',
+    sensorial: includesAny(normalized, ['dulce', 'dulzor', 'suave'])
+      ? 'dulzor'
+      : includesAny(normalized, ['cuerpo', 'intenso', 'fuerte', 'potente'])
+        ? 'cuerpo'
+        : includesAny(normalized, ['aroma', 'floral', 'brillo', 'fragante'])
+          ? 'aroma'
+          : 'equilibrio',
+    tiempo: includesAny(normalized, ['rapido', 'pronto', 'corto', 'apuro', 'minuto'])
+      ? 'rapido'
+      : includesAny(normalized, ['ritual', 'lento', 'sin prisa', 'tiempo'])
+        ? 'ritual'
+        : 'medio',
+    equipo: includesAny(normalized, ['aeropress', 'aero press'])
+      ? 'aeropress'
+      : includesAny(normalized, ['prensa'])
+        ? 'prensa'
+        : includesAny(normalized, ['espresso'])
+          ? 'espresso'
+          : includesAny(normalized, ['v60', 'filtro', 'filtrado'])
+            ? 'filtro'
+            : includesAny(normalized, ['chemex', 'sifon'])
+              ? 'ritual'
+              : 'todos',
+  };
+
+  const matched = [
+    `intención: ${INTENCION_LABEL[answers.intencion]}`,
+    `taza: ${SENSORIAL_LABEL[answers.sensorial]}`,
+    `tiempo: ${TIEMPO_LABEL[answers.tiempo]}`,
+    `equipo: ${EQUIPO_LABEL[answers.equipo]}`,
+  ];
+
+  return {
+    answers,
+    matched,
+    summary: `Entendí ${matched.join(' · ')}.`,
+  };
+}
+
 /** Similitud sensorial: 1 = perfil idéntico al objetivo. */
 export function scoreSensorial(target: PerfilSensorial, perfil: PerfilSensorial): number {
   let diff = 0;
@@ -452,6 +588,71 @@ export function scoreSensorial(target: PerfilSensorial, perfil: PerfilSensorial)
     diff += Math.abs(target[key] - perfil[key]);
   }
   return 1 - diff / 25;
+}
+
+/** Compatibilidad de la frecuencia con la intención declarada. */
+export function scoreFrequency(intencion: Intencion, freq: number): number {
+  const target = INTENCION_HZ[intencion];
+  return Math.max(0, 1 - Math.abs(target - freq) / 432);
+}
+
+function adjustFirstNumber(value: string, delta: number) {
+  return value.replace(/\d+/, (raw) => String(Math.max(1, Number(raw) + delta)));
+}
+
+function scaledSteps(method: BrewMethod, factor: number): BrewStep[] {
+  return method.steps.map((step) => ({
+    ...step,
+    seconds: step.seconds === null ? null : Math.max(1, Math.round(step.seconds * factor)),
+  }));
+}
+
+function totalTimeLabel(seconds: number) {
+  const minutes = Math.floor(seconds / 60);
+  const rest = seconds % 60;
+  return minutes > 0 ? `≈ ${minutes}:${String(rest).padStart(2, '0')}` : `≈ ${seconds} s`;
+}
+
+/** Devuelve una variante de receta sin mutar el método original. */
+export function adjustRecipe(
+  method: BrewMethod,
+  adjustment: RecipeAdjustmentId,
+): RecipeAdjustmentResult {
+  let next: BrewMethod = {
+    ...method,
+    perfil: { ...method.perfil },
+    steps: method.steps.map((step) => ({ ...step })),
+  };
+  const changes: string[] = [];
+
+  if (adjustment === 'dulce') {
+    next = {
+      ...next,
+      temp: adjustFirstNumber(next.temp, -2),
+      water: adjustFirstNumber(next.water, 20),
+    };
+    changes.push('temperatura −2 °C', 'agua +20 ml');
+  } else if (adjustment === 'fuerte') {
+    next = { ...next, coffee: adjustFirstNumber(next.coffee, 2) };
+    changes.push('dosis +2 g', 'agua sin cambios');
+  } else if (adjustment === 'menos-acido') {
+    next = { ...next, temp: adjustFirstNumber(next.temp, -2), grind: 'un punto más gruesa' };
+    changes.push('temperatura −2 °C', 'molienda más gruesa');
+  } else if (adjustment === 'suave') {
+    next = {
+      ...next,
+      coffee: adjustFirstNumber(next.coffee, -2),
+      water: adjustFirstNumber(next.water, 30),
+    };
+    changes.push('dosis −2 g', 'agua +30 ml');
+  } else {
+    const steps = scaledSteps(next, 0.8);
+    const total = brewTotalSeconds({ ...next, steps });
+    next = { ...next, steps, time: totalTimeLabel(total) };
+    changes.push(`tiempo total ${totalTimeLabel(total)}`, 'vertidos más cortos');
+  }
+
+  return { method: next, changes };
 }
 
 /**
@@ -469,7 +670,7 @@ export function recommend(answers: BaristaAnswers): Recommendation {
   const ranked = candidates
     .map((method) => {
       const sSens = scoreSensorial(target, method.perfil);
-      const sFreq = 0.7;
+      const sFreq = scoreFrequency(answers.intencion, method.freq);
       const sEst = method.estado === estadoObj ? 1 : 0.6;
       const sTime = TIEMPO_FIT[answers.tiempo][method.name] ?? 0.6;
       const score = 0.45 * sSens + 0.25 * sFreq + 0.2 * sEst + 0.1 * sTime;
@@ -477,10 +678,20 @@ export function recommend(answers: BaristaAnswers): Recommendation {
     })
     .sort((a, b) => b.score - a.score);
 
+  const method = ranked[0].method;
+  const playlist = [
+    ...new Set([method.trackId, ...ranked.map(({ method: item }) => item.trackId)]),
+  ];
   return {
-    method: ranked[0].method,
+    method,
     score: ranked[0].score,
     alternative: ranked[1]?.method ?? null,
+    playlist,
+    explanation: {
+      method: `${method.name} encaja con ${EQUIPO_LABEL[answers.equipo]} y ${TIEMPO_LABEL[answers.tiempo]}.`,
+      frequency: `${method.freq} Hz acompaña una intención de ${INTENCION_LABEL[answers.intencion]}.`,
+      playlist: `La cola reúne ${playlist.length} piezas y empieza con «${method.trackId}».`,
+    },
   };
 }
 

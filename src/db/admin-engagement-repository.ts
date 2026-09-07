@@ -5,7 +5,12 @@ import { and, desc, eq } from 'drizzle-orm';
 import { getDb } from './client';
 import type { DbClient } from './db-types';
 import { engagementRequests } from './schema/admin-engagement';
-import type { EngagementRequest, EngagementType } from '@/features/engagements';
+import type {
+  EngagementRequest,
+  EngagementType,
+  MarketApplicationStage,
+  RadioOpportunityStage,
+} from '@/features/engagements';
 
 function serialize(row: typeof engagementRequests.$inferSelect): EngagementRequest {
   return {
@@ -16,7 +21,10 @@ function serialize(row: typeof engagementRequests.$inferSelect): EngagementReque
     requesterName: row.requesterName,
     reference: row.reference,
     details: row.details,
+    payload: (row.payload ?? {}) as EngagementRequest['payload'],
     status: row.status as EngagementRequest['status'],
+    radioStage: (row.radioStage as RadioOpportunityStage | null) ?? null,
+    marketStage: (row.marketStage as MarketApplicationStage | null) ?? null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -39,6 +47,9 @@ export class DrizzleEngagementRepository {
       requesterName: string;
       reference: string;
       details?: string;
+      payload: EngagementRequest['payload'];
+      radioStage?: RadioOpportunityStage | null;
+      marketStage?: MarketApplicationStage | null;
     },
     tx: DbClient,
   ): Promise<{ request: EngagementRequest; created: boolean }> {
@@ -80,6 +91,46 @@ export class DrizzleEngagementRepository {
       .update(engagementRequests)
       .set({ status: to, updatedAt: new Date() })
       .where(and(eq(engagementRequests.id, id), eq(engagementRequests.status, from)))
+      .returning();
+    return row ? serialize(row) : null;
+  }
+
+  async setRadioStage(
+    id: string,
+    from: RadioOpportunityStage,
+    to: RadioOpportunityStage,
+    tx: DbClient,
+  ): Promise<EngagementRequest | null> {
+    const [row] = await tx
+      .update(engagementRequests)
+      .set({ radioStage: to, updatedAt: new Date() })
+      .where(
+        and(
+          eq(engagementRequests.id, id),
+          eq(engagementRequests.type, 'radio'),
+          eq(engagementRequests.radioStage, from),
+        ),
+      )
+      .returning();
+    return row ? serialize(row) : null;
+  }
+
+  async setMarketStage(
+    id: string,
+    from: MarketApplicationStage,
+    to: MarketApplicationStage,
+    tx: DbClient,
+  ): Promise<EngagementRequest | null> {
+    const [row] = await tx
+      .update(engagementRequests)
+      .set({ marketStage: to, updatedAt: new Date() })
+      .where(
+        and(
+          eq(engagementRequests.id, id),
+          eq(engagementRequests.type, 'market'),
+          eq(engagementRequests.marketStage, from),
+        ),
+      )
       .returning();
     return row ? serialize(row) : null;
   }

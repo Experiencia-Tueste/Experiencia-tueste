@@ -9,18 +9,18 @@ import SectionGhost from './SectionGhost';
 import styles from './Lanzamientos.module.css';
 
 export interface LanzamientosProps {
-  /** Selecciona la pista de un lanzamiento en el reproductor. */
-  onSelect: (id: TrackId) => void;
+  /** Reproduce la pista de un lanzamiento en el reproductor global. */
+  onPlay: (id: TrackId) => void;
 }
 
 /**
  * Sección «03 / MÚSICA» · la discografía del origen.
  * Grid de cuatro lanzamientos. «Escuchar» y el play de cada tarjeta
- * seleccionan la pista asociada y navegan a #frecuencias. La compra se
+ * reproducen la pista asociada y navegan a #frecuencias. La compra se
  * muestra como «Compra próximamente» (deshabilitada) mientras no exista
  * un canal de pago autorizado: sin carrito, checkout ni Mercado Pago.
  */
-export default function Lanzamientos({ onSelect }: LanzamientosProps) {
+export default function Lanzamientos({ onPlay }: LanzamientosProps) {
   return (
     <section id="lanzamientos" className={styles.section} aria-labelledby="lanz-titulo">
       <SectionGhost number="03" />
@@ -47,7 +47,7 @@ export default function Lanzamientos({ onSelect }: LanzamientosProps) {
       <Reveal>
         <div className={styles.grid}>
           {RELEASES.map((release) => (
-            <ReleaseCard key={release.id} release={release} onSelect={onSelect} />
+            <ReleaseCard key={release.id} release={release} onPlay={onPlay} />
           ))}
         </div>
       </Reveal>

@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { cartTotal, formatoCOP, getProduct } from '@/features/commerce';
+import { cartTotal, formatoCOP, getProduct, MAX_CART_QTY } from '@/features/commerce';
+import { createCheckoutGateway, type CheckoutGateway } from '@/features/commerce/checkout';
 import type { CartItem } from '@/features/commerce';
 import styles from './CartDrawer.module.css';
 
@@ -10,30 +11,46 @@ export interface CartDrawerProps {
   items: CartItem[];
   onClose: () => void;
   onQty: (productId: string, delta: number) => void;
+  gateway?: CheckoutGateway;
+  maxQty?: number;
 }
 
 /**
  * Drawer de la selección (carrito en memoria del cliente). Dialog modal
  * con cierre por botón, Escape y clic en el overlay; focus trap simple y
- * devolución de foco al botón que lo abrió (lo gestiona Tienda). El
- * cierre de compra solo anuncia que el canal operativo aún no está
- * habilitado: sin pedidos, comprobantes ni códigos.
+ * devolución de foco al botón que lo abrió (lo gestiona Tienda). El canal
+ * de checkout llega como gateway explícito: puede estar desactivado,
+ * redirigir a Shopify o usar el BFF legado autenticado. No se inventan
+ * pedidos, comprobantes ni códigos en los canales aún no habilitados.
  */
-export default function CartDrawer({ open, items, onClose, onQty }: CartDrawerProps) {
+export default function CartDrawer({
+  open,
+  items,
+  onClose,
+  onQty,
+  gateway = createCheckoutGateway({ mode: 'disabled', externalShopifyUrl: null }),
+  maxQty = MAX_CART_QTY,
+}: CartDrawerProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const [mensaje, setMensaje] = useState<string | null>(null);
   const [procesando, setProcesando] = useState(false);
-  const checkoutRequestRef = useRef<{ fingerprint: string; id: string } | null>(null);
   const total = cartTotal(items);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   // Foco inicial, Escape y focus trap mientras está abierto.
   useEffect(() => {
     if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
     closeRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (e.key !== 'Tab' || !drawerRef.current) return;
@@ -54,8 +71,11 @@ export default function CartDrawer({ open, items, onClose, onQty }: CartDrawerPr
       }
     };
     document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [open, onClose]);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open]);
 
   const manejarQty = (productId: string, delta: number) => {
     onQty(productId, delta);
@@ -72,45 +92,25 @@ export default function CartDrawer({ open, items, onClose, onQty }: CartDrawerPr
   const iniciarPago = async () => {
     if (procesando || items.length === 0) return;
     setProcesando(true);
-    setMensaje('Preparando tu pago seguro…');
-
-    const fingerprint = JSON.stringify(items);
-    if (checkoutRequestRef.current?.fingerprint !== fingerprint) {
-      checkoutRequestRef.current = { fingerprint, id: crypto.randomUUID() };
-    }
+    setMensaje('Preparando tu checkout…');
 
     try {
-      const response = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          clientRequestId: checkoutRequestRef.current.id,
-          items,
-        }),
-      });
-      const body = (await response.json().catch(() => null)) as {
-        checkoutUrl?: unknown;
-        message?: unknown;
-      } | null;
-
-      if (response.status === 401) {
-        setMensaje('Inicia sesión con tu cuenta Tueste para continuar con el pago.');
+      const result = await gateway.start(items);
+      if (result.kind === 'login') {
+        setMensaje(result.message);
         window.location.replace('/cuenta/iniciar-sesion?next=/experiencia%23merch');
         return;
       }
-      if (!response.ok || typeof body?.checkoutUrl !== 'string') {
-        setMensaje(
-          typeof body?.message === 'string'
-            ? body.message
-            : 'No fue posible iniciar el pago. Inténtalo de nuevo.',
-        );
+      if (result.kind === 'disabled' || result.kind === 'error') {
+        setMensaje(result.message);
         return;
       }
-
-      setMensaje('Listo. Te llevamos a Mercado Pago…');
-      window.location.assign(body.checkoutUrl);
+      setMensaje(
+        `Listo. Te llevamos a ${result.provider === 'mercadopago_legacy' ? 'Mercado Pago' : 'Shopify'}…`,
+      );
+      window.location.assign(result.url);
     } catch {
-      setMensaje('No pudimos conectar con el servicio de pagos. Inténtalo de nuevo.');
+      setMensaje('No pudimos iniciar el checkout. Inténtalo de nuevo.');
     } finally {
       setProcesando(false);
     }
@@ -174,6 +174,8 @@ export default function CartDrawer({ open, items, onClose, onQty }: CartDrawerPr
                       type="button"
                       aria-label={`Agregar uno de ${p.name}`}
                       onClick={() => manejarQty(p.id, 1)}
+                      disabled={i.qty >= maxQty}
+                      aria-disabled={i.qty >= maxQty}
                     >
                       +
                     </button>
@@ -200,19 +202,36 @@ export default function CartDrawer({ open, items, onClose, onQty }: CartDrawerPr
                 <span>Total</span>
                 <b>{formatoCOP(total)}</b>
               </div>
-              <button
-                type="button"
-                className={styles.checkout}
-                onClick={iniciarPago}
-                disabled={procesando}
-              >
-                {procesando ? 'Preparando pago…' : 'Pagar con Mercado Pago'}
-              </button>
+              {gateway.mode === 'disabled' || gateway.mode === 'shopify' ? (
+                <button type="button" className={styles.checkout} disabled>
+                  {gateway.mode === 'shopify' ? 'Shopify próximamente' : 'Compra próximamente'}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className={styles.checkout}
+                  onClick={iniciarPago}
+                  disabled={procesando}
+                >
+                  {procesando
+                    ? 'Preparando checkout…'
+                    : gateway.mode === 'external_shopify'
+                      ? 'Continuar en Shopify'
+                      : 'Pagar con Mercado Pago'}
+                </button>
+              )}
               <p className={styles.note}>
-                Pago seguro en Mercado Pago. Tueste no recibe datos de tarjeta.
+                {gateway.mode === 'mercadopago_legacy'
+                  ? 'Pago seguro en Mercado Pago. Tueste no recibe datos de tarjeta.'
+                  : gateway.mode === 'external_shopify'
+                    ? 'El pago y los datos de tarjeta se gestionan en Shopify.'
+                    : 'Tu selección no genera ningún cobro.'}
               </p>
             </>
           ) : null}
+          <button type="button" className={styles.continue} onClick={onClose}>
+            Continuar comprando
+          </button>
           <p className={styles.live} role="status" aria-live="polite">
             {mensaje ?? '\u00A0'}
           </p>

@@ -1,13 +1,9 @@
-import type { EngagementType } from '@/features/engagements';
+import type { EngagementInput } from '@/features/engagements';
 
 export type EngagementResult =
   { kind: 'ok'; message: string } | { kind: 'login' } | { kind: 'error'; message: string };
 
-export async function submitEngagement(input: {
-  type: EngagementType;
-  reference: string;
-  details?: string;
-}): Promise<EngagementResult> {
+export async function submitEngagement(input: EngagementInput): Promise<EngagementResult> {
   try {
     const response = await fetch('/api/engagements', {
       method: 'POST',

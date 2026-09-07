@@ -15,3 +15,8 @@ export function loadDatabaseUrl(env: NodeJS.ProcessEnv = process.env): string {
   }
   return url;
 }
+
+/** Indica si la experiencia puede intentar leer eventos persistidos. */
+export function isDatabaseConfigured(env: NodeJS.ProcessEnv = process.env): boolean {
+  return typeof env.DATABASE_URL === 'string' && env.DATABASE_URL.trim() !== '';
+}

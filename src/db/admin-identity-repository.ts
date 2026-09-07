@@ -1,6 +1,7 @@
 import 'server-only';
 
-import { and, desc, eq, gte, ilike, inArray, lte } from 'drizzle-orm';
+import { randomUUID } from 'node:crypto';
+import { and, desc, eq, gte, ilike, inArray, lte, sql } from 'drizzle-orm';
 
 import { getDb } from './client';
 import type { DbClient } from './db-types';
@@ -39,6 +40,20 @@ function mapStatus(status: string): AdminUser['status'] {
 }
 
 export class DrizzleAdminIdentityRepository implements AdminIdentityRepository {
+  private mapVendor(row: typeof vendors.$inferSelect, userIds: string[] = []): Vendor {
+    return {
+      id: row.id,
+      name: row.name,
+      email: row.email ?? undefined,
+      phone: row.phone ?? undefined,
+      status: row.status === 'active' ? 'active' : 'suspended',
+      commissionBps: row.commissionBps,
+      createdAt: row.createdAt.toISOString(),
+      updatedAt: row.updatedAt.toISOString(),
+      userIds,
+    };
+  }
+
   private mapCapabilities(rows: { roleId: string; capability: string }[]) {
     const known = new Set<string>(ALL_CAPABILITIES);
     const byRole = new Map<string, PersistedAdminRole['capabilities']>();
@@ -201,17 +216,12 @@ export class DrizzleAdminIdentityRepository implements AdminIdentityRepository {
       db.select().from(vendors).orderBy(vendors.name),
       db.select().from(vendorMemberships),
     ]);
-    return rows.map((row) => ({
-      id: row.id,
-      name: row.name,
-      email: row.email ?? undefined,
-      phone: row.phone ?? undefined,
-      status: row.status === 'active' ? 'active' : 'suspended',
-      commissionBps: row.commissionBps,
-      createdAt: row.createdAt.toISOString(),
-      updatedAt: row.updatedAt.toISOString(),
-      userIds: memberships.filter((item) => item.vendorId === row.id).map((item) => item.userId),
-    }));
+    return rows.map((row) =>
+      this.mapVendor(
+        row,
+        memberships.filter((item) => item.vendorId === row.id).map((item) => item.userId),
+      ),
+    );
   }
 
   async findVendorByUserId(userId: string): Promise<Vendor | null> {
@@ -223,16 +233,114 @@ export class DrizzleAdminIdentityRepository implements AdminIdentityRepository {
       .where(eq(vendorMemberships.userId, userId))
       .limit(1);
     if (!row) return null;
+    return this.mapVendor(row.vendor, [userId]);
+  }
+
+  async findVendorByUserIdInTransaction(userId: string, tx: DbClient) {
+    const [row] = await tx
+      .select({ vendor: vendors })
+      .from(vendorMemberships)
+      .innerJoin(vendors, eq(vendorMemberships.vendorId, vendors.id))
+      .where(eq(vendorMemberships.userId, userId))
+      .limit(1);
+    return row ? this.mapVendor(row.vendor, [userId]) : null;
+  }
+
+  async createOrGetVendorMembership(
+    input: {
+      userId: string;
+      name: string;
+      email: string;
+      phone?: string;
+      actorId: string;
+    },
+    tx: DbClient,
+  ) {
+    const normalizedName = input.name.trim().toLocaleLowerCase('es');
+    const normalizedEmail = input.email.trim().toLowerCase();
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${normalizedName}))`);
+
+    // Las solicitudes públicas traen el UUID de `auth.users`, mientras que
+    // `vendor_memberships.user_id` representa la identidad administrativa
+    // persistida. Se resuelve por el correo verificado para conservar ese
+    // contrato y permitir que el vendedor entre al panel por su cuenta.
+    const [existingAdminUser] = await tx
+      .select()
+      .from(adminUsers)
+      .where(eq(adminUsers.email, normalizedEmail))
+      .limit(1);
+    const adminUser =
+      existingAdminUser ??
+      (
+        await tx
+          .insert(adminUsers)
+          .values({
+            id: randomUUID(),
+            email: normalizedEmail,
+            displayName: input.name.trim(),
+            status: 'active',
+          })
+          .returning()
+      )[0];
+    if (!adminUser)
+      throw new Error('No fue posible crear la identidad administrativa del vendedor.');
+    if (adminUser.status !== 'active') {
+      throw new Error('409: la identidad del vendedor no está activa.');
+    }
+
+    const existingMembership = await this.findVendorByUserIdInTransaction(adminUser.id, tx);
+    if (existingMembership) {
+      return { vendor: existingMembership, createdVendor: false, createdMembership: false };
+    }
+
+    const [existingVendor] = await tx
+      .select()
+      .from(vendors)
+      .where(sql`lower(${vendors.name}) = ${normalizedName}`)
+      .limit(1);
+    const vendorRow =
+      existingVendor ??
+      (
+        await tx
+          .insert(vendors)
+          .values({
+            name: input.name.trim(),
+            email: input.email.trim().toLowerCase() || null,
+            phone: input.phone?.trim() || null,
+            status: 'active',
+            commissionBps: 0,
+            createdBy: input.actorId,
+          })
+          .returning()
+      )[0];
+    if (!vendorRow) throw new Error('No fue posible crear el vendedor.');
+
+    const membership = await tx
+      .insert(vendorMemberships)
+      .values({ vendorId: vendorRow.id, userId: adminUser.id, createdBy: input.actorId })
+      .onConflictDoNothing()
+      .returning();
+    if (membership.length === 0) {
+      const linked = await this.findVendorByUserIdInTransaction(adminUser.id, tx);
+      if (!linked) throw new Error('No fue posible vincular el vendedor al usuario.');
+      return { vendor: linked, createdVendor: false, createdMembership: false };
+    }
+
+    const [sellerRole] = await tx
+      .select({ id: adminRoles.id })
+      .from(adminRoles)
+      .where(eq(adminRoles.key, 'vendedor'))
+      .limit(1);
+    if (!sellerRole) throw new Error('No existe el rol vendedor en la base de datos.');
+    await tx
+      .insert(adminUserRoles)
+      .values({ userId: adminUser.id, roleId: sellerRole.id })
+      .onConflictDoNothing();
+
     return {
-      id: row.vendor.id,
-      name: row.vendor.name,
-      email: row.vendor.email ?? undefined,
-      phone: row.vendor.phone ?? undefined,
-      status: row.vendor.status === 'active' ? 'active' : 'suspended',
-      commissionBps: row.vendor.commissionBps,
-      createdAt: row.vendor.createdAt.toISOString(),
-      updatedAt: row.vendor.updatedAt.toISOString(),
-      userIds: [userId],
+      vendor: this.mapVendor(vendorRow, [adminUser.id]),
+      createdVendor: !existingVendor,
+      createdMembership: true,
     };
   }
 

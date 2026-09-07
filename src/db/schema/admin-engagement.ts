@@ -10,7 +10,7 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 
-import { privateSchema } from './admin-identity';
+import { privateSchema, vendors } from './admin-identity';
 import { radioChannels, radioCompanies } from './admin-radio';
 
 /** Solicitudes autenticadas iniciadas en la experiencia pública. */
@@ -34,6 +34,9 @@ export const engagementRequests = privateSchema.table(
       onDelete: 'set null',
     }),
     marketStage: text('market_stage'),
+    marketVendorId: uuid('market_vendor_id').references(() => vendors.id, {
+      onDelete: 'set null',
+    }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -47,6 +50,7 @@ export const engagementRequests = privateSchema.table(
     index('engagement_requests_type_reference_idx').on(table.type, table.reference),
     index('engagement_requests_radio_company_idx').on(table.radioCompanyId),
     index('engagement_requests_radio_channel_idx').on(table.radioChannelId),
+    index('engagement_requests_market_vendor_idx').on(table.marketVendorId),
     check(
       'engagement_requests_type_check',
       sql`${table.type} IN ('community', 'event', 'radio', 'market')`,

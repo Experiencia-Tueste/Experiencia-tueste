@@ -31,6 +31,7 @@ function serialize(row: typeof engagementRequests.$inferSelect): EngagementReque
     radioCompanyId: row.radioCompanyId ?? null,
     radioChannelId: row.radioChannelId ?? null,
     marketStage: (row.marketStage as MarketApplicationStage | null) ?? null,
+    marketVendorId: row.marketVendorId ?? null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -244,6 +245,21 @@ export class DrizzleEngagementRepository {
           eq(engagementRequests.id, id),
           eq(engagementRequests.type, 'market'),
           eq(engagementRequests.marketStage, from),
+        ),
+      )
+      .returning();
+    return row ? serialize(row) : null;
+  }
+
+  async linkMarketVendor(id: string, vendorId: string, tx: DbClient) {
+    const [row] = await tx
+      .update(engagementRequests)
+      .set({ marketVendorId: vendorId, updatedAt: new Date() })
+      .where(
+        and(
+          eq(engagementRequests.id, id),
+          eq(engagementRequests.type, 'market'),
+          eq(engagementRequests.marketStage, 'approved'),
         ),
       )
       .returning();

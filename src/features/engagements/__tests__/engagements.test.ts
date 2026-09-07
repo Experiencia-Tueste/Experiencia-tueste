@@ -3,7 +3,9 @@ import {
   engagementInputSchema,
   engagementMessage,
   engagementStatusSchema,
+  isMarketApplicationTransitionAllowed,
   isRadioOpportunityTransitionAllowed,
+  marketApplicationStageSchema,
   radioOpportunityStageSchema,
 } from '../index';
 
@@ -155,5 +157,22 @@ describe('feature engagements', () => {
     expect(isRadioOpportunityTransitionAllowed('new', 'won')).toBe(false);
     expect(isRadioOpportunityTransitionAllowed('won', 'qualified')).toBe(false);
     expect(isRadioOpportunityTransitionAllowed('lost', 'won')).toBe(false);
+  });
+
+  it('mantiene el flujo de vendedor secuencial y terminal', () => {
+    expect(isMarketApplicationTransitionAllowed('submitted', 'review')).toBe(true);
+    expect(isMarketApplicationTransitionAllowed('review', 'approved')).toBe(true);
+    expect(isMarketApplicationTransitionAllowed('review', 'rejected')).toBe(true);
+    expect(isMarketApplicationTransitionAllowed('submitted', 'approved')).toBe(false);
+    expect(isMarketApplicationTransitionAllowed('approved', 'review')).toBe(false);
+    expect(isMarketApplicationTransitionAllowed('rejected', 'approved')).toBe(false);
+    expect(() =>
+      marketApplicationStageSchema.parse({
+        id: 'a3f8b6c2-9d4e-4f1a-8b7c-2d5e6f7a8b9c',
+        from: 'review',
+        to: 'approved',
+        reason: 'Datos comerciales verificados.',
+      }),
+    ).not.toThrow();
   });
 });

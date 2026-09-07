@@ -1,0 +1,3 @@
+ALTER TABLE "private"."engagement_requests" ADD COLUMN "market_vendor_id" uuid;--> statement-breakpoint
+ALTER TABLE "private"."engagement_requests" ADD CONSTRAINT "engagement_requests_market_vendor_id_vendors_id_fk" FOREIGN KEY ("market_vendor_id") REFERENCES "private"."vendors"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "engagement_requests_market_vendor_idx" ON "private"."engagement_requests" USING btree ("market_vendor_id");

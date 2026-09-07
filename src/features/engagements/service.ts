@@ -19,6 +19,7 @@ import {
   radioActivationSchema,
   radioOpportunityStageSchema,
   engagementStatusSchema,
+  isMarketApplicationTransitionAllowed,
   isRadioOpportunityTransitionAllowed,
   type EngagementInput,
   type EngagementPayload,
@@ -401,16 +402,84 @@ export async function changeMarketApplicationStage(input: unknown) {
   if (!admin.capabilities.includes('crm.manage')) throw new Error('403: se requiere crm.manage.');
 
   const parsed = marketApplicationStageSchema.parse(input);
-  if (parsed.from === parsed.to) throw new Error('400: etapa sin cambios.');
+  if (parsed.from === parsed.to) {
+    if (parsed.from !== 'approved') throw new Error('400: etapa sin cambios.');
+    return getDb().transaction(async (tx) => {
+      const request = await getEngagementRepository().findByIdForUpdate(parsed.id, tx);
+      if (!request || request.type !== 'market' || request.marketStage !== 'approved') {
+        throw new Error('409: la solicitud de vendedor cambió de etapa o no existe.');
+      }
+      if (!request.marketVendorId)
+        throw new Error('409: la aprobación no tiene vendedor vinculado.');
+      return request;
+    });
+  }
+  if (!isMarketApplicationTransitionAllowed(parsed.from, parsed.to)) {
+    throw new Error(`400: transición de vendedor no permitida (${parsed.from} → ${parsed.to}).`);
+  }
+  if (parsed.to === 'approved' && !admin.capabilities.includes('market.manage')) {
+    throw new Error('403: se requiere market.manage para aprobar vendedores.');
+  }
 
   return getDb().transaction(async (tx) => {
-    const request = await getEngagementRepository().setMarketStage(
+    const engagementRepository = getEngagementRepository();
+    const request = await engagementRepository.findByIdForUpdate(parsed.id, tx);
+    if (!request || request.type !== 'market') {
+      throw new Error('409: la solicitud de vendedor cambió de etapa o no existe.');
+    }
+    if (request.marketStage === 'approved' && request.marketVendorId && parsed.to === 'approved') {
+      return request;
+    }
+    if (request.marketStage !== parsed.from) {
+      throw new Error('409: la solicitud de vendedor cambió de etapa o no existe.');
+    }
+
+    let vendorId: string | null = null;
+    let vendorCreated = false;
+    if (parsed.to === 'approved') {
+      const payload = request.payload;
+      const vendor = await getAdminRepository().createOrGetVendorMembership(
+        {
+          userId: request.requesterUserId,
+          name: payloadString(payload, 'brand'),
+          email: request.requesterEmail,
+          phone: typeof payload.phone === 'string' ? payload.phone : undefined,
+          actorId: admin.id,
+        },
+        tx,
+      );
+      vendorId = vendor.vendor.id;
+      vendorCreated = vendor.createdVendor;
+    }
+
+    const updated = await engagementRepository.setMarketStage(
       parsed.id,
       parsed.from,
       parsed.to,
       tx,
     );
-    if (!request) throw new Error('409: la solicitud de vendedor cambió de etapa o no existe.');
+    if (!updated) throw new Error('409: la solicitud de vendedor cambió de etapa o no existe.');
+    const linked = vendorId
+      ? await engagementRepository.linkMarketVendor(updated.id, vendorId, tx)
+      : updated;
+    if (!linked) throw new Error('409: no fue posible vincular el vendedor a la solicitud.');
+
+    if (vendorCreated) {
+      await getAdminRepository().appendAudit(
+        parseAuditEntry({
+          id: randomUUID(),
+          actorUserId: admin.id,
+          actorEmail: admin.email,
+          action: 'vendor.created',
+          targetType: 'vendor',
+          targetId: vendorId!,
+          occurredAt: new Date().toISOString(),
+          reason: parsed.reason,
+          metadata: { sourceRequestId: linked.id, userId: linked.requesterUserId },
+        }),
+        tx,
+      );
+    }
     await getAdminRepository().appendAudit(
       parseAuditEntry({
         id: randomUUID(),
@@ -421,11 +490,16 @@ export async function changeMarketApplicationStage(input: unknown) {
         targetId: request.id,
         occurredAt: new Date().toISOString(),
         reason: parsed.reason,
-        metadata: { from: parsed.from, to: parsed.to, type: request.type },
+        metadata: {
+          from: parsed.from,
+          to: parsed.to,
+          type: request.type,
+          ...(vendorId ? { vendorId } : {}),
+        },
       }),
       tx,
     );
-    return request;
+    return linked;
   });
 }
 

@@ -75,6 +75,13 @@ export default async function ContactosPage() {
                       Revisión de vendedor: <strong>{marketStageLabel(request.marketStage)}</strong>
                     </p>
                   ) : null}
+                  {request.type === 'market' &&
+                  request.marketStage === 'approved' &&
+                  request.marketVendorId ? (
+                    <p className={styles.pipeline}>
+                      Vendedor vinculado. La membresía quedó creada sin activar cobro.
+                    </p>
+                  ) : null}
                   {canManage ? (
                     <>
                       <form action={changeEngagementStatusAction} className={styles.form}>

@@ -33,6 +33,7 @@ export interface EngagementRequest {
   radioCompanyId: string | null;
   radioChannelId: string | null;
   marketStage: MarketApplicationStage | null;
+  marketVendorId: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -152,6 +153,23 @@ export const marketApplicationStageSchema = z.object({
   to: z.enum(MARKET_APPLICATION_STAGES),
   reason: z.string().trim().min(3).max(300),
 });
+
+const MARKET_APPLICATION_TRANSITIONS: Record<
+  MarketApplicationStage,
+  readonly MarketApplicationStage[]
+> = {
+  submitted: ['review', 'rejected'],
+  review: ['approved', 'rejected'],
+  approved: [],
+  rejected: [],
+};
+
+export function isMarketApplicationTransitionAllowed(
+  from: MarketApplicationStage,
+  to: MarketApplicationStage,
+) {
+  return MARKET_APPLICATION_TRANSITIONS[from].includes(to);
+}
 
 export function engagementMessage(type: EngagementType, created: boolean): string {
   const prefix = created ? 'Recibimos tu solicitud.' : 'Ya teníamos registrada tu solicitud.';

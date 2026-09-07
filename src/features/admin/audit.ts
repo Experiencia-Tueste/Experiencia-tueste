@@ -58,6 +58,7 @@ export const AUDIT_ACTIONS = [
   'tree.adoption_created',
   'tree.adoption_status_changed',
   'market.listing_created',
+  'market.listing_updated',
   'market.listing_status_changed',
   'unity.opportunity_created',
   'unity.opportunity_stage_changed',

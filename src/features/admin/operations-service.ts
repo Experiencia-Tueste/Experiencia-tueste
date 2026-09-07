@@ -15,12 +15,16 @@ import {
   BACKSTAGE_PASS_CREATE_SCHEMA,
   BACKSTAGE_STATUS_SCHEMA,
   MARKET_LISTING_CREATE_SCHEMA,
+  MARKET_LISTING_REVIEW_SCHEMA,
+  MARKET_LISTING_SELF_CREATE_SCHEMA,
+  MARKET_LISTING_UPDATE_SCHEMA,
   MARKET_STATUS_SCHEMA,
   TREE_ADOPTION_CREATE_SCHEMA,
   TREE_STATUS_SCHEMA,
   UNITY_OPPORTUNITY_CREATE_SCHEMA,
   UNITY_STAGE_SCHEMA,
   assertChanged,
+  assertMarketListingComplete,
   canTransitionAuction,
   canTransitionBackstage,
   canTransitionMarket,
@@ -31,7 +35,12 @@ import type { DbClient } from '@/db/db-types';
 import type { AdminCapability } from './permissions';
 
 type ManageCapability =
-  'tree.update' | 'market.manage' | 'unity.manage' | 'auctions.manage' | 'backstage.manage';
+  | 'tree.update'
+  | 'market.manage'
+  | 'market.self'
+  | 'unity.manage'
+  | 'auctions.manage'
+  | 'backstage.manage';
 
 function assertCapability(admin: CurrentAdmin, capability: AdminCapability) {
   if (!admin.capabilities.includes(capability)) throw new Error(`403: se requiere ${capability}.`);
@@ -132,7 +141,13 @@ export async function createMarketListing(input: unknown) {
   const { reason, ...record } = parsed;
   return getDb().transaction(async (tx) => {
     const row = await getAdminOperationsRepository().createListing(
-      { ...record, notes: record.notes || null, createdBy: admin.id, updatedBy: admin.id },
+      {
+        ...record,
+        notes: record.notes || null,
+        imagePath: record.imagePath || null,
+        createdBy: admin.id,
+        updatedBy: admin.id,
+      },
       tx,
     );
     await getAdminRepository().appendAudit(
@@ -147,13 +162,117 @@ export async function createMarketListing(input: unknown) {
 }
 
 export async function changeMarketListingStatus(input: unknown) {
+  const admin = await requireManage('market.manage');
   const parsed = MARKET_STATUS_SCHEMA.parse(input);
   if (!canTransitionMarket(parsed.from, parsed.to)) throw new Error('400: transición inválida.');
-  return changeStatus(parsed, 'market.manage', MARKET_STATUS_SCHEMA, {
-    action: 'market.listing_status_changed',
-    targetType: 'market_listing',
-    update: (id, from, to, actorId, tx) =>
-      getAdminOperationsRepository().setListingStatus(id, from, to, actorId, tx),
+  assertChanged(parsed.from, parsed.to);
+  return getDb().transaction(async (tx) => {
+    const repository = getAdminOperationsRepository();
+    const current = await repository.findListingByIdForUpdate(parsed.id, tx);
+    if (!current || current.status !== parsed.from) {
+      throw new Error('409: la publicación cambió de estado o ya no existe.');
+    }
+    if (parsed.to === 'published') assertMarketListingComplete(current);
+    const row = await repository.setListingStatus(parsed.id, parsed.from, parsed.to, admin.id, tx);
+    if (!row) throw new Error('409: la publicación cambió de estado o ya no existe.');
+    await getAdminRepository().appendAudit(
+      audit(admin, 'market.listing_status_changed', 'market_listing', row.id, parsed.reason, {
+        from: parsed.from,
+        to: parsed.to,
+        vendorId: current.vendorId,
+      }),
+      tx,
+    );
+    return row;
+  });
+}
+
+export async function createVendorListing(input: unknown) {
+  const admin = await requireManage('market.self');
+  if (!admin.vendorId) throw new Error('403: no hay un vendedor vinculado a esta cuenta.');
+  const parsed = MARKET_LISTING_SELF_CREATE_SCHEMA.parse(input);
+  const { reason, ...record } = parsed;
+  return getDb().transaction(async (tx) => {
+    const row = await getAdminOperationsRepository().createListing(
+      {
+        ...record,
+        vendorId: admin.vendorId!,
+        notes: record.notes || null,
+        imagePath: record.imagePath || null,
+        createdBy: admin.id,
+        updatedBy: admin.id,
+      },
+      tx,
+    );
+    await getAdminRepository().appendAudit(
+      audit(admin, 'market.listing_created', 'market_listing', row.id, reason, {
+        vendorId: row.vendorId,
+        priceCents: row.priceCents,
+        ownerScope: 'market.self',
+      }),
+      tx,
+    );
+    return row;
+  });
+}
+
+export async function updateVendorListing(input: unknown) {
+  const admin = await requireManage('market.self');
+  if (!admin.vendorId) throw new Error('403: no hay un vendedor vinculado a esta cuenta.');
+  const parsed = MARKET_LISTING_UPDATE_SCHEMA.parse(input);
+  const { id, reason, ...record } = parsed;
+  return getDb().transaction(async (tx) => {
+    const repository = getAdminOperationsRepository();
+    const current = await repository.findListingByIdForUpdate(id, tx);
+    if (!current || current.vendorId !== admin.vendorId) {
+      throw new Error('403: la publicación no pertenece a tu vendedor.');
+    }
+    if (current.status !== 'draft') {
+      throw new Error('409: solo puedes editar publicaciones en borrador.');
+    }
+    const row = await repository.updateListing(
+      id,
+      admin.vendorId!,
+      { ...record, notes: record.notes || null, imagePath: record.imagePath || null },
+      admin.id,
+      tx,
+    );
+    if (!row) throw new Error('409: la publicación cambió mientras se editaba.');
+    await getAdminRepository().appendAudit(
+      audit(admin, 'market.listing_updated', 'market_listing', row.id, reason, {
+        vendorId: row.vendorId,
+        ownerScope: 'market.self',
+      }),
+      tx,
+    );
+    return row;
+  });
+}
+
+export async function submitVendorListingForReview(input: unknown) {
+  const admin = await requireManage('market.self');
+  if (!admin.vendorId) throw new Error('403: no hay un vendedor vinculado a esta cuenta.');
+  const parsed = MARKET_LISTING_REVIEW_SCHEMA.parse(input);
+  return getDb().transaction(async (tx) => {
+    const repository = getAdminOperationsRepository();
+    const current = await repository.findListingByIdForUpdate(parsed.id, tx);
+    if (!current || current.vendorId !== admin.vendorId) {
+      throw new Error('403: la publicación no pertenece a tu vendedor.');
+    }
+    if (current.status !== 'draft') throw new Error('409: solo un borrador puede ir a revisión.');
+    assertMarketListingComplete(current);
+    const row = await repository.setListingStatus(current.id, 'draft', 'review', admin.id, tx);
+    if (!row) throw new Error('409: la publicación cambió mientras se enviaba a revisión.');
+    await getAdminRepository().appendAudit(
+      audit(admin, 'market.listing_status_changed', 'market_listing', row.id, parsed.reason, {
+        from: 'draft',
+        to: 'review',
+        vendorId: current.vendorId,
+        ownerScope: 'market.self',
+      }),
+      tx,
+    );
+    return row;
   });
 }
 

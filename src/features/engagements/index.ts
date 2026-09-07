@@ -30,6 +30,8 @@ export interface EngagementRequest {
   payload: EngagementPayload;
   status: 'pending' | 'contacted' | 'closed';
   radioStage: RadioOpportunityStage | null;
+  radioCompanyId: string | null;
+  radioChannelId: string | null;
   marketStage: MarketApplicationStage | null;
   createdAt: string;
   updatedAt: string;
@@ -120,6 +122,29 @@ export const radioOpportunityStageSchema = z.object({
   to: z.enum(RADIO_OPPORTUNITY_STAGES),
   reason: z.string().trim().min(3).max(300),
 });
+
+export const radioActivationSchema = z.object({
+  id: z.string().uuid(),
+  reason: z.string().trim().min(3).max(300),
+});
+
+const RADIO_OPPORTUNITY_TRANSITIONS: Record<
+  RadioOpportunityStage,
+  readonly RadioOpportunityStage[]
+> = {
+  new: ['qualified', 'lost'],
+  qualified: ['proposal', 'lost'],
+  proposal: ['won', 'lost'],
+  won: [],
+  lost: [],
+};
+
+export function isRadioOpportunityTransitionAllowed(
+  from: RadioOpportunityStage,
+  to: RadioOpportunityStage,
+) {
+  return RADIO_OPPORTUNITY_TRANSITIONS[from].includes(to);
+}
 
 export const marketApplicationStageSchema = z.object({
   id: z.string().uuid(),

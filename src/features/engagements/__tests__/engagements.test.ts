@@ -3,6 +3,7 @@ import {
   engagementInputSchema,
   engagementMessage,
   engagementStatusSchema,
+  isRadioOpportunityTransitionAllowed,
   radioOpportunityStageSchema,
 } from '../index';
 
@@ -144,5 +145,15 @@ describe('feature engagements', () => {
         reason: 'ok',
       }),
     ).toThrow();
+  });
+
+  it('mantiene el pipeline Radio lineal y bloquea estados terminales', () => {
+    expect(isRadioOpportunityTransitionAllowed('new', 'qualified')).toBe(true);
+    expect(isRadioOpportunityTransitionAllowed('qualified', 'proposal')).toBe(true);
+    expect(isRadioOpportunityTransitionAllowed('proposal', 'won')).toBe(true);
+    expect(isRadioOpportunityTransitionAllowed('proposal', 'lost')).toBe(true);
+    expect(isRadioOpportunityTransitionAllowed('new', 'won')).toBe(false);
+    expect(isRadioOpportunityTransitionAllowed('won', 'qualified')).toBe(false);
+    expect(isRadioOpportunityTransitionAllowed('lost', 'won')).toBe(false);
   });
 });

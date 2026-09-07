@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import {
+  activateRadioOpportunity,
   changeEngagementStatus,
   changeMarketApplicationStage,
   changeRadioOpportunityStage,
@@ -16,6 +17,13 @@ export async function changeEngagementStatusAction(data: FormData) {
 export async function changeRadioOpportunityStageAction(data: FormData) {
   await changeRadioOpportunityStage(Object.fromEntries(data));
   revalidatePath('/admin/contactos');
+  revalidatePath('/admin');
+}
+
+export async function activateRadioOpportunityAction(data: FormData) {
+  await activateRadioOpportunity(Object.fromEntries(data));
+  revalidatePath('/admin/contactos');
+  revalidatePath('/admin/radio');
   revalidatePath('/admin');
 }
 

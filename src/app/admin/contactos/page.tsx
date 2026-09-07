@@ -3,6 +3,7 @@ import type { EngagementPayload } from '@/features/engagements';
 import { requireCapability } from '@/lib/auth/authorization';
 import { AdminShell } from '../AdminShell';
 import {
+  activateRadioOpportunityAction,
   changeEngagementStatusAction,
   changeMarketApplicationStageAction,
   changeRadioOpportunityStageAction,
@@ -113,6 +114,23 @@ export default async function ContactosPage() {
                           </label>
                           <button type="submit">Actualizar pipeline</button>
                         </form>
+                      ) : null}
+                      {request.type === 'radio' && request.radioStage === 'won' ? (
+                        request.radioCompanyId && request.radioChannelId ? (
+                          <p className={styles.pipeline}>
+                            Activación operativa vinculada. El canal queda pendiente de
+                            confirmación, sin cobro automático.
+                          </p>
+                        ) : (
+                          <form action={activateRadioOpportunityAction} className={styles.form}>
+                            <input type="hidden" name="id" value={request.id} />
+                            <label>
+                              Razón de activación
+                              <input name="reason" required minLength={3} maxLength={300} />
+                            </label>
+                            <button type="submit">Crear canal operativo</button>
+                          </form>
+                        )
                       ) : null}
                       {request.type === 'market' && request.marketStage ? (
                         <form action={changeMarketApplicationStageAction} className={styles.form}>

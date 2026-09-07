@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { getAdminEventRepository } from '@/db/admin-event-repository';
 import { getEngagementRepository } from '@/db/admin-engagement-repository';
 import { getAdminRepository } from '@/db/admin-identity-repository';
+import { getAdminRadioRepository } from '@/db/admin-radio-repository';
 import { getDb } from '@/db/client';
 import type { DbClient } from '@/db/db-types';
 import { getCurrentAdmin } from '@/lib/auth/authorization';
@@ -15,8 +16,10 @@ import { saveCommunityConsentInTransaction } from '@/features/community/consent-
 import {
   engagementInputSchema,
   marketApplicationStageSchema,
+  radioActivationSchema,
   radioOpportunityStageSchema,
   engagementStatusSchema,
+  isRadioOpportunityTransitionAllowed,
   type EngagementInput,
   type EngagementPayload,
 } from './index';
@@ -222,6 +225,9 @@ export async function changeRadioOpportunityStage(input: unknown) {
 
   const parsed = radioOpportunityStageSchema.parse(input);
   if (parsed.from === parsed.to) throw new Error('400: etapa sin cambios.');
+  if (!isRadioOpportunityTransitionAllowed(parsed.from, parsed.to)) {
+    throw new Error(`400: transición de Radio no permitida (${parsed.from} → ${parsed.to}).`);
+  }
 
   return getDb().transaction(async (tx) => {
     const request = await getEngagementRepository().setRadioStage(
@@ -246,6 +252,146 @@ export async function changeRadioOpportunityStage(input: unknown) {
       tx,
     );
     return request;
+  });
+}
+
+function payloadString(payload: EngagementPayload, key: string) {
+  const value = payload[key];
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    throw new EngagementDomainError(`La solicitud de Radio no tiene ${key}.`, 409);
+  }
+  return value.trim();
+}
+
+export async function activateRadioOpportunity(input: unknown) {
+  const admin = await getCurrentAdmin();
+  if (!admin) throw new Error('401: sesión administrativa requerida.');
+  if (!admin.capabilities.includes('crm.manage')) {
+    throw new Error('403: se requiere crm.manage.');
+  }
+  if (!admin.capabilities.includes('radio.manage')) {
+    throw new Error('403: se requiere radio.manage.');
+  }
+
+  const parsed = radioActivationSchema.parse(input);
+  return getDb().transaction(async (tx) => {
+    const engagementRepository = getEngagementRepository();
+    const request = await engagementRepository.findByIdForUpdate(parsed.id, tx);
+    if (!request || request.type !== 'radio') {
+      throw new EngagementDomainError('La oportunidad de Radio no existe.', 404);
+    }
+    if (request.radioStage !== 'won') {
+      throw new EngagementDomainError(
+        'Solo una oportunidad ganada puede crear un canal de Radio Origen.',
+        409,
+      );
+    }
+
+    const radioRepository = getAdminRadioRepository();
+    if (request.radioCompanyId && request.radioChannelId) {
+      const [company, channel] = await Promise.all([
+        radioRepository.findCompanyById(request.radioCompanyId, tx),
+        radioRepository.findChannelById(request.radioChannelId, tx),
+      ]);
+      if (!company || !channel) {
+        throw new EngagementDomainError('La activación vinculada ya no existe completa.', 409);
+      }
+      return { request, company, channel };
+    }
+    const companyPayload = {
+      name: payloadString(request.payload, 'company'),
+      contactName: payloadString(request.payload, 'responsible'),
+      contactEmail: request.requesterEmail.trim().toLowerCase(),
+      city: payloadString(request.payload, 'city'),
+      actorId: admin.id,
+    };
+    const company = request.radioCompanyId
+      ? await radioRepository.findCompanyById(request.radioCompanyId, tx).then((row) => {
+          if (!row) throw new EngagementDomainError('La empresa vinculada ya no existe.', 409);
+          return { row, created: false };
+        })
+      : await radioRepository.createOrGetCompany(companyPayload, tx);
+
+    const plan = RADIO_PLANS.find((candidate) => candidate.id === request.reference);
+    if (!plan) throw new EngagementDomainError('El plan de Radio no existe.', 409);
+    const channel = request.radioChannelId
+      ? await radioRepository.findChannelById(request.radioChannelId, tx).then((row) => {
+          if (!row) throw new EngagementDomainError('El canal vinculado ya no existe.', 409);
+          return { row, created: false };
+        })
+      : await radioRepository.createOrGetChannel(
+          {
+            companyId: company.row.id,
+            name: `Radio Origen · ${plan.nombre}`,
+            planId: plan.id,
+            notes: `Solicitud ${request.id}. Servicio pendiente de confirmación operativa; sin cobro automático.`,
+            actorId: admin.id,
+          },
+          tx,
+        );
+
+    const linked = await engagementRepository.linkRadioActivation(
+      request.id,
+      company.row.id,
+      channel.row.id,
+      tx,
+    );
+    if (!linked) throw new Error('409: la oportunidad cambió mientras se activaba.');
+
+    const adminRepository = getAdminRepository();
+    if (company.created) {
+      await adminRepository.appendAudit(
+        parseAuditEntry({
+          id: randomUUID(),
+          actorUserId: admin.id,
+          actorEmail: admin.email,
+          action: 'radio.company_created',
+          targetType: 'radio_company',
+          targetId: company.row.id,
+          occurredAt: new Date().toISOString(),
+          reason: parsed.reason,
+          metadata: { sourceRequestId: request.id, city: company.row.city },
+        }),
+        tx,
+      );
+    }
+    if (channel.created) {
+      await adminRepository.appendAudit(
+        parseAuditEntry({
+          id: randomUUID(),
+          actorUserId: admin.id,
+          actorEmail: admin.email,
+          action: 'radio.channel_created',
+          targetType: 'radio_channel',
+          targetId: channel.row.id,
+          occurredAt: new Date().toISOString(),
+          reason: parsed.reason,
+          metadata: { sourceRequestId: request.id, companyId: company.row.id, planId: plan.id },
+        }),
+        tx,
+      );
+    }
+    await adminRepository.appendAudit(
+      parseAuditEntry({
+        id: randomUUID(),
+        actorUserId: admin.id,
+        actorEmail: admin.email,
+        action: 'engagement.radio_activated',
+        targetType: 'engagement_request',
+        targetId: request.id,
+        occurredAt: new Date().toISOString(),
+        reason: parsed.reason,
+        metadata: {
+          radioCompanyId: company.row.id,
+          radioChannelId: channel.row.id,
+          planId: plan.id,
+          subscriptionStatus: channel.row.subscriptionStatus,
+        },
+      }),
+      tx,
+    );
+
+    return { request: linked, company: company.row, channel: channel.row };
   });
 }
 

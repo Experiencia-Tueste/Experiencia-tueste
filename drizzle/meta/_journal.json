@@ -134,6 +134,13 @@
       "when": 1788759903345,
       "tag": "0018_community_consent",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1788763919779,
+      "tag": "0019_spicy_veda",
+      "breakpoints": true
     }
   ]
 }

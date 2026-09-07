@@ -28,6 +28,8 @@ function serialize(row: typeof engagementRequests.$inferSelect): EngagementReque
     payload: (row.payload ?? {}) as EngagementRequest['payload'],
     status: row.status as EngagementRequest['status'],
     radioStage: (row.radioStage as RadioOpportunityStage | null) ?? null,
+    radioCompanyId: row.radioCompanyId ?? null,
+    radioChannelId: row.radioChannelId ?? null,
     marketStage: (row.marketStage as MarketApplicationStage | null) ?? null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
@@ -202,6 +204,26 @@ export class DrizzleEngagementRepository {
           eq(engagementRequests.id, id),
           eq(engagementRequests.type, 'radio'),
           eq(engagementRequests.radioStage, from),
+        ),
+      )
+      .returning();
+    return row ? serialize(row) : null;
+  }
+
+  async linkRadioActivation(
+    id: string,
+    radioCompanyId: string,
+    radioChannelId: string,
+    tx: DbClient,
+  ): Promise<EngagementRequest | null> {
+    const [row] = await tx
+      .update(engagementRequests)
+      .set({ radioCompanyId, radioChannelId, updatedAt: new Date() })
+      .where(
+        and(
+          eq(engagementRequests.id, id),
+          eq(engagementRequests.type, 'radio'),
+          eq(engagementRequests.radioStage, 'won'),
         ),
       )
       .returning();

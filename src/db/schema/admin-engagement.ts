@@ -11,6 +11,7 @@ import {
 } from 'drizzle-orm/pg-core';
 
 import { privateSchema } from './admin-identity';
+import { radioChannels, radioCompanies } from './admin-radio';
 
 /** Solicitudes autenticadas iniciadas en la experiencia pública. */
 export const engagementRequests = privateSchema.table(
@@ -26,6 +27,12 @@ export const engagementRequests = privateSchema.table(
     payload: jsonb('payload').notNull().default({}),
     status: text('status').notNull().default('pending'),
     radioStage: text('radio_stage'),
+    radioCompanyId: uuid('radio_company_id').references(() => radioCompanies.id, {
+      onDelete: 'set null',
+    }),
+    radioChannelId: uuid('radio_channel_id').references(() => radioChannels.id, {
+      onDelete: 'set null',
+    }),
     marketStage: text('market_stage'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -38,6 +45,8 @@ export const engagementRequests = privateSchema.table(
     ),
     index('engagement_requests_status_created_idx').on(table.status, table.createdAt),
     index('engagement_requests_type_reference_idx').on(table.type, table.reference),
+    index('engagement_requests_radio_company_idx').on(table.radioCompanyId),
+    index('engagement_requests_radio_channel_idx').on(table.radioChannelId),
     check(
       'engagement_requests_type_check',
       sql`${table.type} IN ('community', 'event', 'radio', 'market')`,

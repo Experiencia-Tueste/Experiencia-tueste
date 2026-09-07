@@ -80,6 +80,7 @@ describe('admin · auditoría (reason obligatoria)', () => {
       'backstage.pass_status_changed',
       'engagement.status_changed',
       'engagement.radio_stage_changed',
+      'engagement.radio_activated',
       'engagement.market_stage_changed',
     ]);
   });

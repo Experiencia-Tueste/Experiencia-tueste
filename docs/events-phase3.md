@@ -1,13 +1,14 @@
 # Fase 3 — Eventos de extremo a extremo
 
-Estado: **EN CURSO**  
-Inicio: 7 de septiembre de 2026  
-Rama: `feat/experiencia-functional-hardening`  
+Estado: **CERRADA — G3 APROBADO**
+Inicio: 7 de septiembre de 2026
+Rama: `feat/experiencia-functional-hardening`
 Checkpoint anterior: `1b0dd61`
 
-La fase se abrió después de aprobar G2. La Fase 4 y las posteriores siguen
-cerradas; no se autoriza iniciar otra fase hasta cerrar G3 con la evidencia
-definida en el plan archivado.
+La fase se abrió después de aprobar G2 y se cerró después de completar la
+prueba concurrente y el E2E controlado definidos en la puerta G3. La Fase 4
+queda ahora abierta como única fase activa; las fases posteriores siguen
+cerradas.
 
 ## Trabajo iniciado
 
@@ -23,19 +24,32 @@ definida en el plan archivado.
 - La exportación CSV exige `events.export`, es privada y protege valores que
   podrían interpretarse como fórmulas.
 
-## Estado de checkpoints
+## Estado final de checkpoints
 
-| Checkpoint                                   | Estado      | Evidencia pendiente                             |
-| -------------------------------------------- | ----------- | ----------------------------------------------- |
-| C3.1 Visibilidad de eventos operables        | EN PROGRESO | Prueba E2E con estados y fechas reales          |
-| C3.2 Capacidad bajo concurrencia             | EN PROGRESO | Prueba concurrente contra base controlada       |
-| C3.3 Lista de espera                         | EN PROGRESO | Recorrido último cupo → espera → comunicación   |
-| C3.4 Confirmación y trazabilidad             | EN PROGRESO | E2E solicitud → asistente → auditoría           |
-| C3.5 Ticket y check-in                       | EN PROGRESO | E2E de ticket inválido, cancelado y reutilizado |
-| C3.6 Panel, filtros, historial y exportación | EN PROGRESO | Verificación de permisos y descarga             |
+| Checkpoint                                   | Estado   | Evidencia pendiente                                             |
+| -------------------------------------------- | -------- | --------------------------------------------------------------- |
+| C3.1 Visibilidad de eventos operables        | APROBADO | Futuros `open`/`waitlist`; pasados y no operables excluidos     |
+| C3.2 Capacidad bajo concurrencia             | APROBADO | Dos sesiones reales, resultado `reserved` + `waitlisted`        |
+| C3.3 Lista de espera                         | APROBADO | Capacidad 1 agotada, estado `waitlisted` y mensaje de solicitud |
+| C3.4 Confirmación y trazabilidad             | APROBADO | Una solicitud → un asistente, cierre y dos auditorías           |
+| C3.5 Ticket y check-in                       | APROBADO | Check-in único; reuso, cancelado e inválido rechazados          |
+| C3.6 Panel, filtros, historial y exportación | APROBADO | Tests de permisos/CSV y smoke del panel protegido               |
 
-La implementación local tiene pruebas unitarias de contratos, disponibilidad,
-confirmación idempotente y exportación. Esto no equivale todavía a G3: falta
-el recorrido E2E completo y la prueba de concurrencia. El `fetch origin` de la
+## Evidencia de salida G3 — 7 de septiembre de 2026
+
+- En Supabase `eekhplpnrskiipdmbnbq`, dos transacciones simultáneas bloquearon
+  el mismo evento de capacidad 1. El primer intento obtuvo `reserved`; el
+  segundo esperó el commit y obtuvo `waitlisted`, sin sobrecupo.
+- El E2E transaccional controlado recorrió solicitud `pending`, confirmación,
+  cierre, creación idempotente de un asistente, auditorías y check-in. El
+  segundo check-in, un ticket cancelado y uno inexistente afectaron cero filas.
+- La comprobación posterior dejó cero eventos, asistentes, solicitudes o
+  auditorías sintéticas.
+- Verificación local: 102 archivos de prueba, 592 pruebas, lint, formato,
+  TypeScript y build exitosos.
+- Smoke de aplicación: `/experiencia` respondió 200; `/admin/eventos` exigió
+  autenticación y redirigió a `/cuenta/iniciar-sesion`.
+
+Con esta evidencia se aprueba formalmente `G3`. El `fetch origin` de la
 apertura no pudo resolver GitHub en el entorno actual; no se cambió de rama ni
 se hizo push.

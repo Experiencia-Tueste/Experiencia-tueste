@@ -5,9 +5,12 @@ import { loadPublicConfig } from '../env-public';
 import {
   loadAdminStorageConfig,
   loadCheckoutConfig,
+  loadDeploymentEnvironment,
   loadShopifyStoreUrl,
   loadSiteUrl,
 } from '../env-server';
+
+const TEST_PRIVATE_KEY = '-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----';
 
 /**
  * Pruebas del contrato de configuración. Nunca dependen del entorno
@@ -78,6 +81,31 @@ describe('loadSiteUrl (URL canónica del sitio)', () => {
   it('falla con error claro si SITE_URL no es una URL absoluta válida', () => {
     expect(() => loadSiteUrl({ SITE_URL: 'no-es-una-url' })).toThrow(/SITE_URL/);
   });
+
+  it('exige una URL pública HTTPS fuera del entorno local', () => {
+    expect(() => loadSiteUrl({ TUESTE_ENV: 'preview' })).toThrow(/SITE_URL/);
+    expect(() =>
+      loadSiteUrl({ TUESTE_ENV: 'preview', SITE_URL: 'http://preview.tueste.co' }),
+    ).toThrow(/HTTPS/);
+    expect(() =>
+      loadSiteUrl({ TUESTE_ENV: 'production', SITE_URL: 'https://localhost:3000' }),
+    ).toThrow(/localhost/);
+    expect(loadSiteUrl({ TUESTE_ENV: 'preview', SITE_URL: 'https://preview.tueste.co/' })).toBe(
+      'https://preview.tueste.co',
+    );
+  });
+});
+
+describe('loadDeploymentEnvironment (perfil de despliegue)', () => {
+  it('usa local por defecto y acepta los tres perfiles explícitos', () => {
+    expect(loadDeploymentEnvironment({})).toBe('local');
+    expect(loadDeploymentEnvironment({ TUESTE_ENV: 'preview' })).toBe('preview');
+    expect(loadDeploymentEnvironment({ TUESTE_ENV: 'production' })).toBe('production');
+  });
+
+  it('rechaza perfiles desconocidos', () => {
+    expect(() => loadDeploymentEnvironment({ TUESTE_ENV: 'staging' })).toThrow(/TUESTE_ENV/);
+  });
 });
 
 describe('loadShopifyStoreUrl (URL pública de la tienda)', () => {
@@ -121,6 +149,29 @@ describe('loadCheckoutConfig (canal comercial explícito)', () => {
       mode: 'external_shopify',
       externalShopifyUrl: 'https://tueste.myshopify.com',
     });
+  });
+
+  it('activa el BFF legado solo con su configuración privada completa', () => {
+    expect(
+      loadCheckoutConfig({
+        CHECKOUT_MODE: 'mercadopago_legacy',
+        PAYMENTS_SERVICE_URL: 'http://localhost:8080',
+        PAYMENTS_JWT_PRIVATE_KEY: TEST_PRIVATE_KEY,
+      }),
+    ).toEqual({
+      mode: 'mercadopago_legacy',
+      externalShopifyUrl: null,
+    });
+    expect(() =>
+      loadCheckoutConfig({
+        CHECKOUT_MODE: 'mercadopago_legacy',
+        PAYMENTS_SERVICE_URL: 'http://localhost:8080',
+      }),
+    ).toThrow(/PAYMENTS_JWT_PRIVATE_KEY/);
+  });
+
+  it('mantiene Shopify nativo cerrado hasta que exista su contrato completo', () => {
+    expect(() => loadCheckoutConfig({ CHECKOUT_MODE: 'shopify' })).toThrow(/reservado/);
   });
 
   it('rechaza modo desconocido o externo sin tienda', () => {

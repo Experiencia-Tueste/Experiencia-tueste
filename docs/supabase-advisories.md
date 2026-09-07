@@ -31,6 +31,20 @@ hay dos opciones: actualizar el proyecto al plan Pro+ y activar la protección,
 o aceptar formalmente el riesgo residual sin promover a producción mientras
 permanezca desactivada.
 
+> **Pendiente para plan Pro+:** al actualizar el proyecto, activar
+> `Authentication → Attack Protection → Prevent use of leaked passwords`,
+> guardar el cambio y volver a ejecutar el advisor de seguridad. No eliminar
+> esta tarea ni considerar cerrado el advisory mientras el advisor siga
+> reportando `auth_leaked_password_protection`.
+
+## Aprobación de G1
+
+El responsable del proyecto aprobó en este hilo el checkpoint de Fase 1 el 7
+de septiembre de 2026 y autorizó continuar con la Fase 2. La aprobación no
+autoriza promover a producción: esa promoción continúa condicionada a activar
+la protección de contraseñas filtradas en un plan Pro+ o a una aceptación de
+riesgo separada y explícita.
+
 Para los avisos de rendimiento se conservan las referencias oficiales del
 linter: [claves foráneas sin índice](https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys)
 y [índices sin uso](https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index).

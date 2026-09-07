@@ -17,6 +17,20 @@ El aviso de seguridad se corrige desde la configuración de Auth, no con una
 migración SQL. Referencia oficial:
 [protección contra contraseñas filtradas en Supabase Auth](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).
 
+## Intento de corrección — 7 de septiembre de 2026
+
+Se abrió `Authentication → Attack Protection → Email` y se confirmó que
+`Prevent use of leaked passwords` aparece desactivado. El panel informa que la
+función solo está disponible en el plan Pro o superior; el proyecto
+`eekhplpnrskiipdmbnbq` aparece actualmente en el plan Free. El toggle no se
+puede guardar y el advisor de seguridad continúa reportando
+`auth_leaked_password_protection` como `WARN`.
+
+**Estado:** bloqueante externo, no corregible desde el código. Para cerrarlo
+hay dos opciones: actualizar el proyecto al plan Pro+ y activar la protección,
+o aceptar formalmente el riesgo residual sin promover a producción mientras
+permanezca desactivada.
+
 Para los avisos de rendimiento se conservan las referencias oficiales del
 linter: [claves foráneas sin índice](https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys)
 y [índices sin uso](https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index).

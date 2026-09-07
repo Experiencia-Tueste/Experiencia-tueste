@@ -4,12 +4,16 @@ const mocks = vi.hoisted(() => ({
   transaction: vi.fn(),
   getCurrentAdmin: vi.fn(),
   engagementRepository: {
+    createOrGet: vi.fn(),
     findByIdForUpdate: vi.fn(),
     setMarketStage: vi.fn(),
     linkMarketVendor: vi.fn(),
   },
   createOrGetVendorMembership: vi.fn(),
   appendAudit: vi.fn(),
+  publicMarketRepository: {
+    findPublishedById: vi.fn(),
+  },
 }));
 
 vi.mock('@/db/client', () => ({
@@ -33,8 +37,11 @@ vi.mock('@/db/admin-event-repository', () => ({
 vi.mock('@/db/admin-radio-repository', () => ({
   getAdminRadioRepository: vi.fn(),
 }));
+vi.mock('@/db/public-market-repository', () => ({
+  getPublicMarketRepository: () => mocks.publicMarketRepository,
+}));
 
-import { changeMarketApplicationStage } from '../service';
+import { changeMarketApplicationStage, createEngagementRequest } from '../service';
 
 const ADMIN = {
   id: '22222222-2222-4222-8222-222222222222',
@@ -70,12 +77,25 @@ const REQUEST = {
   updatedAt: '2026-09-07T12:00:00.000Z',
 };
 
+const LISTING = {
+  id: '44444444-4444-4444-8444-444444444444',
+  title: 'Café Roble',
+  brand: 'Marca Roble',
+  category: 'Café tostado',
+  origin: 'Quindío',
+};
+
 describe('aprobación operativa de vendedores', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getCurrentAdmin.mockResolvedValue(ADMIN);
     mocks.transaction.mockImplementation((callback: (tx: object) => unknown) => callback({}));
     mocks.engagementRepository.findByIdForUpdate.mockResolvedValue(REQUEST);
+    mocks.engagementRepository.createOrGet.mockResolvedValue({
+      created: true,
+      request: { id: 'request-id' },
+    });
+    mocks.publicMarketRepository.findPublishedById.mockResolvedValue(LISTING);
     mocks.createOrGetVendorMembership.mockResolvedValue({
       createdVendor: true,
       createdMembership: true,
@@ -102,6 +122,60 @@ describe('aprobación operativa de vendedores', () => {
       }),
     ).rejects.toThrow('transición de vendedor no permitida');
     expect(mocks.transaction).not.toHaveBeenCalled();
+  });
+
+  it('canoniza la disponibilidad desde una publicación publicada', async () => {
+    await createEngagementRequest(
+      { id: '55555555-5555-4555-8555-555555555555', email: 'cliente@example.com' },
+      {
+        type: 'market',
+        reference: LISTING.id,
+        payload: { intent: 'availability', itemSlug: 'valor-manipulado' },
+      },
+    );
+
+    expect(mocks.engagementRepository.createOrGet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        reference: `availability:${LISTING.id}`,
+        details: 'Marca Roble · Café tostado · Quindío',
+        payload: expect.objectContaining({
+          listingId: LISTING.id,
+          itemSlug: 'cafe-roble-44444444',
+        }),
+      }),
+      expect.anything(),
+    );
+  });
+
+  it('rechaza una referencia manipulada o pausada antes de crear la solicitud', async () => {
+    mocks.publicMarketRepository.findPublishedById.mockResolvedValue(null);
+
+    await expect(
+      createEngagementRequest(
+        { id: '55555555-5555-4555-8555-555555555555', email: 'cliente@example.com' },
+        {
+          type: 'market',
+          reference: '66666666-6666-4666-8666-666666666666',
+          payload: { intent: 'availability', itemSlug: 'cafe-roble-44444444' },
+        },
+      ),
+    ).rejects.toThrow('producto no existe');
+    expect(mocks.engagementRepository.createOrGet).not.toHaveBeenCalled();
+  });
+
+  it('rechaza una referencia que ni siquiera tiene formato de listing', async () => {
+    await expect(
+      createEngagementRequest(
+        { id: '55555555-5555-4555-8555-555555555555', email: 'cliente@example.com' },
+        {
+          type: 'market',
+          reference: 'valor-manipulado',
+          payload: { intent: 'availability', itemSlug: 'cafe-roble-44444444' },
+        },
+      ),
+    ).rejects.toThrow('producto no existe');
+    expect(mocks.publicMarketRepository.findPublishedById).not.toHaveBeenCalled();
+    expect(mocks.engagementRepository.createOrGet).not.toHaveBeenCalled();
   });
 
   it('aprueba en una transacción y crea vendedor, membresía y rol', async () => {

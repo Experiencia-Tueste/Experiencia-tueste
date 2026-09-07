@@ -1,6 +1,6 @@
 # Fase 7 — Mercado: producto y moderación
 
-Estado: **LISTA PARA APROBACIÓN — G7**
+Estado: **CERRADA — G7 APROBADO**
 Fecha de evidencia: 7 de septiembre de 2026
 Rama: `feat/experiencia-functional-hardening`
 Checkpoint anterior: `fe9c6ca`
@@ -22,14 +22,14 @@ Checkpoint anterior: `fe9c6ca`
 
 ## Checkpoints
 
-| Checkpoint | Estado | Evidencia |
-| --- | --- | --- |
+| Checkpoint                            | Estado                | Evidencia                                                                                                       |
+| ------------------------------------- | --------------------- | --------------------------------------------------------------------------------------------------------------- |
 | C7.1 Migración, constraints e índices | APROBADO TÉCNICAMENTE | Migración aplicada en Supabase; columnas y checks verificados por SQL; índice vendor/estado existente revisado. |
-| C7.2 Aislamiento entre vendedores | APROBADO TÉCNICAMENTE | Test de workspace filtra lectura al vendor de sesión; test de servicio rechaza edición de publicación ajena. |
-| C7.3 Borrador incompleto | APROBADO TÉCNICAMENTE | Test de servicio bloquea el envío a revisión cuando falta variedad. |
-| C7.4 Publicación moderada | APROBADO TÉCNICAMENTE | Test bloquea publicar un producto incompleto; E2E remoto deja solo productos completos en `published`. |
-| C7.5 Inventario y precio | APROBADO TÉCNICAMENTE | Constraints existentes y validación de esquema; consulta remota: cero valores numéricos inválidos. |
-| C7.6 Imágenes | APROBADO TÉCNICAMENTE | Tests para ruta ajena, GIF y tamaño mayor de 5 MB; E2E usa rutas válidas por vendedor. |
+| C7.2 Aislamiento entre vendedores     | APROBADO TÉCNICAMENTE | Test de workspace filtra lectura al vendor de sesión; test de servicio rechaza edición de publicación ajena.    |
+| C7.3 Borrador incompleto              | APROBADO TÉCNICAMENTE | Test de servicio bloquea el envío a revisión cuando falta variedad.                                             |
+| C7.4 Publicación moderada             | APROBADO TÉCNICAMENTE | Test bloquea publicar un producto incompleto; E2E remoto deja solo productos completos en `published`.          |
+| C7.5 Inventario y precio              | APROBADO TÉCNICAMENTE | Constraints existentes y validación de esquema; consulta remota: cero valores numéricos inválidos.              |
+| C7.6 Imágenes                         | APROBADO TÉCNICAMENTE | Tests para ruta ajena, GIF y tamaño mayor de 5 MB; E2E usa rutas válidas por vendedor.                          |
 
 ## Evidencia de salida G7
 
@@ -60,5 +60,5 @@ habilitarlo cuando corresponda al plan de Supabase.
 El E2E deja los registros sintéticos identificados en Supabase como evidencia;
 no se eliminan sin una solicitud explícita.
 
-G7 queda lista para aprobación formal y el checkpoint Git se crea en este
-estado. No se hizo push ni se mezclaron ramas.
+G7 fue aprobada formalmente por el usuario el 7 de septiembre de 2026. El
+checkpoint Git quedó en `408b800`. No se hizo push ni se mezclaron ramas.

@@ -49,6 +49,26 @@ export interface PublicacionPreview {
   descripcion: string;
 }
 
+/** Proyección pública; nunca incluye la ruta interna de Storage. */
+export interface PublicMarketListing {
+  id: string;
+  slug: string;
+  title: string;
+  vendorName: string;
+  brand: string;
+  category: string;
+  variety: string;
+  process: string;
+  origin: string;
+  presentation: string;
+  weightGrams: number;
+  inventory: number;
+  priceCents: number;
+  imageUrl: string | null;
+  delivery: string;
+  traceability: string;
+}
+
 /** Aviso visible de la sección. */
 export const AVISO_MERCADO =
   'Enviar esta solicitud no genera ningún cobro. Tueste revisa la marca antes de publicar.';
@@ -71,7 +91,7 @@ export const MERCADO_ACCENT: Record<MercadoTipo, MercadoAccent> = {
   'Métodos & accesorios': 'purple',
 };
 
-/** Pasos «cómo funcionará» (modo demo: nada está activo todavía). */
+/** Pasos visibles del flujo curado del mercado; no implican checkout ni cobro. */
 export const MERCADO_PASOS: MercadoPaso[] = [
   {
     num: '1',
@@ -93,7 +113,7 @@ export const MERCADO_PASOS: MercadoPaso[] = [
   },
 ];
 
-/** Catálogo demo del mercado (datos del mockup). */
+/** Fixture editorial legado; no se renderiza en el flujo productivo. */
 export const MERCADO_ITEMS: MercadoItem[] = [
   {
     marca: 'Finca La Aurora',

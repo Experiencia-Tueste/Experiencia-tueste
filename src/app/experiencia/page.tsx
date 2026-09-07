@@ -11,6 +11,7 @@ import SkipLink from '@/components/SkipLink';
 import CustomerWelcome from '@/features/customer-auth/components/CustomerWelcome';
 import { getPublicEditorialProjection } from '@/features/public-content/service';
 import { getPublicEvents } from '@/features/events/service';
+import { getPublicMarketCatalog } from '@/features/mercado/public-service';
 import { DEFAULT_CHECKOUT_CONFIG, type CheckoutConfig } from '@/features/commerce/checkout';
 import { loadCheckoutConfig } from '@/lib/config/env-server';
 import { isDatabaseConfigured } from '@/lib/config/admin-database-env';
@@ -48,10 +49,12 @@ export function ExperienceView({
   editorial = EMPTY_PUBLIC_EDITORIAL_PROJECTION,
   checkoutConfig = DEFAULT_CHECKOUT_CONFIG,
   events = [],
+  marketListings = [],
 }: {
   editorial?: PublicEditorialProjection;
   checkoutConfig?: CheckoutConfig;
   events?: readonly EventItem[];
+  marketListings?: readonly import('@/features/mercado').PublicMarketListing[];
 }) {
   return (
     <>
@@ -65,7 +68,11 @@ export function ExperienceView({
           <Manifiesto />
           <PublishedEditorial projection={editorial} />
           <EditorialTicker variant="amber" />
-          <ListeningExperience checkoutConfig={checkoutConfig} events={events} />
+          <ListeningExperience
+            checkoutConfig={checkoutConfig}
+            events={events}
+            marketListings={marketListings}
+          />
         </main>
         <Footer />
       </div>
@@ -76,6 +83,7 @@ export function ExperienceView({
 export default async function Home() {
   let editorial = EMPTY_PUBLIC_EDITORIAL_PROJECTION;
   let events: EventItem[] = [];
+  let marketListings: import('@/features/mercado').PublicMarketListing[] = [];
   let checkoutConfig = DEFAULT_CHECKOUT_CONFIG;
   if (isDatabaseConfigured()) {
     try {
@@ -84,6 +92,16 @@ export default async function Home() {
       // El contenido administrable no debe tumbar la experiencia pública.
       console.error(
         '[public-content] no se pudo cargar la proyección editorial.',
+        error instanceof Error ? error.name : 'unknown',
+      );
+    }
+  }
+  if (isDatabaseConfigured()) {
+    try {
+      marketListings = await getPublicMarketCatalog();
+    } catch (error) {
+      console.error(
+        '[public-market] no se pudo cargar el catálogo público.',
         error instanceof Error ? error.name : 'unknown',
       );
     }
@@ -106,5 +124,12 @@ export default async function Home() {
       error instanceof Error ? error.name : 'unknown',
     );
   }
-  return <ExperienceView editorial={editorial} events={events} checkoutConfig={checkoutConfig} />;
+  return (
+    <ExperienceView
+      editorial={editorial}
+      events={events}
+      marketListings={marketListings}
+      checkoutConfig={checkoutConfig}
+    />
+  );
 }

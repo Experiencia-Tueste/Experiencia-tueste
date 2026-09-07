@@ -1,16 +1,17 @@
 import 'server-only';
 
 import { randomUUID } from 'node:crypto';
+import { z } from 'zod';
 import { getAdminEventRepository } from '@/db/admin-event-repository';
 import { getEngagementRepository } from '@/db/admin-engagement-repository';
 import { getAdminRepository } from '@/db/admin-identity-repository';
 import { getAdminRadioRepository } from '@/db/admin-radio-repository';
+import { getPublicMarketRepository } from '@/db/public-market-repository';
 import { getDb } from '@/db/client';
 import type { DbClient } from '@/db/db-types';
 import { getCurrentAdmin } from '@/lib/auth/authorization';
 import { parseAuditEntry } from '@/features/admin/audit';
 import { isEventPast } from '@/features/events';
-import { MERCADO_ITEMS } from '@/features/mercado';
 import { RADIO_PLANS } from '@/features/radio';
 import { saveCommunityConsentInTransaction } from '@/features/community/consent-service';
 import {
@@ -119,20 +120,23 @@ async function canonicalize(input: EngagementInput, tx: DbClient) {
 
   const marketPayload = input.payload;
   if (marketPayload.intent === 'availability') {
-    const item = MERCADO_ITEMS.find(
-      (candidate) => slugify(candidate.marca) === marketPayload.itemSlug,
-    );
+    const listingId = z.string().uuid().safeParse(input.reference);
+    if (!listingId.success) {
+      throw new EngagementDomainError('El producto no existe en el catálogo.', 404);
+    }
+    const item = await getPublicMarketRepository().findPublishedById(listingId.data, tx);
     if (!item) throw new EngagementDomainError('El producto no existe en el catálogo.', 404);
-    const itemSlug = slugify(item.marca);
+    const itemSlug = `${slugify(item.title) || 'producto'}-${item.id.slice(0, 8)}`;
     return {
-      reference: `availability:${itemSlug}`,
-      details: `${item.marca} · ${item.tipo} · ${item.origen}`,
+      reference: `availability:${item.id}`,
+      details: `${item.brand} · ${item.category} · ${item.origin}`,
       payload: versionedPayload({
         intent: 'availability',
         itemSlug,
-        brand: item.marca,
-        category: item.tipo,
-        origin: item.origen,
+        listingId: item.id,
+        brand: item.brand,
+        category: item.category,
+        origin: item.origin,
       }),
     };
   }

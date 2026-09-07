@@ -12,6 +12,15 @@ export async function submitEngagement(input: EngagementInput): Promise<Engageme
     });
     if (response.status === 401) return { kind: 'login' };
     const body = (await response.json().catch(() => null)) as { message?: unknown } | null;
+    if (response.status === 429) {
+      return {
+        kind: 'error',
+        message:
+          typeof body?.message === 'string'
+            ? body.message
+            : 'Has alcanzado el límite de solicitudes. Inténtalo de nuevo más tarde.',
+      };
+    }
     if (!response.ok || typeof body?.message !== 'string') {
       return { kind: 'error', message: 'No pudimos registrar tu solicitud. Inténtalo de nuevo.' };
     }

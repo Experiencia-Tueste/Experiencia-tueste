@@ -120,6 +120,13 @@
       "when": 1788752360547,
       "tag": "0016_gifted_fenris",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1788757577499,
+      "tag": "0017_fixed_jean_grey",
+      "breakpoints": true
     }
   ]
 }

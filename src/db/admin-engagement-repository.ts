@@ -1,10 +1,14 @@
 import 'server-only';
 
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, gt, isNull, lte, sql } from 'drizzle-orm';
 
 import { getDb } from './client';
 import type { DbClient } from './db-types';
-import { engagementRequests } from './schema/admin-engagement';
+import {
+  engagementRequests,
+  pendingEngagementIntents,
+  requestRateLimitBuckets,
+} from './schema/admin-engagement';
 import type {
   EngagementRequest,
   EngagementType,
@@ -79,6 +83,69 @@ export class DrizzleEngagementRepository {
       .limit(1);
     if (!existing) throw new Error('No fue posible registrar la solicitud.');
     return { request: serialize(existing), created: false };
+  }
+
+  async createPendingIntent(
+    input: { tokenHash: string; payload: unknown; expiresAt: Date },
+    tx: DbClient,
+  ) {
+    await tx.insert(pendingEngagementIntents).values({
+      tokenHash: input.tokenHash,
+      payload: input.payload,
+      expiresAt: input.expiresAt,
+    });
+  }
+
+  /** Consume solo una vez y solo antes de que expire; la transacción externa completa la acción. */
+  async consumePendingIntent(tokenHash: string, now: Date, tx: DbClient) {
+    const [row] = await tx
+      .update(pendingEngagementIntents)
+      .set({ consumedAt: now })
+      .where(
+        and(
+          eq(pendingEngagementIntents.tokenHash, tokenHash),
+          isNull(pendingEngagementIntents.consumedAt),
+          gt(pendingEngagementIntents.expiresAt, now),
+        ),
+      )
+      .returning();
+    return row ?? null;
+  }
+
+  /**
+   * Incrementa atómicamente un bucket. La ventana vencida se reinicia en el
+   * mismo upsert, por lo que funciona entre instancias del servicio web.
+   */
+  async incrementRateLimitBucket(
+    input: { bucketKey: string; windowStartedAt: Date; now: Date; maxRequests: number },
+    tx: DbClient,
+  ) {
+    const cappedCount = input.maxRequests + 1;
+    const [row] = await tx
+      .insert(requestRateLimitBuckets)
+      .values({
+        bucketKey: input.bucketKey,
+        windowStartedAt: input.now,
+        requestCount: 1,
+        updatedAt: input.now,
+      })
+      .onConflictDoUpdate({
+        target: requestRateLimitBuckets.bucketKey,
+        set: {
+          windowStartedAt: sql`CASE WHEN ${requestRateLimitBuckets.windowStartedAt} <= ${input.windowStartedAt} THEN ${input.now} ELSE ${requestRateLimitBuckets.windowStartedAt} END`,
+          requestCount: sql`CASE WHEN ${requestRateLimitBuckets.windowStartedAt} <= ${input.windowStartedAt} THEN 1 ELSE LEAST(${requestRateLimitBuckets.requestCount} + 1, ${cappedCount}) END`,
+          updatedAt: input.now,
+        },
+      })
+      .returning({
+        requestCount: requestRateLimitBuckets.requestCount,
+        windowStartedAt: requestRateLimitBuckets.windowStartedAt,
+      });
+    return row;
+  }
+
+  async purgeExpiredPendingIntents(now: Date, tx: DbClient) {
+    await tx.delete(pendingEngagementIntents).where(lte(pendingEngagementIntents.expiresAt, now));
   }
 
   async setStatus(

@@ -19,6 +19,11 @@ import {
   type EngagementInput,
   type EngagementPayload,
 } from './index';
+import {
+  createPendingEngagementToken,
+  hashPendingEngagementToken,
+  PENDING_ENGAGEMENT_TTL_SECONDS,
+} from './pending-intent';
 
 export class EngagementDomainError extends Error {
   constructor(
@@ -142,26 +147,54 @@ async function canonicalize(input: EngagementInput, tx: DbClient) {
 
 export async function createEngagementRequest(user: { id: string; email: string }, input: unknown) {
   const parsed = engagementInputSchema.parse(input);
-  const requesterName = user.email.split('@')[0] || 'Cliente Tueste';
   return getDb().transaction(async (tx) => {
-    const canonical = await canonicalize(parsed, tx);
-    return getEngagementRepository().createOrGet(
-      {
-        type: parsed.type,
-        requesterUserId: user.id,
-        requesterEmail: user.email.trim().toLowerCase(),
-        requesterName,
-        reference: canonical.reference,
-        details: canonical.details,
-        payload: canonical.payload,
-        radioStage: parsed.type === 'radio' ? 'new' : null,
-        marketStage:
-          parsed.type === 'market' && parsed.payload.intent === 'seller_application'
-            ? 'submitted'
-            : null,
-      },
-      tx,
-    );
+    return createEngagementRequestInTransaction(user, parsed, tx);
+  });
+}
+
+async function createEngagementRequestInTransaction(
+  user: { id: string; email: string },
+  parsed: EngagementInput,
+  tx: DbClient,
+) {
+  const canonical = await canonicalize(parsed, tx);
+  const requesterName = user.email.split('@')[0] || 'Cliente Tueste';
+  return getEngagementRepository().createOrGet(
+    {
+      type: parsed.type,
+      requesterUserId: user.id,
+      requesterEmail: user.email.trim().toLowerCase(),
+      requesterName,
+      reference: canonical.reference,
+      details: canonical.details,
+      payload: canonical.payload,
+      radioStage: parsed.type === 'radio' ? 'new' : null,
+      marketStage:
+        parsed.type === 'market' && parsed.payload.intent === 'seller_application'
+          ? 'submitted'
+          : null,
+    },
+    tx,
+  );
+}
+
+export async function createPendingEngagementIntent(input: EngagementInput) {
+  const { token, tokenHash } = createPendingEngagementToken();
+  const expiresAt = new Date(Date.now() + PENDING_ENGAGEMENT_TTL_SECONDS * 1000);
+  await getDb().transaction((tx) =>
+    getEngagementRepository().createPendingIntent({ tokenHash, payload: input, expiresAt }, tx),
+  );
+  return token;
+}
+
+/** Consume la intención y crea la solicitud dentro de la misma transacción. */
+export async function resumePendingEngagement(user: { id: string; email: string }, token: string) {
+  const tokenHash = hashPendingEngagementToken(token);
+  return getDb().transaction(async (tx) => {
+    const pending = await getEngagementRepository().consumePendingIntent(tokenHash, new Date(), tx);
+    if (!pending) return null;
+    const input = engagementInputSchema.parse(pending.payload);
+    return createEngagementRequestInTransaction(user, input, tx);
   });
 }
 

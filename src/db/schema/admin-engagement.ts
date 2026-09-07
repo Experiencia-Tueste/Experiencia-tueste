@@ -1,5 +1,14 @@
 import { sql } from 'drizzle-orm';
-import { check, index, jsonb, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import {
+  check,
+  index,
+  integer,
+  jsonb,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from 'drizzle-orm/pg-core';
 
 import { privateSchema } from './admin-identity';
 
@@ -46,4 +55,32 @@ export const engagementRequests = privateSchema.table(
       sql`${table.marketStage} IS NULL OR ${table.marketStage} IN ('submitted', 'review', 'approved', 'rejected')`,
     ),
   ],
+);
+
+/**
+ * Intenciones anónimas de corta duración, previas al login.
+ * Solo se persiste el hash del token que viaja en una cookie HttpOnly.
+ */
+export const pendingEngagementIntents = privateSchema.table(
+  'pending_engagement_intents',
+  {
+    tokenHash: text('token_hash').primaryKey(),
+    payload: jsonb('payload').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    consumedAt: timestamp('consumed_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('pending_engagement_intents_expires_idx').on(table.expiresAt)],
+);
+
+/** Buckets compartidos para rate limiting entre instancias del servicio web. */
+export const requestRateLimitBuckets = privateSchema.table(
+  'request_rate_limit_buckets',
+  {
+    bucketKey: text('bucket_key').primaryKey(),
+    windowStartedAt: timestamp('window_started_at', { withTimezone: true }).notNull(),
+    requestCount: integer('request_count').notNull().default(0),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('request_rate_limit_buckets_updated_idx').on(table.updatedAt)],
 );

@@ -8,6 +8,7 @@ import type { EngagementInput } from '@/features/engagements';
 import { RADIO_PLANS } from '@/features/radio';
 import type { RadioPlan } from '@/features/radio';
 import { loginPath, submitEngagement } from './engagement-client';
+import { trackAnalytics } from '@/features/analytics/client';
 import SectionGhost from './SectionGhost';
 import Reveal from './Reveal';
 import styles from './NegociosRadio.module.css';
@@ -73,6 +74,9 @@ export default function NegociosRadio({ onSelectChannel }: NegociosRadioProps) {
       setAnuncio('Inicia sesión con tu cuenta Tueste para solicitar este plan.');
       router.push(loginPath('radio'));
       return;
+    }
+    if (result.kind === 'ok') {
+      void trackAnalytics('radio_request_submitted', { planId: plan.id });
     }
     setAnuncio(result.message);
   };

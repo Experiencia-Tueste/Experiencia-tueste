@@ -13,6 +13,7 @@ import {
 } from '@/features/mercado';
 import type { PublicMarketListing, PublicacionPreview } from '@/features/mercado';
 import { loginPath, submitEngagement } from './engagement-client';
+import { trackAnalytics } from '@/features/analytics/client';
 import MercadoVisual from './MercadoVisual';
 import Reveal from './Reveal';
 import SectionGhost from './SectionGhost';
@@ -96,6 +97,9 @@ export default function MercadoOrigen({
       router.push(loginPath('mercado'));
       return;
     }
+    if (result.kind === 'ok') {
+      void trackAnalytics('market_availability_requested', { listingId: item.id });
+    }
     setAnuncio(result.message);
   };
 
@@ -142,6 +146,9 @@ export default function MercadoOrigen({
       setAnuncio('Inicia sesión con tu cuenta Tueste para solicitar una publicación.');
       router.push(loginPath('mercado'));
       return;
+    }
+    if (result.kind === 'ok') {
+      void trackAnalytics('seller_application_submitted', {});
     }
     setAnuncio(result.message);
   };

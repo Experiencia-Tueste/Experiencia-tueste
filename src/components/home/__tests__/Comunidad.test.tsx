@@ -32,7 +32,7 @@ describe('Comunidad', () => {
     await user.click(screen.getByRole('checkbox', { name: /recibir comunicaciones/i }));
     await user.click(submit);
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
     const engagementCall = fetchMock.mock.calls.find(([url]) => url === '/api/engagements');
     const request = JSON.parse(engagementCall?.[1].body as string);
     expect(request).toMatchObject({

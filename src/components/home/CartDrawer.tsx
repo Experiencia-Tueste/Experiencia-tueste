@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { cartTotal, formatoCOP, getProduct, MAX_CART_QTY } from '@/features/commerce';
 import { createCheckoutGateway, type CheckoutGateway } from '@/features/commerce/checkout';
+import { trackAnalytics } from '@/features/analytics/client';
 import type { CartItem } from '@/features/commerce';
 import styles from './CartDrawer.module.css';
 
@@ -93,6 +94,7 @@ export default function CartDrawer({
     if (procesando || items.length === 0) return;
     setProcesando(true);
     setMensaje('Preparando tu checkout…');
+    void trackAnalytics('checkout_started', { itemCount: items.length, mode: gateway.mode });
 
     try {
       const result = await gateway.start(items);

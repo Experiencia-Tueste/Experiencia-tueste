@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { COMUNIDAD_CTA } from '@/features/community';
 import { COMMUNITY_PREFERENCES, type CommunityPreference } from '@/features/engagements';
 import { loginPath, submitEngagement } from './engagement-client';
+import { trackAnalytics } from '@/features/analytics/client';
 import Reveal from './Reveal';
 import SectionGhost from './SectionGhost';
 import styles from './Comunidad.module.css';
@@ -62,7 +63,10 @@ export default function Comunidad() {
       router.push(loginPath('comunidad'));
       return;
     }
-    if (result.kind === 'ok') setHasMembership(true);
+    if (result.kind === 'ok') {
+      setHasMembership(true);
+      void trackAnalytics('community_joined', { preferenceCount: preferences.length });
+    }
     setAnuncio(result.message);
   };
 

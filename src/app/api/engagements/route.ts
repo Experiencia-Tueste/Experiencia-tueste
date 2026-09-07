@@ -11,12 +11,15 @@ import {
 } from '@/features/engagements/pending-intent';
 import { checkEngagementRateLimit, requestOrigin } from '@/features/engagements/rate-limit';
 import { createServerSupabase } from '@/lib/supabase/server';
+import { recordOperationalError } from '@/features/analytics/service';
+import { randomUUID } from 'node:crypto';
 import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
 /** La sesión y la identidad se validan aquí, antes de escribir datos privados. */
 export async function POST(request: Request) {
+  const requestId = randomUUID();
   const supabase = await createServerSupabase();
   if (!supabase)
     return Response.json({ message: 'Inicia sesión para continuar.' }, { status: 401 });
@@ -30,9 +33,16 @@ export async function POST(request: Request) {
       userId: error || !user?.id ? undefined : user.id,
     });
   } catch {
+    void recordOperationalError({
+      requestId,
+      route: '/api/engagements',
+      operation: 'rate_limit',
+      status: 503,
+      errorCode: 'rate_limit_unavailable',
+    }).catch(() => undefined);
     return Response.json(
       { message: 'No pudimos validar la disponibilidad del servicio. Inténtalo de nuevo.' },
-      { status: 503 },
+      { status: 503, headers: { 'X-Request-Id': requestId } },
     );
   }
   if (!rateLimit.allowed) {
@@ -70,9 +80,16 @@ export async function POST(request: Request) {
       });
       return response;
     } catch {
+      void recordOperationalError({
+        requestId,
+        route: '/api/engagements',
+        operation: 'pending_intent',
+        status: 503,
+        errorCode: 'pending_intent_unavailable',
+      }).catch(() => undefined);
       return Response.json(
         { message: 'No pudimos guardar tu solicitud pendiente. Inténtalo de nuevo.' },
-        { status: 503 },
+        { status: 503, headers: { 'X-Request-Id': requestId } },
       );
     }
   }
@@ -93,9 +110,16 @@ export async function POST(request: Request) {
     if (error instanceof Error && error.name === 'ZodError') {
       return Response.json({ message: 'Revisa la información de la solicitud.' }, { status: 400 });
     }
+    void recordOperationalError({
+      requestId,
+      route: '/api/engagements',
+      operation: 'create_engagement',
+      status: 503,
+      errorCode: 'engagement_persistence_failed',
+    }).catch(() => undefined);
     return Response.json(
       { message: 'No pudimos registrar tu solicitud. Inténtalo de nuevo.' },
-      { status: 503 },
+      { status: 503, headers: { 'X-Request-Id': requestId } },
     );
   }
 }

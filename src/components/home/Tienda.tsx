@@ -16,6 +16,7 @@ import {
   DEFAULT_CHECKOUT_CONFIG,
   type CheckoutConfig,
 } from '@/features/commerce/checkout';
+import { trackAnalytics } from '@/features/analytics/client';
 import type { CartItem } from '@/features/commerce';
 import CartDrawer from './CartDrawer';
 import ProductVisual from './ProductVisual';
@@ -91,6 +92,7 @@ export default function Tienda({
     const p = getProduct(productId);
     setAnuncio(`${p?.name ?? productId} agregado a tu selección.`);
     setDrawerOpen(true);
+    void trackAnalytics('product_added', { productId, quantity: 1 });
   };
 
   const cambiarQty = (productId: string, delta: number) => {
@@ -100,6 +102,7 @@ export default function Tienda({
   const abrirDrawer = () => {
     abridorRef.current = cartButtonRef.current;
     setDrawerOpen(true);
+    void trackAnalytics('cart_opened', { itemCount: count });
   };
 
   const cerrarDrawer = () => {

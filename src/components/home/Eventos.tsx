@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { EventItem, EventRequestPayload } from '@/features/events';
 import { loginPath, submitEngagement } from './engagement-client';
+import { trackAnalytics } from '@/features/analytics/client';
 import EventRow from './EventRow';
 import Reveal from './Reveal';
 import SectionGhost from './SectionGhost';
@@ -31,6 +32,9 @@ export default function Eventos({ events = [] }: { events?: readonly EventItem[]
       setAnuncio('Inicia sesión con tu cuenta Tueste para solicitar un cupo.');
       router.push(loginPath('eventos'));
       return;
+    }
+    if (result.kind === 'ok') {
+      void trackAnalytics('event_request_submitted', { eventId: ev.id });
     }
     setAnuncio(result.message);
   };

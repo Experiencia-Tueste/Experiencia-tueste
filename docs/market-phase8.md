@@ -1,10 +1,10 @@
 # Fase 8 — Mercado: experiencia pública del comprador
 
-Estado: **LISTA PARA APROBACIÓN — G8**
+Estado: **CERRADA — G8 APROBADO**
 Fecha de inicio: 7 de septiembre de 2026
 Rama: `feat/experiencia-functional-hardening`
 Checkpoint de entrada: `408b800` — G7 aprobado
-Checkpoint Git de salida: `aa6e921`
+Checkpoint Git de salida: `89e636a`
 
 ## Objetivo cerrado
 
@@ -59,8 +59,9 @@ TypeScript, build, `npm run verify`, `git diff --check`, la auditoría remota de
 las publicaciones y el checkpoint Git. No se avanza a Fase 9 sin aprobación
 formal de G8.
 
-La evidencia técnica y el checkpoint Git ya están completos. G8 queda lista
-para aprobación formal del usuario; Fase 9 permanece cerrada.
+La evidencia técnica y el checkpoint Git quedaron completos. G8 fue aprobada
+formalmente por el usuario el 7 de septiembre de 2026. La Fase 9 puede
+iniciarse; no se habilita la Fase 10 hasta cerrar G9.
 
 ## Reapertura
 

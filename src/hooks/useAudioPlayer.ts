@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getChannel, getTrack, nextInQueue, radioDemoTrackId, TRACKS } from '@/features/audio';
+import { trackAnalytics } from '@/features/analytics/client';
 import type { RadioChannelId, RadioDemoOption } from '@/features/audio';
 import type { TrackId } from '@/lib/audio';
 
@@ -145,6 +146,7 @@ export function useAudioPlayer(): AudioPlayerResult {
       channelRef.current = null;
       setChannelId(null);
       playTrackNow(id);
+      void trackAnalytics('audio_started', { trackId: id, source: 'direct' });
     },
     [playTrackNow],
   );
@@ -157,6 +159,7 @@ export function useAudioPlayer(): AudioPlayerResult {
       channelRef.current = null;
       setChannelId(null);
       playTrackNow(valid[0]);
+      void trackAnalytics('audio_started', { trackId: valid[0], source: 'queue' });
     },
     [playTrackNow],
   );
@@ -261,6 +264,11 @@ export function useAudioPlayer(): AudioPlayerResult {
       }
       channelRef.current = option.channel;
       setChannelId(option.channel);
+      void trackAnalytics('radio_demo_started', { channelId: option.channel });
+      void trackAnalytics('audio_started', {
+        trackId: radioDemoTrackId(option),
+        source: 'radio',
+      });
       const channel = getChannel(option.channel);
       queueRef.current = channel?.queue ?? [radioDemoTrackId(option)];
       playTrackNow(radioDemoTrackId(option));

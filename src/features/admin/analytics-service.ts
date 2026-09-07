@@ -5,6 +5,7 @@ import { desc } from 'drizzle-orm';
 import { getDb } from '@/db/client';
 import { auditLogs } from '@/db/schema/admin-identity';
 import { checkoutOrders } from '@/db/schema/payments';
+import { getAnalyticsSignals } from '@/features/analytics/service';
 import type { CurrentAdmin } from './authorization-core';
 
 export async function getAnalyticsWorkspace(admin: CurrentAdmin) {
@@ -13,9 +14,10 @@ export async function getAnalyticsWorkspace(admin: CurrentAdmin) {
   }
 
   const db = getDb();
-  const [orders, activity] = await Promise.all([
+  const [orders, activity, signals] = await Promise.all([
     db.select().from(checkoutOrders).orderBy(desc(checkoutOrders.createdAt)).limit(1000),
     db.select().from(auditLogs).orderBy(desc(auditLogs.createdAt)).limit(1000),
+    getAnalyticsSignals(),
   ]);
 
   const paidOrders = orders.filter((order) =>
@@ -58,6 +60,8 @@ export async function getAnalyticsWorkspace(admin: CurrentAdmin) {
       revenue,
       conversion,
       activity: activity.length,
+      publicEvents: signals.total,
+      operationalErrors: signals.health.operationalErrors,
     },
     funnel: [
       { label: 'Clientes con intención', value: customerCount },
@@ -77,5 +81,6 @@ export async function getAnalyticsWorkspace(admin: CurrentAdmin) {
       status: order.status,
       createdAt: order.createdAt.toISOString(),
     })),
+    signals,
   };
 }

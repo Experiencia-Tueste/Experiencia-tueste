@@ -96,6 +96,18 @@ export class DrizzleEngagementRepository {
     });
   }
 
+  async findByIdForUpdate(id: string, tx: DbClient) {
+    await tx.execute(
+      sql`SELECT id FROM private.engagement_requests WHERE id = ${id}::uuid FOR UPDATE`,
+    );
+    const [row] = await tx
+      .select()
+      .from(engagementRequests)
+      .where(eq(engagementRequests.id, id))
+      .limit(1);
+    return row ? serialize(row) : null;
+  }
+
   /** Consume solo una vez y solo antes de que expire; la transacción externa completa la acción. */
   async consumePendingIntent(tokenHash: string, now: Date, tx: DbClient) {
     const [row] = await tx

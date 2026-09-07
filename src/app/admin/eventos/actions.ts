@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 
 import {
   checkInEventAttendee,
+  confirmEventEngagementRequest,
   createAdminEvent,
   registerEventAttendee,
   transitionAdminEvent,
@@ -43,6 +44,14 @@ export async function registerAttendeeAction(formData: FormData) {
     eventId: formData.get('eventId'),
     name: formData.get('name'),
     email: formData.get('email'),
+    reason: formData.get('reason'),
+  });
+  refresh();
+}
+
+export async function confirmEventRequestAction(formData: FormData) {
+  await confirmEventEngagementRequest({
+    requestId: formData.get('requestId'),
     reason: formData.get('reason'),
   });
   refresh();

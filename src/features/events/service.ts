@@ -12,15 +12,16 @@ function eventType(title: string): EventType {
   return 'RITUAL';
 }
 
-function publicStatus(event: AdminEventRow, now: Date): EventStatus {
-  if (isEventPast({ dateTime: event.endsAt ?? event.startsAt }, now)) return 'past';
+function publicStatus(event: AdminEventRow, occupied: number): EventStatus {
   if (event.status === 'waitlist') return 'wait';
+  if (event.capacity !== null && occupied >= event.capacity) return 'wait';
+  if (event.capacity !== null && event.capacity - occupied <= 1) return 'few';
   return 'open';
 }
 
-function toPublicEvent(event: AdminEventRow, now: Date): EventItem {
+function toPublicEvent(event: AdminEventRow, occupied: number): EventItem {
   const start = new Date(event.startsAt);
-  const status = publicStatus(event, now);
+  const status = publicStatus(event, occupied);
   return {
     id: event.id,
     day: new Intl.DateTimeFormat('es-CO', { day: '2-digit', timeZone: 'UTC' }).format(start),
@@ -46,10 +47,21 @@ function toPublicEvent(event: AdminEventRow, now: Date): EventItem {
   };
 }
 
-/** Solo eventos persistidos y no borrador llegan a la experiencia pública. */
+/** Solo eventos futuros operables llegan a la experiencia pública. */
 export async function getPublicEvents(now = new Date()): Promise<EventItem[]> {
-  const events = await getAdminEventRepository().listEvents();
+  const repository = getAdminEventRepository();
+  const [events, attendees] = await Promise.all([
+    repository.listEvents(),
+    repository.listAttendees(),
+  ]);
   return events
-    .filter((event) => event.status !== 'draft')
-    .map((event) => toPublicEvent(event, now));
+    .filter((event) => ['open', 'waitlist'].includes(event.status))
+    .filter((event) => !isEventPast({ dateTime: event.endsAt ?? event.startsAt }, now))
+    .map((event) => {
+      const occupied = attendees.filter(
+        (attendee) =>
+          attendee.eventId === event.id && ['reserved', 'checked_in'].includes(attendee.status),
+      ).length;
+      return toPublicEvent(event, occupied);
+    });
 }

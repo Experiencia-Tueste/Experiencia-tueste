@@ -7,6 +7,7 @@ import {
   MARKET_LISTING_CREATE_SCHEMA,
   TREE_ADOPTION_CREATE_SCHEMA,
   UNITY_OPPORTUNITY_CREATE_SCHEMA,
+  VENDOR_IMAGE_UPLOAD_REQUEST_SCHEMA,
   assertChanged,
   assertMarketListingComplete,
   canTransitionAuction,
@@ -14,6 +15,7 @@ import {
   canTransitionMarket,
   canTransitionTree,
   canTransitionUnity,
+  expectedMarketImageContentType,
   validateMarketImage,
 } from '../operations-schemas';
 
@@ -137,5 +139,44 @@ describe('admin operations schemas', () => {
         imageSizeBytes: MARKET_IMAGE_MAX_BYTES + 1,
       }),
     ).toThrow('pesar');
+    // Path traversal (`..`) sigue bloqueado, aun con un vendorId correcto.
+    expect(() =>
+      validateMarketImage({
+        vendorId: id,
+        imagePath: `vendors/${id}/../otro/producto.webp`,
+        imageSizeBytes: 1000,
+      }),
+    ).toThrow('no pertenece');
+  });
+
+  it('deriva el content-type real esperado de la extensión de la imagen', () => {
+    expect(expectedMarketImageContentType(`vendors/${id}/foto.webp`)).toBe('image/webp');
+    expect(expectedMarketImageContentType(`vendors/${id}/foto.JPG`)).toBe('image/jpeg');
+    expect(expectedMarketImageContentType(`vendors/${id}/foto.png`)).toBe('image/png');
+    expect(expectedMarketImageContentType(`vendors/${id}/foto.gif`)).toBeNull();
+  });
+
+  it('valida la solicitud de subida de imagen de vendedor', () => {
+    expect(() =>
+      VENDOR_IMAGE_UPLOAD_REQUEST_SCHEMA.parse({
+        filename: 'foto.webp',
+        mimeType: 'image/webp',
+        sizeBytes: 1000,
+      }),
+    ).not.toThrow();
+    expect(() =>
+      VENDOR_IMAGE_UPLOAD_REQUEST_SCHEMA.parse({
+        filename: 'foto.gif',
+        mimeType: 'image/gif',
+        sizeBytes: 1000,
+      }),
+    ).toThrow();
+    expect(() =>
+      VENDOR_IMAGE_UPLOAD_REQUEST_SCHEMA.parse({
+        filename: 'foto.webp',
+        mimeType: 'image/webp',
+        sizeBytes: MARKET_IMAGE_MAX_BYTES + 1,
+      }),
+    ).toThrow();
   });
 });

@@ -4,7 +4,11 @@ import { createClient } from '@supabase/supabase-js';
 
 import { loadAdminStorageConfig } from '@/lib/config/env-server';
 import type { AdminStorageConfig } from '@/lib/config/env-server';
-import type { StorageProvider, StoredAssetInput } from '@/features/admin/storage-contract';
+import type {
+  StorageObjectMetadata,
+  StorageProvider,
+  StoredAssetInput,
+} from '@/features/admin/storage-contract';
 
 function sanitizePathPart(value: string): string {
   return value
@@ -23,6 +27,21 @@ export function buildAssetStorageKey(filename: string, now = new Date()): string
   const month = String(now.getUTCMonth() + 1).padStart(2, '0');
   const stamp = String(now.getTime());
   return `admin-assets/${year}/${month}/${stamp}-${safeFilename}`;
+}
+
+/**
+ * Construye la clave de Storage para la imagen de un listing de vendedor,
+ * siempre bajo `vendors/{vendorId}/…`. `vendorId` debe salir del admin
+ * autenticado (nunca de input del cliente) — ver `market-image-service.ts`.
+ */
+export function buildVendorImageStorageKey(
+  vendorId: string,
+  filename: string,
+  now = new Date(),
+): string {
+  const safeFilename = sanitizePathPart(filename) || 'imagen';
+  const stamp = String(now.getTime());
+  return `vendors/${vendorId}/${stamp}-${safeFilename}`;
 }
 
 export class SupabaseStorageProvider implements StorageProvider {
@@ -70,6 +89,17 @@ export class SupabaseStorageProvider implements StorageProvider {
       .createSignedUrl(path, expiresInSeconds);
     if (error) throw error;
     return data.signedUrl;
+  }
+
+  async getObjectMetadata(key: string): Promise<StorageObjectMetadata | null> {
+    const path = key.startsWith(`${this.bucket}/`) ? key.slice(this.bucket.length + 1) : key;
+    const { data, error } = await this.client.storage.from(this.bucket).info(path);
+    if (error) {
+      const status = (error as { status?: number }).status;
+      if (status === 404 || status === 400) return null;
+      throw error;
+    }
+    return { size: data.size ?? 0, contentType: data.contentType ?? null };
   }
 }
 

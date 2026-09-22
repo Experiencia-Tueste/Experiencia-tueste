@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { requestOrigin, ENGAGEMENT_RATE_LIMIT } from '../rate-limit';
 
 describe('rate limiting de engagements', () => {
-  it('usa el último salto de x-forwarded-for (el que agrega el proxy confiable)', () => {
+  it('usa x-real-ip, el único header de IP de cliente que garantiza Railway', () => {
     expect(
       requestOrigin(
         new Request('http://localhost/api/engagements', {
@@ -13,14 +13,24 @@ describe('rate limiting de engagements', () => {
     expect(requestOrigin(new Request('http://localhost/api/engagements'))).toBe('unknown');
   });
 
-  it('ignora un primer salto falsificado por el cliente', () => {
+  it('ignora x-forwarded-for por completo, incluso si el cliente lo falsifica', () => {
     expect(
       requestOrigin(
         new Request('http://localhost/api/engagements', {
-          headers: { 'x-forwarded-for': 'atacante-spoofed-ip, 198.51.100.7' },
+          headers: {
+            'x-forwarded-for': 'atacante-spoofed-ip, 198.51.100.7',
+            'x-real-ip': '198.51.100.7',
+          },
         }),
       ),
     ).toBe('198.51.100.7');
+    expect(
+      requestOrigin(
+        new Request('http://localhost/api/engagements', {
+          headers: { 'x-forwarded-for': 'atacante-spoofed-ip' },
+        }),
+      ),
+    ).toBe('unknown');
   });
 
   it('mantiene una ventana y límites explícitos', () => {

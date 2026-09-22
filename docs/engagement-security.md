@@ -13,13 +13,18 @@ memoria de una sola instancia:
 - si el bucket o la base no están disponibles, la ruta falla cerrado con
   `503` y no intenta escribir la solicitud.
 
-El origen se obtiene del ÚLTIMO salto de `x-forwarded-for` (el que agrega el
-proxy de borde más cercano al contenedor, no el primero, que el cliente puede
-falsificar libremente) o de `x-real-ip`. Supuesto asumido para Railway con un
-único proxy de borde delante del contenedor — pendiente de confirmación contra
-la infraestructura real. No se deben aceptar estos valores como identidad ni
-registrar en logs. La tabla y los buckets no se exponen a `anon` ni
-`authenticated`.
+El origen se obtiene de `x-real-ip`, el único header de IP de cliente que
+Railway documenta y garantiza como no falsificable
+(docs.railway.com/networking/public-networking/specs-and-limits). Railway no
+documenta ningún contrato sobre `x-forwarded-for` — ni que lo sobreescribe, ni
+que lo agrega, ni que lo pasa intacto — por lo que no se usa como fuente ni
+como respaldo: si hubiera más de un proxy en el medio, tomar un hop de XFF
+podría colapsar a todo el tráfico anónimo en el mismo valor y dejar que un
+solo cliente abusivo bloquee a los demás. Si `x-real-ip` no está presente (por
+ejemplo, en desarrollo local sin el proxy de Railway por delante) el origen
+cae a `'unknown'`, que agrupa ese tráfico en un único balde. No se deben
+aceptar estos valores como identidad ni registrar en logs. La tabla y los
+buckets no se exponen a `anon` ni `authenticated`.
 
 ## Continuidad después del login
 

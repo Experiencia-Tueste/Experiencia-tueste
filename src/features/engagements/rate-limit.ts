@@ -24,29 +24,27 @@ export interface EngagementRateLimitDecision {
 /**
  * Identificador de origen para el proxy confiable; nunca se registra en logs.
  *
- * `X-Forwarded-For` es una lista donde cada proxy AÑADE su propia vista del
- * cliente al final de la cadena en vez de sobrescribirla. El primer valor lo
- * puede fijar libremente quien hace la petición (spoofable); el ÚLTIMO valor
- * es el que agrega el proxy más cercano al servidor, que el cliente no puede
- * falsificar salvo que ese proxy reenvíe headers sin tocarlos.
+ * Railway documenta `X-Real-IP` como el único header de IP de cliente que
+ * garantiza y que el cliente no puede falsificar
+ * (docs.railway.com/networking/public-networking/specs-and-limits). No hay
+ * contrato documentado sobre `X-Forwarded-For`: Railway no especifica si lo
+ * sobreescribe, lo agrega o lo reenvía intacto, así que no es una fuente
+ * confiable de IP de cliente en este despliegue. Confirmado por Rocha contra
+ * la documentación oficial (ver docs/engagement-security.md).
  *
- * Supuesto asumido para este despliegue (Railway, un único proxy de borde
- * delante del contenedor — ver docs/deployment-latinoamerica-hosting.md):
- * el ÚLTIMO salto de `X-Forwarded-For` es el que agrega ese proxy y es
- * confiable; los anteriores no lo son. Esto NO está confirmado contra el
- * contrato real de la infraestructura — pendiente de verificación por Rocha.
- * Si Railway antepusiera otro balanceador delante de su proxy de borde, este
- * supuesto dejaría de ser válido y habría que ajustar el hop de confianza.
+ * Nota: si en algún momento hay más de un proxy delante del contenedor,
+ * tomar un hop de `X-Forwarded-For` puede ser peor que no tener límite —
+ * todo el tráfico anónimo detrás del mismo hop intermedio colapsaría en el
+ * mismo valor y un solo cliente abusivo bloquearía a los demás. Por eso no
+ * se usa como fuente ni siquiera como respaldo.
+ *
+ * Fallback: si `X-Real-IP` no está presente (por ejemplo, en desarrollo
+ * local, donde no hay proxy de Railway por delante) se cae a `'unknown'`,
+ * que agrupa ese tráfico en un único balde de rate limit en vez de fallar.
  */
 export function requestOrigin(request: Request): string {
-  const forwardedHeader = request.headers.get('x-forwarded-for');
-  const lastHop = forwardedHeader
-    ?.split(',')
-    .map((part) => part.trim())
-    .filter(Boolean)
-    .pop();
   const real = request.headers.get('x-real-ip')?.trim();
-  return (lastHop || real || 'unknown').slice(0, 120);
+  return (real || 'unknown').slice(0, 120);
 }
 
 function retryAfterSeconds(now: Date, windowStartedAt: Date) {

@@ -20,7 +20,18 @@ export const DEFAULT_CHECKOUT_CONFIG: CheckoutConfig = {
 };
 
 export type CheckoutResult =
-  | { kind: 'redirect'; url: string; provider: Exclude<CheckoutMode, 'disabled'> }
+  | {
+      kind: 'redirect';
+      url: string;
+      provider: Exclude<CheckoutMode, 'disabled'>;
+      /**
+       * Si `false`, la URL de redirect NO lleva el contenido del carrito
+       * (productos/cantidades elegidos): el destino ignora `items` por
+       * completo. El consumidor de este resultado (UI) debe avisarle a la
+       * persona que su selección no viajó, en vez de asumir que sí.
+       */
+      cartPreserved: boolean;
+    }
   | { kind: 'disabled'; message: string }
   | { kind: 'login'; message: string }
   | { kind: 'error'; message: string };
@@ -55,13 +66,30 @@ class DisabledCheckout implements CheckoutGateway {
   }
 }
 
+/**
+ * Redirect genérico a la tienda Shopify (`SHOPIFY_STORE_URL`), sin carrito.
+ *
+ * Este modo (`external_shopify`) es un placeholder deliberadamente simple:
+ * `url` es la URL pública de la tienda, no un permalink de carrito, y hoy no
+ * existe un mapeo de `CartItem.productId` a variant IDs reales de Shopify
+ * (ver `docs/planning/2026-09-22-shopify-checkout-migration.md`, tarea
+ * pendiente de Teo). Construir un link de carrito con IDs internos que no
+ * son variant IDs de Shopify fallaría silenciosamente o rompería el
+ * checkout, así que `start()` ignora `items` a propósito y lo declara vía
+ * `cartPreserved: false` en vez de fingir que el carrito viajó.
+ *
+ * ADVERTENCIA PARA EL MODO `shopify` REAL (`ShopifyCheckout` abajo): este
+ * NO es el patrón a copiar. Esa integración va a crear una orden/checkout
+ * server-side (Draft Order o Cart API) con los `items` reales y variant IDs
+ * verificados, devolviendo `cartPreserved: true`.
+ */
 class ExternalShopifyCheckout implements CheckoutGateway {
   readonly mode = 'external_shopify' as const;
 
   constructor(private readonly url: string) {}
 
   async start() {
-    return { kind: 'redirect' as const, url: this.url, provider: this.mode };
+    return { kind: 'redirect' as const, url: this.url, provider: this.mode, cartPreserved: false };
   }
 }
 
@@ -96,7 +124,12 @@ class MercadoPagoLegacyCheckout implements CheckoutGateway {
         };
       }
 
-      return { kind: 'redirect' as const, url: body.checkoutUrl, provider: this.mode };
+      return {
+        kind: 'redirect' as const,
+        url: body.checkoutUrl,
+        provider: this.mode,
+        cartPreserved: true,
+      };
     } catch {
       return {
         kind: 'error' as const,

@@ -47,8 +47,9 @@ export interface AudioPlayerResult {
  * con fftSize 256 y smoothingTimeConstant 0.82. Toda acción que arranca
  * reproducción real (togglePlay, selección de señal Radio, siguiente pista
  * en `ended`) asegura primero el grafo y reanuda el contexto si quedó
- * suspended. Si el navegador no ofrece AudioContext, la reproducción MP3
- * sigue funcionando sin visualizador reactivo (analyser null).
+ * suspended. Si el navegador no ofrece AudioContext, la reproducción WAV
+ * sigue funcionando sin visualizador reactivo (analyser null). Las pistas se
+ * cargan desde `public/audio` únicamente al iniciar su reproducción.
  */
 export function useAudioPlayer(): AudioPlayerResult {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -96,13 +97,13 @@ export function useAudioPlayer(): AudioPlayerResult {
         analyserRef.current = node;
         setAnalyser(node);
       } catch {
-        // Sin grafo de audio: la reproducción MP3 sigue funcionando.
+        // Sin grafo de audio: la reproducción WAV sigue funcionando.
         return;
       }
     }
     if (ctxRef.current.state === 'suspended') {
       void ctxRef.current.resume().catch(() => {
-        // El contexto puede negarse a reanudar; el MP3 suena igual.
+        // El contexto puede negarse a reanudar; el WAV suena igual.
       });
     }
   }, []);
@@ -270,7 +271,7 @@ export function useAudioPlayer(): AudioPlayerResult {
           return;
         }
       }
-      setMensaje('Preview terminado.');
+      setMensaje('Pista terminada.');
     };
 
     audio.addEventListener('play', onPlay);

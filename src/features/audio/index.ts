@@ -3,12 +3,10 @@
  * ---------------------------------------------------------------------
  * Reproductor único de Origen Tostado + señales de radio.
  *
- * Contrato: las pistas son previews MP3 locales reales servidos por la
- * propia app desde public/audio (75.05 s). No hay base64, ni CDN
- * pendiente, ni síntesis artificial: el ciclo de vida del navegador
- * (Audio, AudioContext, AnalyserNode, canvas) vive en el hook cliente
- * useAudioPlayer; aquí solo hay lógica pura: catálogo, rutas, colas y
- * señales.
+ * Contrato temporal: los masters WAV viven en `public/audio`. El navegador
+ * no descarga nada hasta que la persona pulsa reproducir. Cuando Storage
+ * tenga el plan adecuado, estos archivos se podrán migrar a un CDN sin
+ * modificar la identidad del catálogo.
  */
 
 import type { TrackId } from '../../lib/audio';
@@ -22,9 +20,9 @@ export interface Track {
   /** Frecuencia ritual en Hz (111, 222, 432, 528…). */
   hz: number;
   mode: TrackMode;
-  /** URL del preview MP3 local (public/audio). */
+  /** Archivo WAV estático que se descarga bajo demanda. */
   src: string;
-  /** Duración en segundos de los previews (75.05). */
+  /** Duración estimada del master; el elemento audio confirma su metadata. */
   duration: number;
 }
 
@@ -38,16 +36,16 @@ export interface RadioChannel {
 }
 
 /**
- * Rutas literales de los previews MP3 en public/audio. Mapa explícito y
- * determinista TrackId → src: los nombres de archivo reales llevan
- * prefijo numérico y sufijo -hz, por lo que NO se derivan del id.
+ * Rutas de los masters WAV que entrega Next desde `public/audio`.
+ * Coherencia comparte el master de 432 Hz hasta que exista una pieza WAV
+ * dedicada para esa señal.
  */
 export const TRACK_SRC: Record<TrackId, string> = {
-  'origen-111': '/audio/01-origen-111-hz.mp3',
-  'raiz-222': '/audio/02-raiz-222-hz.mp3',
-  'expansion-432': '/audio/03-expansion-432-hz.mp3',
-  'coherencia-432': '/audio/04-coherencia-432-hz.mp3',
-  'despertar-528': '/audio/05-despertar-528-hz.mp3',
+  'origen-111': '/audio/01-origen-111-hz.wav',
+  'raiz-222': '/audio/02-raiz-222-hz.wav',
+  'expansion-432': '/audio/03-expansion-432-hz.wav',
+  'coherencia-432': '/audio/03-expansion-432-hz.wav',
+  'despertar-528': '/audio/05-despertar-528-hz.wav',
 };
 
 const TRACK_SEED: Array<Omit<Track, 'src' | 'duration'>> = [
@@ -89,13 +87,20 @@ const TRACK_SEED: Array<Omit<Track, 'src' | 'duration'>> = [
 ];
 
 /**
- * Catálogo de pistas con previews MP3 locales (public/audio).
- * Duración real de los previews: 75.05 s. Sin base64 ni URLs externas.
+ * Catálogo de masters locales. La duración es informativa hasta que el
+ * navegador reciba `loadedmetadata` del archivo WAV.
  */
 export const TRACKS: Track[] = TRACK_SEED.map((t) => ({
   ...t,
   src: TRACK_SRC[t.id],
-  duration: 75.05,
+  duration:
+    t.id === 'origen-111'
+      ? 241.625
+      : t.id === 'raiz-222'
+        ? 149.625
+        : t.id === 'despertar-528'
+          ? 206.875
+          : 205.625,
 }));
 
 /** Señales de radio (demo). */

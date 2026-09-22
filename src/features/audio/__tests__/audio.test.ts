@@ -11,30 +11,30 @@ describe('feature audio', () => {
     expect(TRACKS.map((t) => t.hz)).toEqual([111, 222, 432, 432, 528]);
   });
 
-  it('mapea cada pista a su ruta literal exacta en public/audio', () => {
+  it('mapea cada pista a un master WAV estático', () => {
     expect(TRACK_SRC).toEqual({
-      'origen-111': '/audio/01-origen-111-hz.mp3',
-      'raiz-222': '/audio/02-raiz-222-hz.mp3',
-      'expansion-432': '/audio/03-expansion-432-hz.mp3',
-      'coherencia-432': '/audio/04-coherencia-432-hz.mp3',
-      'despertar-528': '/audio/05-despertar-528-hz.mp3',
+      'origen-111': '/audio/01-origen-111-hz.wav',
+      'raiz-222': '/audio/02-raiz-222-hz.wav',
+      'expansion-432': '/audio/03-expansion-432-hz.wav',
+      'coherencia-432': '/audio/03-expansion-432-hz.wav',
+      'despertar-528': '/audio/05-despertar-528-hz.wav',
     });
     for (const t of TRACKS) {
       expect(t.src).toBe(TRACK_SRC[t.id]);
     }
   });
 
-  it('las rutas no contienen base64 ni URLs externas', () => {
+  it('las rutas son archivos WAV locales, no datos embebidos ni URL externa', () => {
     for (const t of TRACKS) {
       expect(t.src.startsWith('data:')).toBe(false);
       expect(t.src).not.toContain('base64');
       expect(t.src).not.toMatch(/^https?:\/\//);
-      expect(t.src.startsWith('/audio/')).toBe(true);
-      expect(t.duration).toBe(75.05);
+      expect(t.src).toMatch(/^\/audio\/.+\.wav$/);
+      expect(t.duration).toBeGreaterThan(75.05);
     }
   });
 
-  it('cada ruta corresponde a un archivo existente en public/audio', () => {
+  it('cada ruta corresponde a un archivo WAV existente en public/audio', () => {
     for (const t of TRACKS) {
       const file = new URL(t.src.replace(/^\/audio\//, 'audio/'), PUBLIC_URL);
       expect(existsSync(file), `falta el archivo ${t.src}`).toBe(true);

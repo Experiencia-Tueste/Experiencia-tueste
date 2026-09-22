@@ -61,7 +61,7 @@ describe('useAudioPlayer (ciclo de vida del navegador)', () => {
       result.current.togglePlay();
     });
     expect(result.current.playing).toBe(true);
-    expect(audioEl.src).toContain(`/audio/01-origen-111-hz.mp3`);
+    expect(audioEl.src).toContain('/audio/01-origen-111-hz.wav');
 
     await act(async () => {
       result.current.togglePlay();
@@ -82,7 +82,7 @@ describe('useAudioPlayer (ciclo de vida del navegador)', () => {
     expect(result.current.trackId).toBe('raiz-222');
     expect(result.current.playing).toBe(true);
     expect(result.current.currentTime).toBe(0);
-    expect(audioEl.src).toContain('/audio/02-raiz-222-hz.mp3');
+    expect(audioEl.src).toContain('/audio/02-raiz-222-hz.wav');
   });
 
   it('togglePlay crea el grafo de audio en la primera interacción', async () => {
@@ -137,7 +137,7 @@ describe('useAudioPlayer (ciclo de vida del navegador)', () => {
     expect(result.current.trackId).toBe(RADIO_CHANNELS.find((c) => c.id === 'cafe')!.queue[0]);
   });
 
-  it('sin AudioContext el MP3 sigue reproduciéndose sin visualizador', async () => {
+  it('sin AudioContext el master WAV sigue reproduciéndose sin visualizador', async () => {
     const { result } = renderHook(() => useAudioPlayer());
 
     await act(async () => {
@@ -231,7 +231,7 @@ describe('useAudioPlayer (ciclo de vida del navegador)', () => {
     expect(result.current.playing).toBe(true);
   });
 
-  it('sin canal activa el fin de pista solo anuncia el final del preview', async () => {
+  it('sin canal al terminar una pista anuncia el final', async () => {
     const { result } = renderHook(() => useAudioPlayer());
 
     await act(async () => {
@@ -242,7 +242,7 @@ describe('useAudioPlayer (ciclo de vida del navegador)', () => {
     });
 
     expect(result.current.trackId).toBe(TRACKS[0].id);
-    expect(result.current.mensaje).toBe('Preview terminado.');
+    expect(result.current.mensaje).toBe('Pista terminada.');
   });
 
   it('refleja el progreso del audio (timeupdate y loadedmetadata)', async () => {

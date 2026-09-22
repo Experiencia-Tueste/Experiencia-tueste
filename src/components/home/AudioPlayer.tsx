@@ -65,8 +65,7 @@ export default function AudioPlayer({ player }: AudioPlayerProps) {
         <TrackList tracks={TRACKS} selectedId={trackId} playing={playing} onSelect={select} />
 
         <p className={styles.note} data-note>
-          Fragmentos de 75 s · las piezas completas viven en{' '}
-          <a href="#lanzamientos">la discografía</a> y en tus plataformas.
+          Masters WAV en alta calidad · se cargan al reproducir desde la radio Tueste.
         </p>
 
         <RadioDemo channelId={channelId} onSelectChannel={selectChannel} mensaje={mensaje} />

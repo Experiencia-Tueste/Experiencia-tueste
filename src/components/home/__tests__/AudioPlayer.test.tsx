@@ -43,12 +43,13 @@ describe('AudioPlayer (orden del master: lista → nota → demo → scrub → l
     expect(sigueA(scrub, live)).toBe(true);
   });
 
-  it('la nota de 75 s enlaza a la discografía (#lanzamientos)', () => {
+  it('la nota explica que el master se carga desde la radio', () => {
     const { container } = render(<AudioPlayer player={mockPlayer()} />);
 
-    const enlace = container.querySelector('[data-note] a');
-    expect(enlace).not.toBeNull();
-    expect(enlace).toHaveAttribute('href', '#lanzamientos');
+    const nota = container.querySelector('[data-note]');
+    expect(nota).not.toBeNull();
+    expect(nota?.textContent).toContain('Masters WAV en alta calidad');
+    expect(nota?.textContent).toContain('se cargan al reproducir');
   });
 
   it('el scrub es un input range accesible con el progreso de la pista', () => {

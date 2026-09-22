@@ -2,7 +2,14 @@ import 'server-only';
 
 import { z } from 'zod';
 
+import {
+  CHECKOUT_MODES,
+  DEFAULT_CHECKOUT_CONFIG,
+  type CheckoutConfig,
+  type CheckoutMode,
+} from '@/features/commerce/checkout';
 import type { PublicEnv } from './env-public';
+import { loadPaymentsServiceConfig } from './payments-env';
 
 /**
  * Contrato de configuración SERVER-ONLY (src/lib/config/env-server).
@@ -32,10 +39,65 @@ const SUPABASE_STORAGE_URL_SCHEMA = z
     message: 'la URL no debe contener espacios, corchetes ni formato Markdown',
   });
 
+const CHECKOUT_MODE_SCHEMA = z.enum(CHECKOUT_MODES);
+
+export const DEPLOYMENT_ENVIRONMENTS = ['local', 'preview', 'production'] as const;
+export type DeploymentEnvironment = (typeof DEPLOYMENT_ENVIRONMENTS)[number];
+
+const DEPLOYMENT_ENVIRONMENT_SCHEMA = z.enum(DEPLOYMENT_ENVIRONMENTS);
+
+/** Perfil explícito para que los fallbacks locales nunca se confundan con producción. */
+export function loadDeploymentEnvironment(env: PublicEnv = process.env): DeploymentEnvironment {
+  const rawEnvironment = env.TUESTE_ENV?.trim() || 'local';
+  const parsedEnvironment = DEPLOYMENT_ENVIRONMENT_SCHEMA.safeParse(rawEnvironment);
+  if (!parsedEnvironment.success) {
+    throw new Error(
+      `TUESTE_ENV no es válido: «${rawEnvironment}». Usa local, preview o production.`,
+    );
+  }
+
+  return parsedEnvironment.data;
+}
+
 export interface AdminStorageConfig {
   supabaseUrl: string;
   adminKey: string;
   bucket: string;
+}
+
+/** Configuración explícita del canal comercial visible en la experiencia. */
+export function loadCheckoutConfig(env: PublicEnv = process.env): CheckoutConfig {
+  const rawMode = env.CHECKOUT_MODE?.trim() || DEFAULT_CHECKOUT_CONFIG.mode;
+  const parsedMode = CHECKOUT_MODE_SCHEMA.safeParse(rawMode);
+  if (!parsedMode.success) {
+    throw new Error(
+      `CHECKOUT_MODE no es válido: «${rawMode}». Usa disabled, external_shopify, mercadopago_legacy o shopify.`,
+    );
+  }
+
+  const storeUrl = loadShopifyStoreUrl(env);
+  if (parsedMode.data === 'external_shopify' && !storeUrl) {
+    throw new Error(
+      'CHECKOUT_MODE=external_shopify requiere SHOPIFY_STORE_URL con una URL pública https:// válida.',
+    );
+  }
+
+  if (parsedMode.data === 'mercadopago_legacy' && !loadPaymentsServiceConfig(env)) {
+    throw new Error(
+      'CHECKOUT_MODE=mercadopago_legacy requiere PAYMENTS_SERVICE_URL y PAYMENTS_JWT_PRIVATE_KEY válidos.',
+    );
+  }
+
+  if (parsedMode.data === 'shopify') {
+    throw new Error(
+      'CHECKOUT_MODE=shopify está reservado para la integración nativa de Shopify y no puede activarse antes de completar su contrato operativo.',
+    );
+  }
+
+  return {
+    mode: parsedMode.data as CheckoutMode,
+    externalShopifyUrl: parsedMode.data === 'external_shopify' ? storeUrl : null,
+  };
 }
 
 /**
@@ -46,15 +108,22 @@ export interface AdminStorageConfig {
  * Open Graph y Twitter). Si está ausente o vacía, usa
  * `http://localhost:3000` exclusivamente como fallback local de
  * desarrollo/build. Si está presente pero no es una URL absoluta
- * válida, lanza un error claro.
+ * válida, lanza un error claro. En preview y production también exige una
+ * URL pública HTTPS; el fallback localhost solo existe en local.
  *
  * Antes de producción se configura `SITE_URL` con el dominio público
  * HTTPS real de Latinoamérica Hosting; no se hardcodea ningún dominio.
  */
 export function loadSiteUrl(env: PublicEnv = process.env): string {
+  const environment = loadDeploymentEnvironment(env);
   const raw = env.SITE_URL;
 
   if (typeof raw !== 'string' || raw.trim() === '') {
+    if (environment !== 'local') {
+      throw new Error(
+        `SITE_URL es obligatoria cuando TUESTE_ENV=${environment}. Define la URL pública HTTPS del despliegue.`,
+      );
+    }
     return 'http://localhost:3000';
   }
 
@@ -65,7 +134,21 @@ export function loadSiteUrl(env: PublicEnv = process.env): string {
     );
   }
 
-  return parsed.data;
+  const parsedUrl = new URL(parsed.data);
+  if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+    throw new Error('SITE_URL debe usar http:// o https://.');
+  }
+
+  if (environment !== 'local') {
+    const localHosts = new Set(['localhost', '127.0.0.1', '::1']);
+    if (parsedUrl.protocol !== 'https:' || localHosts.has(parsedUrl.hostname)) {
+      throw new Error(
+        `SITE_URL debe ser una URL pública HTTPS en TUESTE_ENV=${environment}; no uses localhost.`,
+      );
+    }
+  }
+
+  return parsedUrl.toString().replace(/\/$/, '');
 }
 
 /**

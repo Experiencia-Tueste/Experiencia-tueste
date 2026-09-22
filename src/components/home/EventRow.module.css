@@ -181,6 +181,97 @@
   outline-offset: 3px;
 }
 
+.requestForm {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 14px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(var(--cream-rgb), 0.12);
+}
+
+.requestFields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.requestFields label {
+  display: grid;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.08em;
+  color: rgba(var(--cream-rgb), 0.68);
+}
+
+.requestFields input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid rgba(var(--cream-rgb), 0.2);
+  border-radius: 8px;
+  background: rgba(var(--cream-rgb), 0.05);
+  color: var(--cream);
+  font: 0.86rem var(--font-sans);
+}
+
+.requestFields input:focus-visible {
+  outline: 2px solid var(--teal-bright);
+  outline-offset: 2px;
+  border-color: var(--teal-bright);
+}
+
+.consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: rgba(var(--cream-rgb), 0.72);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.consent input {
+  accent-color: var(--amber);
+  margin-top: 3px;
+}
+
+.requestActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.requestSubmit,
+.requestCancel {
+  padding: 9px 16px;
+  border-radius: 999px;
+  font: 700 0.78rem var(--font-sans);
+  cursor: pointer;
+}
+
+.requestSubmit {
+  border: 1px solid var(--amber);
+  background: var(--amber);
+  color: var(--ink);
+}
+
+.requestSubmit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.requestCancel {
+  border: 1px solid rgba(var(--cream-rgb), 0.24);
+  background: transparent;
+  color: var(--cream);
+}
+
+.requestSubmit:focus-visible,
+.requestCancel:focus-visible {
+  outline: 2px solid var(--teal-bright);
+  outline-offset: 3px;
+}
+
 /* ── Móvil: bloque vertical sin overflow horizontal ── */
 @media (max-width: 720px) {
   .row {
@@ -201,5 +292,17 @@
   .action {
     text-align: left;
     align-items: flex-start;
+  }
+
+  .requestFields {
+    grid-template-columns: 1fr;
+  }
+
+  .comment {
+    grid-column: auto;
+  }
+
+  .requestActions {
+    flex-wrap: wrap;
   }
 }

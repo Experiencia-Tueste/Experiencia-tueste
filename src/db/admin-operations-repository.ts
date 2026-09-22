@@ -142,6 +142,25 @@ export class DrizzleAdminOperationsRepository {
     const [row] = await tx.insert(marketListings).values(input).returning();
     return row;
   }
+  async findListingByIdForUpdate(id: string, tx: DbClient) {
+    await tx.execute(sql`SELECT id FROM private.market_listings WHERE id = ${id}::uuid FOR UPDATE`);
+    const [row] = await tx.select().from(marketListings).where(eq(marketListings.id, id)).limit(1);
+    return row ?? null;
+  }
+  async updateListing(
+    id: string,
+    vendorId: string,
+    input: Omit<typeof marketListings.$inferInsert, 'id' | 'vendorId' | 'createdBy' | 'createdAt'>,
+    actorId: string,
+    tx: DbClient,
+  ) {
+    const [row] = await tx
+      .update(marketListings)
+      .set({ ...input, vendorId, updatedBy: actorId, updatedAt: new Date() })
+      .where(and(eq(marketListings.id, id), eq(marketListings.vendorId, vendorId)))
+      .returning();
+    return row ?? null;
+  }
   async createOpportunity(input: typeof unityOpportunities.$inferInsert, tx: DbClient) {
     const [row] = await tx.insert(unityOpportunities).values(input).returning();
     return row;

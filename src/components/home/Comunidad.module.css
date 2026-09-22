@@ -60,6 +60,58 @@
   flex-wrap: wrap;
 }
 
+.preferences {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  text-align: left;
+}
+
+.preferences legend {
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.08em;
+  color: rgba(var(--cream-rgb), 0.68);
+}
+
+.preferenceGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 14px;
+  margin-top: 10px;
+}
+
+.preferenceGrid label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(var(--cream-rgb), 0.78);
+  font-size: 0.84rem;
+  text-transform: capitalize;
+}
+
+.preferenceGrid input,
+.consent input {
+  accent-color: var(--amber);
+}
+
+.consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  color: rgba(var(--cream-rgb), 0.72);
+  font-size: 0.78rem;
+  line-height: 1.4;
+  text-align: left;
+}
+
+.consent input {
+  margin-top: 3px;
+}
+
 .signup input {
   flex: 1;
   min-width: 200px;
@@ -100,6 +152,23 @@
   transition: 0.3s;
 }
 
+.withdraw {
+  display: block;
+  margin: 1rem auto 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink-soft, #8c8174);
+  cursor: pointer;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.withdraw:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
 .btn:hover {
   background: var(--paper);
   transform: translateY(-2px);
@@ -108,6 +177,11 @@
 .btn:focus-visible {
   outline: 2px solid var(--teal-bright);
   outline-offset: 3px;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .aviso {
@@ -222,5 +296,9 @@
   .signup input {
     min-width: 0;
     width: 100%;
+  }
+
+  .preferenceGrid {
+    grid-template-columns: 1fr;
   }
 }

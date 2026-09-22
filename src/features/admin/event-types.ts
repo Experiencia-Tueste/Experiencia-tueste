@@ -25,8 +25,18 @@ export type EventAttendeeRow = {
   createdAt: string;
 };
 
+export type EventEngagementSummary = {
+  id: string;
+  requesterName: string;
+  requesterEmail: string;
+  attendeeCount: number;
+  status: 'pending' | 'contacted' | 'closed';
+  createdAt: string;
+};
+
 export type AdminEventWorkspace = AdminEventRow & {
   attendees: EventAttendeeRow[];
+  requests: EventEngagementSummary[];
   reservedCount: number;
   checkedInCount: number;
 };

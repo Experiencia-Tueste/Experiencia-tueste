@@ -5,6 +5,7 @@ import { loadSiteUrl } from '@/lib/config/env-server';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { getAdminByEmail } from '@/lib/auth/authorization';
 import { postSignInDestination } from '@/features/customer-auth/post-sign-in';
+import { resumePendingEngagementAfterAuth } from '@/features/customer-auth/resume-pending';
 
 function publicRedirect(pathname: string, searchParams?: Record<string, string>) {
   const destination = new URL(pathname, loadSiteUrl());
@@ -18,6 +19,9 @@ function publicRedirect(pathname: string, searchParams?: Record<string, string>)
 
 async function redirectAuthenticatedUser(supabase: SupabaseClient, requestedPath: string | null) {
   const { data, error } = await supabase.auth.getUser();
+  if (!error && data.user?.id && data.user.email) {
+    await resumePendingEngagementAfterAuth({ id: data.user.id, email: data.user.email });
+  }
   const admin = error ? null : await getAdminByEmail(data.user?.email);
   const destination = postSignInDestination(admin, requestedPath);
   return publicRedirect(destination.pathname, destination.searchParams);

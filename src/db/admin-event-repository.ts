@@ -139,6 +139,17 @@ export class DrizzleAdminEventRepository {
     return mapAttendee(row);
   }
 
+  async findAttendeeByEventEmail(eventId: string, email: string, tx: DbClient) {
+    const [row] = await tx
+      .select()
+      .from(eventAttendees)
+      .where(
+        sql`${eventAttendees.eventId} = ${eventId}::uuid AND ${eventAttendees.email} = ${email}`,
+      )
+      .limit(1);
+    return row ? mapAttendee(row) : null;
+  }
+
   async checkIn(eventId: string, ticketCode: string, actorId: string, tx: DbClient) {
     const [row] = await tx
       .update(eventAttendees)

@@ -55,6 +55,31 @@ export const CHECK_IN_SCHEMA = z.object({
   reason: z.string().trim().min(3).max(300),
 });
 
+export const EVENT_CONFIRM_REQUEST_SCHEMA = z.object({
+  requestId: z.string().uuid(),
+  reason: z.string().trim().min(3).max(300),
+});
+
+const optionalFilter = <T extends z.ZodTypeAny>(schema: T) =>
+  z.preprocess(
+    (value) => (value === '' || value === undefined ? undefined : value),
+    schema.optional(),
+  );
+
+export const EVENT_FILTER_SCHEMA = z
+  .object({
+    status: optionalFilter(z.enum(ADMIN_EVENT_STATUS)),
+    city: optionalFilter(z.string().trim().max(120)),
+    from: optionalFilter(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)),
+    to: optionalFilter(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)),
+  })
+  .refine((filters) => !filters.from || !filters.to || filters.from <= filters.to, {
+    path: ['to'],
+    message: 'El rango de fechas no es válido.',
+  });
+
+export type EventFilters = z.infer<typeof EVENT_FILTER_SCHEMA>;
+
 const EVENT_STATUS_TRANSITIONS: ReadonlyArray<readonly [AdminEventStatus, AdminEventStatus]> = [
   ['draft', 'open'],
   ['open', 'waitlist'],

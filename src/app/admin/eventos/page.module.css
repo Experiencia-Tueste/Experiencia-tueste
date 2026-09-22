@@ -14,11 +14,16 @@
 
 .form,
 .compactForm,
+.inlineForm,
 .eventCard,
 .attendeeList {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.inlineForm {
+  align-items: flex-end;
 }
 
 .label {

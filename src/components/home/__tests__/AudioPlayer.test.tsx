@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { AudioPlayerResult } from '@/hooks/useAudioPlayer';
 import AudioPlayer from '../AudioPlayer';
@@ -20,6 +20,8 @@ function mockPlayer(overrides: Partial<AudioPlayerResult> = {}): AudioPlayerResu
     seek: vi.fn(),
     selectChannel: vi.fn(),
     play: vi.fn(),
+    playQueue: vi.fn(),
+    retry: vi.fn(),
     ...overrides,
   };
 }
@@ -63,10 +65,13 @@ describe('AudioPlayer (orden del master: lista → nota → demo → scrub → l
   });
 
   it('anuncia el error del reproductor en el área aria-live', () => {
-    render(<AudioPlayer player={mockPlayer({ error: 'No se pudo cargar el audio.' })} />);
+    render(
+      <AudioPlayer player={mockPlayer({ error: 'No se pudo cargar el audio.', retry: vi.fn() })} />,
+    );
 
     const live = document.querySelector('[data-live]');
     expect(live?.textContent).toContain('No se pudo cargar el audio.');
+    expect(screen.getByRole('button', { name: 'Reintentar' })).toBeInTheDocument();
   });
 
   it('sin duración conocida no muestra NaN en el progreso', () => {

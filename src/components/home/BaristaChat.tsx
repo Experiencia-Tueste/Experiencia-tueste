@@ -2,44 +2,35 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Sun from '../brand/Sun';
-import { CHAT_FLOW, recommend } from '@/features/barista';
+import { CHAT_FLOW, interpretFreeText, recommend } from '@/features/barista';
 import type { BaristaAnswers, Recommendation } from '@/features/barista';
 import type { TrackId } from '@/lib/audio';
 import RecommendationCard from './RecommendationCard';
 import styles from './BaristaChat.module.css';
-
-const AVISO_IA =
-  'Las consultas libres se habilitarán cuando se apruebe el proveedor de IA; por ahora elige una opción.';
-const MENSAJE_PLAYLIST = 'Playlist disponible próximamente.';
 
 interface Burbuja {
   quien: 'bot' | 'user';
   texto: string;
 }
 
-/** Ajustes posteriores a la carta (del mockup), con respuesta del bot. */
-const AJUSTES: ReadonlyArray<readonly [label: string, respuesta: string]> = [
-  ['Más dulce', 'Para más dulzor: baja 1–2 °C la temperatura y alarga ligeramente la extracción.'],
-  ['Más fuerte', 'Para más fuerza: sube la dosis de café o reduce el agua.'],
-  ['Menos ácido', 'Para menos acidez: muele un poco más grueso o baja la temperatura.'],
-];
-
 export interface BaristaChatProps {
-  /** Selecciona la pista recomendada en el reproductor (estado compartido). */
-  onSelect: (id: TrackId) => void;
+  /** Reproduce la pista recomendada en el reproductor global. */
+  onPlay: (id: TrackId) => void;
+  /** Reproduce la cola de playlist recomendada en el reproductor global. */
+  onPlayQueue: (ids: TrackId[]) => void;
 }
 
 /**
  * Chat del Barista Sonoro. Mantiene solo el estado local de la
  * conversación: burbujas, progreso, respuestas, carta y anuncios
  * aria-live. El flujo es determinista (CHAT_FLOW) y la recomendación se
- * delega en `recommend()` del feature barista. Sin temporizadores
- * ficticios ni APIs: el texto libre solo muestra un aviso accesible.
+ * delega en `recommend()`. El texto libre usa el intérprete determinista
+ * antes de ejecutar la recomendación.
  * `mensajeBot` es un anunciante aria-live dedicado que anuncia solo el
- * último mensaje nuevo del bot (preguntas siguientes, confirmación y
- * ajustes), sin repetir la carta ni los mensajes del usuario.
+ * último mensaje nuevo del bot (preguntas siguientes, confirmación e
+ * interpretación), sin repetir la carta ni los mensajes del usuario.
  */
-export default function BaristaChat({ onSelect }: BaristaChatProps) {
+export default function BaristaChat({ onPlay, onPlayQueue }: BaristaChatProps) {
   const [paso, setPaso] = useState(0);
   const [respuestas, setRespuestas] = useState<Partial<BaristaAnswers>>({});
   const [recomendacion, setRecomendacion] = useState<Recommendation | null>(null);
@@ -97,13 +88,28 @@ export default function BaristaChat({ onSelect }: BaristaChatProps) {
   };
 
   const enviarTexto = () => {
-    if (!texto.trim()) return;
-    setBurbujas((b) => [...b, { quien: 'user', texto: texto.trim() }]);
+    const libre = texto.trim();
+    if (!libre) return;
+    const interpretacion = interpretFreeText(libre);
+    const r = recommend(interpretacion.answers);
+    setRespuestas(interpretacion.answers);
     setTexto('');
-    setAnuncio(AVISO_IA);
+    setPaso(CHAT_FLOW.length);
+    setRecomendacion(r);
+    setBurbujas((b) => [
+      ...b,
+      { quien: 'user', texto: libre },
+      { quien: 'bot', texto: interpretacion.summary },
+      { quien: 'bot', texto: 'Listo. Esta es tu preparación recomendada para hoy.' },
+    ]);
+    setMensajeBot(interpretacion.summary);
   };
 
-  const manejarPlaylist = () => setAnuncio(MENSAJE_PLAYLIST);
+  const manejarPlaylist = () => {
+    if (!recomendacion) return;
+    onPlayQueue(recomendacion.playlist);
+    setAnuncio(`Playlist iniciada: ${recomendacion.playlist.length} piezas en cola.`);
+  };
 
   return (
     <div className={styles.consulta}>
@@ -133,9 +139,10 @@ export default function BaristaChat({ onSelect }: BaristaChatProps) {
 
         {recomendacion ? (
           <RecommendationCard
+            key={recomendacion.method.id}
             recommendation={recomendacion}
-            onSelect={onSelect}
-            onPlaylist={manejarPlaylist}
+            onPlay={onPlay}
+            onPlayQueue={manejarPlaylist}
           />
         ) : null}
       </div>
@@ -149,23 +156,6 @@ export default function BaristaChat({ onSelect }: BaristaChatProps) {
       <div className={styles.chips} role="group" aria-label="Opciones de respuesta">
         {recomendacion ? (
           <>
-            {AJUSTES.map(([label, respuesta]) => (
-              <button
-                type="button"
-                key={label}
-                className={styles.chip}
-                onClick={() => {
-                  setBurbujas((b) => [
-                    ...b,
-                    { quien: 'user', texto: label },
-                    { quien: 'bot', texto: respuesta },
-                  ]);
-                  setMensajeBot(respuesta);
-                }}
-              >
-                {label}
-              </button>
-            ))}
             <button
               type="button"
               className={`${styles.chip} ${styles.restart}`}

@@ -5,8 +5,10 @@ import SectionGhost from './SectionGhost';
 import styles from './BaristaSonoro.module.css';
 
 export interface BaristaSonoroProps {
-  /** Selecciona la pista recomendada en el reproductor (estado compartido). */
-  onSelect: (id: TrackId) => void;
+  /** Reproduce la pista recomendada en el reproductor global. */
+  onPlay: (id: TrackId) => void;
+  /** Reproduce la cola de la playlist recomendada. */
+  onPlayQueue: (ids: TrackId[]) => void;
 }
 
 /**
@@ -14,7 +16,7 @@ export interface BaristaSonoroProps {
  * El chat vive en BaristaChat; aquí se conserva la jerarquía editorial y
  * el aviso de que la propuesta no es una afirmación médica.
  */
-export default function BaristaSonoro({ onSelect }: BaristaSonoroProps) {
+export default function BaristaSonoro({ onPlay, onPlayQueue }: BaristaSonoroProps) {
   return (
     <section id="recetario" className={styles.section} aria-labelledby="barista-titulo">
       <SectionGhost number="04" />
@@ -36,7 +38,7 @@ export default function BaristaSonoro({ onSelect }: BaristaSonoroProps) {
         </p>
       </Reveal>
 
-      <BaristaChat onSelect={onSelect} />
+      <BaristaChat onPlay={onPlay} onPlayQueue={onPlayQueue} />
     </section>
   );
 }

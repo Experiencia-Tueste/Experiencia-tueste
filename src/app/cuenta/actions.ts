@@ -6,6 +6,7 @@ import { createServerSupabase } from '@/lib/supabase/server';
 import { customerCredentialsSchema } from '@/features/customer-auth/schemas';
 import { getAdminByEmail } from '@/lib/auth/authorization';
 import { postSignInDestination, safePostSignInPath } from '@/features/customer-auth/post-sign-in';
+import { resumePendingEngagementAfterAuth } from '@/features/customer-auth/resume-pending';
 
 export interface CustomerAuthState {
   status: 'idle' | 'error' | 'success';
@@ -79,6 +80,9 @@ export async function loginCustomerAction(
   }
 
   const { data: verified } = await supabase.auth.getUser();
+  if (verified.user?.id && verified.user.email) {
+    await resumePendingEngagementAfterAuth({ id: verified.user.id, email: verified.user.email });
+  }
   const admin = await getAdminByEmail(verified.user?.email);
   const destination = postSignInDestination(admin, formData.get('next'));
   redirect(destinationHref(destination.pathname, destination.searchParams));

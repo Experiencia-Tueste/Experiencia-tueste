@@ -88,6 +88,22 @@
   min-height: 1.2em;
 }
 
+.retry {
+  margin-left: 12px;
+  padding: 4px 9px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.retry:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 3px;
+}
+
 :global(body.day) .note {
   color: rgba(46, 42, 36, 0.6);
 }

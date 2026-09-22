@@ -1,13 +1,24 @@
 import { createOrGetCheckoutOrder } from '@/db/payment-repository';
 import { getProduct } from '@/features/commerce';
 import { checkoutRequestSchema } from '@/features/payments/schemas';
+import { loadCheckoutConfig } from '@/lib/config/env-server';
 import { loadPaymentsServiceConfig } from '@/lib/config/payments-env';
 import { createPaymentCheckout, PaymentServiceError } from '@/lib/payments/payment-service-client';
 import { createServerSupabase } from '@/lib/supabase/server';
+import { recordOperationalError } from '@/features/analytics/service';
+import { randomUUID } from 'node:crypto';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
+  const requestId = randomUUID();
+  const checkoutConfig = loadCheckoutConfig();
+  if (checkoutConfig.mode !== 'mercadopago_legacy') {
+    return Response.json(
+      { message: 'El checkout no está habilitado para este canal.' },
+      { status: 503 },
+    );
+  }
   const paymentsConfig = loadPaymentsServiceConfig();
   if (!paymentsConfig) {
     return Response.json(
@@ -71,11 +82,28 @@ export async function POST(request: Request) {
     return Response.json(checkout, { status: 201 });
   } catch (error) {
     if (error instanceof PaymentServiceError) {
-      return Response.json({ message: error.message, orderId: order.id }, { status: error.status });
+      void recordOperationalError({
+        requestId,
+        route: '/api/checkout',
+        operation: 'create_checkout',
+        status: error.status,
+        errorCode: 'payment_provider_rejected',
+      }).catch(() => undefined);
+      return Response.json(
+        { message: error.message, orderId: order.id },
+        { status: error.status, headers: { 'X-Request-Id': requestId } },
+      );
     }
+    void recordOperationalError({
+      requestId,
+      route: '/api/checkout',
+      operation: 'create_checkout',
+      status: 500,
+      errorCode: 'payment_provider_failed',
+    }).catch(() => undefined);
     return Response.json(
       { message: 'Ocurrio un error seguro al iniciar el pago.', orderId: order.id },
-      { status: 500 },
+      { status: 500, headers: { 'X-Request-Id': requestId } },
     );
   }
 }

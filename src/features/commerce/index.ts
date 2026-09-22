@@ -1,8 +1,8 @@
 /**
  * Feature: commerce
  * ---------------------------------------------------------------------
- * Catálogo, carrito y pedido. El checkout seguro se inicia desde el BFF
- * de Next.js y lo procesa el servicio privado de pagos con Mercado Pago.
+ * Catálogo y carrito de la experiencia. El checkout se resuelve mediante
+ * un gateway configurable; este módulo nunca decide qué proveedor cobrar.
  *
  * Regla del plan: el navegador presenta; el servidor decide. Los
  * precios finales y la validación de cupones viven en rutas de servidor.
@@ -33,7 +33,11 @@ export interface Product {
 export interface CartItem {
   productId: string;
   qty: number;
+  /** Reservado para variantes futuras sin cambiar el contrato del carrito. */
+  variantId?: string;
 }
+
+export const MAX_CART_QTY = 20;
 
 export interface OrderDraft {
   code: string;
@@ -113,30 +117,78 @@ export function getProduct(id: string): Product | undefined {
   return PRODUCTS.find((p) => p.id === id);
 }
 
+function isValidQty(qty: unknown): qty is number {
+  return typeof qty === 'number' && Number.isInteger(qty) && qty > 0;
+}
+
+function itemKey(item: Pick<CartItem, 'productId' | 'variantId'>) {
+  return `${item.productId}::${item.variantId ?? 'default'}`;
+}
+
+/** Recupera un carrito antiguo o dañado sin dejar entrar productos inválidos. */
+export function sanitizeCart(input: unknown): CartItem[] {
+  if (!Array.isArray(input)) return [];
+
+  const safe = new Map<string, CartItem>();
+  for (const value of input) {
+    if (typeof value !== 'object' || value === null) continue;
+    const item = value as Partial<CartItem>;
+    if (
+      typeof item.productId !== 'string' ||
+      !getProduct(item.productId) ||
+      !isValidQty(item.qty) ||
+      item.qty > MAX_CART_QTY ||
+      (item.variantId !== undefined && typeof item.variantId !== 'string')
+    ) {
+      continue;
+    }
+
+    const normalized = {
+      productId: item.productId,
+      qty: item.qty,
+      ...(item.variantId ? { variantId: item.variantId } : {}),
+    } satisfies CartItem;
+    const key = itemKey(normalized);
+    const current = safe.get(key);
+    safe.set(key, {
+      ...normalized,
+      qty: Math.min(MAX_CART_QTY, (current?.qty ?? 0) + normalized.qty),
+    });
+  }
+  return Array.from(safe.values());
+}
+
 /** Añade un producto al carrito (inmutable). */
 export function addToCart(items: CartItem[], productId: string, qty = 1): CartItem[] {
-  const existing = items.find((i) => i.productId === productId);
+  if (!getProduct(productId) || !isValidQty(qty)) return sanitizeCart(items);
+  const safeItems = sanitizeCart(items);
+  const existing = safeItems.find((i) => i.productId === productId);
   if (existing) {
-    return items.map((i) => (i.productId === productId ? { ...i, qty: i.qty + qty } : i));
+    return safeItems.map((i) =>
+      i.productId === productId ? { ...i, qty: Math.min(MAX_CART_QTY, i.qty + qty) } : i,
+    );
   }
-  return [...items, { productId, qty }];
+  return [...safeItems, { productId, qty: Math.min(MAX_CART_QTY, qty) }];
 }
 
 /** Cambia la cantidad (qty <= 0 elimina el ítem). */
 export function changeQty(items: CartItem[], productId: string, delta: number): CartItem[] {
-  return items
-    .map((i) => (i.productId === productId ? { ...i, qty: i.qty + delta } : i))
+  if (!Number.isInteger(delta) || !getProduct(productId)) return sanitizeCart(items);
+  return sanitizeCart(items)
+    .map((i) =>
+      i.productId === productId ? { ...i, qty: Math.min(MAX_CART_QTY, i.qty + delta) } : i,
+    )
     .filter((i) => i.qty > 0);
 }
 
 /** Número de unidades en el carrito. */
 export function cartCount(items: CartItem[]): number {
-  return items.reduce((acc, i) => acc + i.qty, 0);
+  return sanitizeCart(items).reduce((acc, i) => acc + i.qty, 0);
 }
 
 /** Total del carrito en COP (solo presentación; el servidor valida). */
 export function cartTotal(items: CartItem[]): number {
-  return items.reduce((acc, i) => {
+  return sanitizeCart(items).reduce((acc, i) => {
     const p = getProduct(i.productId);
     return acc + (p ? p.price * i.qty : 0);
   }, 0);

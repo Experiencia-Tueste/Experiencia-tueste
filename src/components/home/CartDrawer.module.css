@@ -73,6 +73,28 @@
   outline-offset: 2px;
 }
 
+.continue {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  border: 0;
+  background: none;
+  color: rgba(var(--cream-rgb), 0.72);
+  font: 0.76rem var(--font-sans);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.continue:hover {
+  color: var(--cream);
+}
+
+.continue:focus-visible {
+  outline: 2px solid var(--teal-bright);
+  outline-offset: 3px;
+}
+
 .body {
   flex: 1;
   overflow-y: auto;

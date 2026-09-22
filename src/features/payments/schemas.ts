@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { MAX_CART_QTY } from '@/features/commerce';
 
 export const checkoutRequestSchema = z.object({
   clientRequestId: z.string().uuid(),
@@ -6,7 +7,7 @@ export const checkoutRequestSchema = z.object({
     .array(
       z.object({
         productId: z.string().trim().min(1).max(80),
-        qty: z.number().int().min(1).max(20),
+        qty: z.number().int().min(1).max(MAX_CART_QTY),
       }),
     )
     .min(1)

@@ -28,7 +28,7 @@ Auditoría de botones, enlaces de acción y CTA. Categorías:
 | `release-spotify`           | Escuchar en Spotify               | `/experiencia` (ReleaseCard)                 | external          | `<a>` `_blank noreferrer noopener`                                        | Correcto           |
 | `release-compra`            | Compra próximamente               | `/experiencia` (ReleaseCard)                 | coming-soon       | `<button disabled>` + `data-commercial-intent="release-…"`                | Correcto           |
 | `merch-agregar`             | Agregar                           | `/experiencia` (Tienda)                      | local-ui          | `<button>` añade al carrito persistente                                   | Correcto           |
-| `merch-checkout`            | Pagar con Mercado Pago            | `/experiencia` (CartDrawer)                  | commercial-intent | Orden validada en servidor y redirección al checkout autenticado          | Correcto           |
+| `merch-checkout`            | Continuar en el canal configurado | `/experiencia` (CartDrawer)                  | commercial-intent | `CHECKOUT_MODE` explícito: desactivado, Shopify externo o BFF legado      | Correcto           |
 | `event-request`             | Reservar cupo / Entradas          | `/experiencia` (Eventos)                     | commercial-intent | Solicitud autenticada; el equipo confirma cupo antes de emitir reserva    | Correcto           |
 | `radio-request`             | Solicitar plan                    | `/experiencia` (Radio Origen)                | commercial-intent | Solicitud autenticada; no activa ni cobra una suscripción automáticamente | Correcto           |
 | `market-consulta`           | Consultar disponibilidad          | `/experiencia` (MercadoOrigen)               | commercial-intent | Solicitud autenticada visible para el equipo administrativo               | Correcto           |
@@ -49,5 +49,8 @@ Auditoría de botones, enlaces de acción y CTA. Categorías:
 - Enlaces externos con `target="_blank"` y `rel="noreferrer noopener"`.
 - Sin `href="#"`, sin `javascript:`, sin `window.open`, sin `alert`/`confirm`, sin handlers silenciosos.
 - Acciones comerciales con `data-commercial-intent` estable (release/merch/tree/availability).
-- El checkout de Tienda se crea en servidor y delega el cobro a Mercado Pago; el navegador no recibe credenciales de pago.
+- El checkout de Tienda usa `CHECKOUT_MODE` explícito. `disabled` no cobra;
+  `external_shopify` redirige a la tienda pública; `mercadopago_legacy`
+  conserva el BFF autenticado sin exponer credenciales al navegador;
+  `shopify` queda reservado para la integración nativa futura.
 - Comunidad, eventos, Radio y Mercado requieren una sesión validada en servidor, son idempotentes y se revisan en `/admin/contactos`.

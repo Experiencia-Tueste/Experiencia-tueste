@@ -7,6 +7,63 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 
+const PUBLIC_LISTINGS = [
+  {
+    id: '11111111-1111-4111-8111-111111111111',
+    slug: 'cafe-roble-11111111',
+    title: 'Café Roble',
+    vendorName: 'Finca Roble',
+    brand: 'Marca Roble',
+    category: 'Café tostado',
+    variety: 'Castillo',
+    process: 'Lavado',
+    origin: 'Quindío',
+    presentation: 'Bolsa 340 g',
+    weightGrams: 340,
+    inventory: 4,
+    priceCents: 4800000,
+    imageUrl: '/images/mercado/cafe-roble.webp',
+    delivery: 'Envío nacional',
+    traceability: 'Lote 001',
+  },
+  {
+    id: '22222222-2222-4222-8222-222222222222',
+    slug: 'cafe-campo-22222222',
+    title: 'Café Campo',
+    vendorName: 'Finca Campo',
+    brand: 'Marca Campo',
+    category: 'Café molido',
+    variety: 'Caturra',
+    process: 'Honey',
+    origin: 'Huila',
+    presentation: 'Bolsa 500 g',
+    weightGrams: 500,
+    inventory: 4,
+    priceCents: 5000000,
+    imageUrl: '/images/mercado/cafe-campo.webp',
+    delivery: 'Envío nacional',
+    traceability: 'Lote 002',
+  },
+  {
+    id: '33333333-3333-4333-8333-333333333333',
+    slug: 'cafe-sierra-33333333',
+    title: 'Café Sierra',
+    vendorName: 'Finca Sierra',
+    brand: 'Marca Sierra',
+    category: 'Café en verde',
+    variety: 'Typica',
+    process: 'Natural',
+    origin: 'Tolima',
+    presentation: 'Saco 1 kg',
+    weightGrams: 1000,
+    inventory: 4,
+    priceCents: 5200000,
+    imageUrl: '/images/mercado/cafe-sierra.webp',
+    delivery: 'Envío nacional',
+    traceability: 'Lote 003',
+  },
+];
+
 describe('Experiencia (metadata)', () => {
   it('expone la metadata explícita de la experiencia', () => {
     expect(metadata.title).toBe('Tueste · Origen Tostado');
@@ -208,7 +265,7 @@ describe('Página pública (CTA comerciales sin pagos)', () => {
   });
 
   it('la tienda y el mercado exponen intención comercial estable', () => {
-    render(<Home />);
+    render(<Home marketListings={PUBLIC_LISTINGS} />);
 
     expect(document.querySelectorAll('[data-commercial-intent^="merch-"]').length).toBeGreaterThan(
       0,
@@ -288,7 +345,7 @@ describe('Página pública (animación de entrada por scroll)', () => {
   });
 
   it('tienda, mercado y lanzamientos usan los assets locales integrados', () => {
-    render(<Home />);
+    render(<Home marketListings={PUBLIC_LISTINGS} />);
 
     const imgs = Array.from(
       document.querySelectorAll('#merch img, #mercado img, #lanzamientos img'),

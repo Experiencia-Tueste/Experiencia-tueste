@@ -2,11 +2,11 @@
  * Feature: events
  * ---------------------------------------------------------------------
  * Agenda pública de Origen Tostado (sección #eventos / «En Vivo»).
- * Datos del mockup: cuatro eventos con fecha visible, tipo, ciudad,
+ * Contrato público de eventos con fecha visible, tipo, ciudad,
  * lugar, hora opcional, precio opcional, estado explícito y CTA.
  * Lógica pura (sin DOM): estados, reservabilidad y mensajes accesibles.
- * Los estados son explícitos (few/open/wait/past), nunca calculados
- * según la fecha actual.
+ * Los fixtures al final del archivo solo sirven para pruebas; la agenda
+ * pública real llega desde administración.
  */
 
 export type EventStatus = 'few' | 'open' | 'wait' | 'past';
@@ -34,10 +34,15 @@ export interface EventItem {
   cta: string;
 }
 
+export interface EventRequestPayload {
+  attendeeCount: number;
+  city?: string;
+  comment?: string;
+  consent: true;
+}
+
 /**
- * Agenda del mockup (tueste.html, `const EVENTS`): cuatro eventos en
- * orden editorial. Solo `past` está cerrado; `few` señala últimos
- * cupos y `wait` lista de espera.
+ * Fixtures de prueba del mockup. No se usan como fuente de verdad pública.
  */
 export const EVENTS: readonly EventItem[] = [
   {
@@ -102,11 +107,24 @@ export const EVENTS: readonly EventItem[] = [
   },
 ];
 
-/** Estados con cupo abierto (o lista de espera): reservables. */
+/** Estados con cupo abierto (o lista de espera): reservables si no vencieron. */
 export const RESERVABLE: readonly EventStatus[] = ['few', 'open', 'wait'];
 
-/** True si el evento aún puede reservarse (todo menos `past`). */
-export const isReservable = (status: EventStatus): boolean => status !== 'past';
+export function eventEndDate(dateTime: string): Date {
+  return dateTime.includes('T') ? new Date(dateTime) : new Date(`${dateTime}T23:59:59.999`);
+}
+
+/** True si la fecha del evento ya terminó. */
+export function isEventPast(ev: Pick<EventItem, 'dateTime'>, now = new Date()): boolean {
+  const end = eventEndDate(ev.dateTime);
+  return Number.isNaN(end.getTime()) || end.getTime() < now.getTime();
+}
+
+/** Acepta el contrato antiguo por estado y el contrato público completo. */
+export function isReservable(eventOrStatus: EventItem | EventStatus, now = new Date()): boolean {
+  if (typeof eventOrStatus === 'string') return eventOrStatus !== 'past';
+  return eventOrStatus.status !== 'past' && !isEventPast(eventOrStatus, now);
+}
 
 /**
  * Mensaje de la acción de cupo: la solicitud no equivale a una reserva

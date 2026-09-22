@@ -2,7 +2,15 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { loadPublicConfig } from '../env-public';
-import { loadAdminStorageConfig, loadShopifyStoreUrl, loadSiteUrl } from '../env-server';
+import {
+  loadAdminStorageConfig,
+  loadCheckoutConfig,
+  loadDeploymentEnvironment,
+  loadShopifyStoreUrl,
+  loadSiteUrl,
+} from '../env-server';
+
+const TEST_PRIVATE_KEY = '-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----';
 
 /**
  * Pruebas del contrato de configuración. Nunca dependen del entorno
@@ -73,6 +81,31 @@ describe('loadSiteUrl (URL canónica del sitio)', () => {
   it('falla con error claro si SITE_URL no es una URL absoluta válida', () => {
     expect(() => loadSiteUrl({ SITE_URL: 'no-es-una-url' })).toThrow(/SITE_URL/);
   });
+
+  it('exige una URL pública HTTPS fuera del entorno local', () => {
+    expect(() => loadSiteUrl({ TUESTE_ENV: 'preview' })).toThrow(/SITE_URL/);
+    expect(() =>
+      loadSiteUrl({ TUESTE_ENV: 'preview', SITE_URL: 'http://preview.tueste.co' }),
+    ).toThrow(/HTTPS/);
+    expect(() =>
+      loadSiteUrl({ TUESTE_ENV: 'production', SITE_URL: 'https://localhost:3000' }),
+    ).toThrow(/localhost/);
+    expect(loadSiteUrl({ TUESTE_ENV: 'preview', SITE_URL: 'https://preview.tueste.co/' })).toBe(
+      'https://preview.tueste.co',
+    );
+  });
+});
+
+describe('loadDeploymentEnvironment (perfil de despliegue)', () => {
+  it('usa local por defecto y acepta los tres perfiles explícitos', () => {
+    expect(loadDeploymentEnvironment({})).toBe('local');
+    expect(loadDeploymentEnvironment({ TUESTE_ENV: 'preview' })).toBe('preview');
+    expect(loadDeploymentEnvironment({ TUESTE_ENV: 'production' })).toBe('production');
+  });
+
+  it('rechaza perfiles desconocidos', () => {
+    expect(() => loadDeploymentEnvironment({ TUESTE_ENV: 'staging' })).toThrow(/TUESTE_ENV/);
+  });
 });
 
 describe('loadShopifyStoreUrl (URL pública de la tienda)', () => {
@@ -93,6 +126,57 @@ describe('loadShopifyStoreUrl (URL pública de la tienda)', () => {
       /SHOPIFY_STORE_URL/,
     );
     expect(() => loadShopifyStoreUrl({ SHOPIFY_STORE_URL: 'http://tueste.com' })).toThrow(
+      /SHOPIFY_STORE_URL/,
+    );
+  });
+});
+
+describe('loadCheckoutConfig (canal comercial explícito)', () => {
+  it('usa disabled por defecto y no promete un proveedor', () => {
+    expect(loadCheckoutConfig({})).toEqual({
+      mode: 'disabled',
+      externalShopifyUrl: null,
+    });
+  });
+
+  it('permite el enlace externo de Shopify solo con URL válida', () => {
+    expect(
+      loadCheckoutConfig({
+        CHECKOUT_MODE: 'external_shopify',
+        SHOPIFY_STORE_URL: 'https://tueste.myshopify.com',
+      }),
+    ).toEqual({
+      mode: 'external_shopify',
+      externalShopifyUrl: 'https://tueste.myshopify.com',
+    });
+  });
+
+  it('activa el BFF legado solo con su configuración privada completa', () => {
+    expect(
+      loadCheckoutConfig({
+        CHECKOUT_MODE: 'mercadopago_legacy',
+        PAYMENTS_SERVICE_URL: 'http://localhost:8080',
+        PAYMENTS_JWT_PRIVATE_KEY: TEST_PRIVATE_KEY,
+      }),
+    ).toEqual({
+      mode: 'mercadopago_legacy',
+      externalShopifyUrl: null,
+    });
+    expect(() =>
+      loadCheckoutConfig({
+        CHECKOUT_MODE: 'mercadopago_legacy',
+        PAYMENTS_SERVICE_URL: 'http://localhost:8080',
+      }),
+    ).toThrow(/PAYMENTS_JWT_PRIVATE_KEY/);
+  });
+
+  it('mantiene Shopify nativo cerrado hasta que exista su contrato completo', () => {
+    expect(() => loadCheckoutConfig({ CHECKOUT_MODE: 'shopify' })).toThrow(/reservado/);
+  });
+
+  it('rechaza modo desconocido o externo sin tienda', () => {
+    expect(() => loadCheckoutConfig({ CHECKOUT_MODE: 'fake' })).toThrow(/CHECKOUT_MODE/);
+    expect(() => loadCheckoutConfig({ CHECKOUT_MODE: 'external_shopify' })).toThrow(
       /SHOPIFY_STORE_URL/,
     );
   });

@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { EVENTS } from '@/features/events';
-import type { EventItem } from '@/features/events';
+import type { EventItem, EventRequestPayload } from '@/features/events';
 import { loginPath, submitEngagement } from './engagement-client';
+import { trackAnalytics } from '@/features/analytics/client';
 import EventRow from './EventRow';
 import Reveal from './Reveal';
 import SectionGhost from './SectionGhost';
@@ -15,23 +15,26 @@ import styles from './Eventos.module.css';
  * Agenda editorial. Las acciones guardan una solicitud autenticada para
  * que el equipo confirme cupo y condiciones antes de emitir una reserva.
  */
-export default function Eventos() {
+export default function Eventos({ events = [] }: { events?: readonly EventItem[] }) {
   const [anuncio, setAnuncio] = useState<string | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const router = useRouter();
 
-  const handleReserva = async (ev: EventItem) => {
+  const handleReserva = async (ev: EventItem, payload: EventRequestPayload) => {
     setPendingId(ev.id);
     const result = await submitEngagement({
       type: 'event',
       reference: ev.id,
-      details: `${ev.title} · ${ev.city} · ${ev.dateTime}`,
+      payload,
     });
     setPendingId(null);
     if (result.kind === 'login') {
       setAnuncio('Inicia sesión con tu cuenta Tueste para solicitar un cupo.');
       router.push(loginPath('eventos'));
       return;
+    }
+    if (result.kind === 'ok') {
+      void trackAnalytics('event_request_submitted', { eventId: ev.id });
     }
     setAnuncio(result.message);
   };
@@ -62,9 +65,18 @@ export default function Eventos() {
 
       <Reveal>
         <div className={styles.events}>
-          {EVENTS.map((ev) => (
-            <EventRow key={ev.id} ev={ev} onReserva={handleReserva} loading={pendingId === ev.id} />
-          ))}
+          {events.length === 0 ? (
+            <p className={styles.empty}>Estamos preparando nuevas fechas. Vuelve pronto.</p>
+          ) : (
+            events.map((ev) => (
+              <EventRow
+                key={ev.id}
+                ev={ev}
+                onReserva={handleReserva}
+                loading={pendingId === ev.id}
+              />
+            ))
+          )}
         </div>
       </Reveal>
 

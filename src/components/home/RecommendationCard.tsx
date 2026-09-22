@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getTrack } from '@/features/audio';
-import type { Recommendation } from '@/features/barista';
+import { adjustRecipe, brewTotalSeconds, RECIPE_ADJUSTMENTS } from '@/features/barista';
+import type { RecipeAdjustmentId, Recommendation } from '@/features/barista';
 import type { TrackId } from '@/lib/audio';
 import styles from './RecommendationCard.module.css';
 
@@ -14,28 +15,111 @@ const PERFIL_LABELS: ReadonlyArray<readonly [key: string, label: string]> = [
 
 export interface RecommendationCardProps {
   recommendation: Recommendation;
-  /** Selecciona la pista recomendada en el reproductor (estado compartido). */
-  onSelect: (id: TrackId) => void;
-  /** Anuncia «Playlist disponible próximamente.» (aria-live del chat). */
-  onPlaylist: () => void;
+  /** Reproduce la pista recomendada en el reproductor global. */
+  onPlay: (id: TrackId) => void;
+  /** Reproduce la cola recomendada en el reproductor global. */
+  onPlayQueue: (ids: TrackId[]) => void;
 }
 
 /**
  * Carta del barista: método recomendado, receta, frecuencia y TrackId
  * asociado, perfil sensorial, mensaje del día, alternativa y pasos de
- * preparación expandibles (sin temporizador). «Tomar la frecuencia» es un
- * enlace semántico a #frecuencias que selecciona la pista recomendada.
+ * preparación expandibles. «Tomar la frecuencia» es un
+ * enlace semántico a #frecuencias que reproduce la pista recomendada.
  */
 export default function RecommendationCard({
   recommendation,
-  onSelect,
-  onPlaylist,
+  onPlay,
+  onPlayQueue,
 }: RecommendationCardProps) {
   const { method, alternative } = recommendation;
   const [pasosAbiertos, setPasosAbiertos] = useState(false);
+  const [methodView, setMethodView] = useState(method);
+  const [ajuste, setAjuste] = useState<string | null>(null);
+  const [timerStatus, setTimerStatus] = useState<'idle' | 'running' | 'paused' | 'done'>('idle');
+  const [elapsed, setElapsed] = useState(0);
+  const startedAtRef = useRef<number | null>(null);
+  const elapsedBaseRef = useRef(0);
 
-  const track = getTrack(method.trackId);
-  const folio = String(1000 + method.freq);
+  const track = getTrack(methodView.trackId);
+  const folio = String(1000 + methodView.freq);
+  const totalSeconds = brewTotalSeconds(methodView);
+
+  useEffect(() => {
+    if (timerStatus !== 'running' || startedAtRef.current === null) return;
+    const update = () => {
+      const next = Math.min(
+        totalSeconds,
+        elapsedBaseRef.current + (Date.now() - startedAtRef.current!) / 1000,
+      );
+      setElapsed(next);
+      if (next >= totalSeconds) {
+        startedAtRef.current = null;
+        elapsedBaseRef.current = totalSeconds;
+        setTimerStatus('done');
+      }
+    };
+    update();
+    const timer = window.setInterval(update, 250);
+    return () => window.clearInterval(timer);
+  }, [timerStatus, totalSeconds]);
+
+  const setElapsedAt = (next: number) => {
+    const clamped = Math.min(Math.max(next, 0), totalSeconds);
+    elapsedBaseRef.current = clamped;
+    setElapsed(clamped);
+    if (timerStatus === 'running') startedAtRef.current = Date.now();
+    if (clamped < totalSeconds && timerStatus === 'done') setTimerStatus('paused');
+  };
+
+  const currentStepIndex = methodView.steps.reduce((index, step, i) => {
+    const start = methodView.steps.slice(0, i).reduce((sum, item) => sum + (item.seconds ?? 0), 0);
+    return elapsed >= start ? i : index;
+  }, 0);
+
+  const startTimer = () => {
+    if (timerStatus === 'done') setElapsedAt(0);
+    startedAtRef.current = Date.now();
+    setTimerStatus('running');
+    setPasosAbiertos(true);
+  };
+
+  const pauseTimer = () => {
+    if (startedAtRef.current !== null) {
+      elapsedBaseRef.current = Math.min(
+        totalSeconds,
+        elapsedBaseRef.current + (Date.now() - startedAtRef.current) / 1000,
+      );
+      setElapsed(elapsedBaseRef.current);
+    }
+    startedAtRef.current = null;
+    setTimerStatus('paused');
+  };
+
+  const resetTimer = () => {
+    startedAtRef.current = null;
+    elapsedBaseRef.current = 0;
+    setElapsed(0);
+    setTimerStatus('idle');
+  };
+
+  const stepStart = (index: number) =>
+    methodView.steps
+      .slice(0, Math.max(0, index))
+      .reduce((sum, step) => sum + (step.seconds ?? 0), 0);
+
+  const adjust = (id: RecipeAdjustmentId) => {
+    const result = adjustRecipe(method, id);
+    setMethodView(result.method);
+    setAjuste(`Ajuste aplicado: ${result.changes.join(' · ')}.`);
+    resetTimer();
+  };
+
+  const restoreRecipe = () => {
+    setMethodView(method);
+    setAjuste('Receta original restaurada.');
+    resetTimer();
+  };
 
   return (
     <div className={styles.card}>
@@ -46,33 +130,33 @@ export default function RecommendationCard({
 
       <div className={styles.body}>
         <p className={styles.dx}>
-          Hoy tu café es <b>{method.name}</b> · origen sugerido: {method.origen}.
+          Hoy tu café es <b>{methodView.name}</b> · origen sugerido: {methodView.origen}.
         </p>
 
         <div className={styles.recipe}>
           <div>
             <span>Café</span>
-            <b>{method.coffee}</b>
+            <b>{methodView.coffee}</b>
           </div>
           <div>
             <span>Agua</span>
-            <b>{method.water}</b>
+            <b>{methodView.water}</b>
           </div>
           <div>
             <span>Temp.</span>
-            <b>{method.temp}</b>
+            <b>{methodView.temp}</b>
           </div>
           <div>
             <span>Molienda</span>
-            <b>{method.grind}</b>
+            <b>{methodView.grind}</b>
           </div>
           <div>
             <span>Tiempo</span>
-            <b>{method.time}</b>
+            <b>{methodView.time}</b>
           </div>
           <div>
             <span>Ratio</span>
-            <b>{method.ratio}</b>
+            <b>{methodView.ratio}</b>
           </div>
         </div>
 
@@ -82,9 +166,9 @@ export default function RecommendationCard({
           </span>
           <div className={styles.presc}>
             <b>
-              {method.freq} Hz · {method.estado}
+              {methodView.freq} Hz · {methodView.estado}
             </b>
-            <span>Frecuencia ritual · suena «{track?.title ?? method.trackId}»</span>
+            <span>Frecuencia ritual · suena «{track?.title ?? methodView.trackId}»</span>
           </div>
           <div className={styles.wave} aria-hidden="true">
             <i />
@@ -99,7 +183,11 @@ export default function RecommendationCard({
           {PERFIL_LABELS.map(([key, label]) => (
             <div className={styles.pf} key={key}>
               <span>{label}</span>
-              <i style={{ width: `${method.perfil[key as keyof typeof method.perfil] * 20}%` }} />
+              <i
+                style={{
+                  width: `${methodView.perfil[key as keyof typeof methodView.perfil] * 20}%`,
+                }}
+              />
             </div>
           ))}
         </div>
@@ -113,8 +201,8 @@ export default function RecommendationCard({
         <dl className={styles.dl}>
           <dt>Por qué</dt>
           <dd>
-            Esta preparación conecta con el estado de {method.estado}. La frecuencia {method.freq}{' '}
-            Hz acompaña la experiencia como guía ritual y emocional.
+            {recommendation.explanation.method} {recommendation.explanation.frequency} Las
+            frecuencias acompañan la experiencia como guía ritual y emocional.
           </dd>
           <dt>✦ Mensaje del día</dt>
           <dd>{method.message}</dd>
@@ -125,7 +213,7 @@ export default function RecommendationCard({
         <a
           className={`${styles.btn} ${styles.play}`}
           href="#frecuencias"
-          onClick={() => onSelect(method.trackId)}
+          onClick={() => onPlay(methodView.trackId)}
         >
           <span aria-hidden="true">▶</span> Tomar la frecuencia
         </a>
@@ -137,14 +225,59 @@ export default function RecommendationCard({
         >
           <span aria-hidden="true">⏱</span> Preparar guiado
         </button>
-        <button type="button" className={`${styles.btn} ${styles.save}`} onClick={onPlaylist}>
-          ♪ Playlist
+        <button
+          type="button"
+          className={`${styles.btn} ${styles.save}`}
+          onClick={() => onPlayQueue(recommendation.playlist)}
+        >
+          ♪ Reproducir playlist
         </button>
       </div>
 
-      {pasosAbiertos ? (
+      {pasosAbiertos || timerStatus !== 'idle' ? (
         <ol className={styles.steps}>
-          {method.steps.map((s, i) => (
+          <li className={styles.timer} role="timer" aria-label="Temporizador de preparación">
+            <div className={styles.timerHead}>
+              <b>Preparación guiada</b>
+              <span>
+                {Math.floor(elapsed / 60)}:{String(Math.floor(elapsed % 60)).padStart(2, '0')} /{' '}
+                {Math.floor(totalSeconds / 60)}:{String(totalSeconds % 60).padStart(2, '0')}
+              </span>
+            </div>
+            <strong>
+              Paso {currentStepIndex + 1}: {methodView.steps[currentStepIndex]?.name}
+            </strong>
+            <div className={styles.timerActions}>
+              {timerStatus === 'running' ? (
+                <button type="button" onClick={pauseTimer}>
+                  Pausar
+                </button>
+              ) : (
+                <button type="button" onClick={startTimer}>
+                  {timerStatus === 'paused'
+                    ? 'Continuar'
+                    : timerStatus === 'done'
+                      ? 'Reiniciar'
+                      : 'Iniciar'}
+                </button>
+              )}
+              <button type="button" onClick={() => setElapsedAt(stepStart(currentStepIndex - 1))}>
+                Retroceder
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  setElapsedAt(stepStart(Math.min(currentStepIndex + 1, methodView.steps.length)))
+                }
+              >
+                Avanzar
+              </button>
+              <button type="button" onClick={resetTimer}>
+                Reiniciar
+              </button>
+            </div>
+          </li>
+          {methodView.steps.map((s, i) => (
             <li key={i}>
               <b>{s.name}</b>
               <span>{s.description}</span>
@@ -153,6 +286,23 @@ export default function RecommendationCard({
           ))}
         </ol>
       ) : null}
+
+      <div className={styles.adjustments} aria-label="Ajustes de la receta">
+        <span>Ajustar receta</span>
+        {RECIPE_ADJUSTMENTS.map((option) => (
+          <button type="button" key={option.id} onClick={() => adjust(option.id)}>
+            {option.label}
+          </button>
+        ))}
+        {methodView !== method ? (
+          <button type="button" onClick={restoreRecipe}>
+            Restaurar
+          </button>
+        ) : null}
+        <p role="status" aria-live="polite">
+          {ajuste ?? '\u00A0'}
+        </p>
+      </div>
 
       <p className={styles.foot}>
         Las frecuencias son una capa artística, ritual y emocional de la experiencia Tueste; no son

@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic';
 /** Bandeja privada de solicitudes enviadas desde Tueste Experiencia. */
 export default async function ContactosPage() {
   const admin = await requireCapability('crm.read');
-  const requests = await getEngagementRequests();
+  const requests = await getEngagementRequests(admin);
   const canManage = admin.capabilities.includes('crm.manage');
 
   return (

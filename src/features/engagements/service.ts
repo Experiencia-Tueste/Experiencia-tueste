@@ -10,6 +10,7 @@ import { getPublicMarketRepository } from '@/db/public-market-repository';
 import { getDb } from '@/db/client';
 import type { DbClient } from '@/db/db-types';
 import { getCurrentAdmin } from '@/lib/auth/authorization';
+import type { CurrentAdmin } from '@/features/admin/authorization-core';
 import { parseAuditEntry } from '@/features/admin/audit';
 import { isEventPast } from '@/features/events';
 import { RADIO_PLANS } from '@/features/radio';
@@ -507,8 +508,23 @@ export async function changeMarketApplicationStage(input: unknown) {
   });
 }
 
-export async function getEngagementRequests() {
-  return getEngagementRepository().list();
+/**
+ * Bandeja de CRM. `crm.read` por sí solo (rol `vendedor`, `lector`) NO da
+ * visibilidad de toda la plataforma: solo `crm.manage` (operador/admin/owner)
+ * ve todas las solicitudes. Sin ese permiso, el caller solo ve sus propias
+ * solicitudes de vendedor ya vinculadas (`marketVendorId === admin.vendorId`)
+ * — nunca asistentes a eventos, miembros de comunidad, leads de Radio Origen
+ * ni solicitudes de otros vendedores. Un `vendedor` sin vendorId resuelto no
+ * ve nada.
+ */
+export async function getEngagementRequests(admin: CurrentAdmin) {
+  const requests = await getEngagementRepository().list();
+  if (admin.capabilities.includes('crm.manage')) return requests;
+  if (!admin.vendorId) return [];
+  const vendorId = admin.vendorId;
+  return requests.filter(
+    (request) => request.type === 'market' && request.marketVendorId === vendorId,
+  );
 }
 
 export async function changeEngagementStatus(input: unknown) {

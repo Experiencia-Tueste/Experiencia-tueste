@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   getCommunityConsent: vi.fn(),
   saveCommunityConsent: vi.fn(),
   withdrawCommunityConsent: vi.fn(),
+  checkCommunityConsentRateLimit: vi.fn(),
 }));
 
 vi.mock('@/lib/supabase/server', () => ({ createServerSupabase: mocks.createServerSupabase }));
@@ -13,6 +14,9 @@ vi.mock('@/features/community/consent-service', () => ({
   getCommunityConsent: mocks.getCommunityConsent,
   saveCommunityConsent: mocks.saveCommunityConsent,
   withdrawCommunityConsent: mocks.withdrawCommunityConsent,
+}));
+vi.mock('@/features/community/rate-limit', () => ({
+  checkCommunityConsentRateLimit: mocks.checkCommunityConsentRateLimit,
 }));
 
 const user = { id: '20ccda8d-1346-4af8-bade-5cc870bd31ce', email: 'ana@tueste.co' };
@@ -36,6 +40,10 @@ describe('/api/community/consent', () => {
       requesterUserId: user.id,
       consentStatus: 'active',
       preferences: ['events'],
+    });
+    mocks.checkCommunityConsentRateLimit.mockResolvedValue({
+      allowed: true,
+      retryAfterSeconds: 0,
     });
   });
 
@@ -71,5 +79,21 @@ describe('/api/community/consent', () => {
     const response = await DELETE();
     expect(response.status).toBe(200);
     expect(mocks.withdrawCommunityConsent).toHaveBeenCalledWith(user.id);
+  });
+
+  it('rechaza con 429 cuando se excede el límite por usuario, en PUT y DELETE', async () => {
+    mocks.checkCommunityConsentRateLimit.mockResolvedValue({
+      allowed: false,
+      retryAfterSeconds: 12,
+    });
+
+    const putResponse = await PUT(request({ preferences: ['coffee'], consent: true }));
+    expect(putResponse.status).toBe(429);
+    expect(putResponse.headers.get('Retry-After')).toBe('12');
+    expect(mocks.saveCommunityConsent).not.toHaveBeenCalled();
+
+    const deleteResponse = await DELETE();
+    expect(deleteResponse.status).toBe(429);
+    expect(mocks.withdrawCommunityConsent).not.toHaveBeenCalled();
   });
 });

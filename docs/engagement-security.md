@@ -13,8 +13,11 @@ memoria de una sola instancia:
 - si el bucket o la base no están disponibles, la ruta falla cerrado con
   `503` y no intenta escribir la solicitud.
 
-El origen se obtiene de `x-forwarded-for` o `x-real-ip`. El proveedor debe
-limpiar y establecer esos headers; no se deben aceptar como identidad ni
+El origen se obtiene del ÚLTIMO salto de `x-forwarded-for` (el que agrega el
+proxy de borde más cercano al contenedor, no el primero, que el cliente puede
+falsificar libremente) o de `x-real-ip`. Supuesto asumido para Railway con un
+único proxy de borde delante del contenedor — pendiente de confirmación contra
+la infraestructura real. No se deben aceptar estos valores como identidad ni
 registrar en logs. La tabla y los buckets no se exponen a `anon` ni
 `authenticated`.
 

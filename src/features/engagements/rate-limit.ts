@@ -21,11 +21,32 @@ export interface EngagementRateLimitDecision {
   retryAfterSeconds: number;
 }
 
-/** Identificador de origen para el proxy confiable; nunca se registra en logs. */
+/**
+ * Identificador de origen para el proxy confiable; nunca se registra en logs.
+ *
+ * `X-Forwarded-For` es una lista donde cada proxy AÑADE su propia vista del
+ * cliente al final de la cadena en vez de sobrescribirla. El primer valor lo
+ * puede fijar libremente quien hace la petición (spoofable); el ÚLTIMO valor
+ * es el que agrega el proxy más cercano al servidor, que el cliente no puede
+ * falsificar salvo que ese proxy reenvíe headers sin tocarlos.
+ *
+ * Supuesto asumido para este despliegue (Railway, un único proxy de borde
+ * delante del contenedor — ver docs/deployment-latinoamerica-hosting.md):
+ * el ÚLTIMO salto de `X-Forwarded-For` es el que agrega ese proxy y es
+ * confiable; los anteriores no lo son. Esto NO está confirmado contra el
+ * contrato real de la infraestructura — pendiente de verificación por Rocha.
+ * Si Railway antepusiera otro balanceador delante de su proxy de borde, este
+ * supuesto dejaría de ser válido y habría que ajustar el hop de confianza.
+ */
 export function requestOrigin(request: Request): string {
-  const forwarded = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
+  const forwardedHeader = request.headers.get('x-forwarded-for');
+  const lastHop = forwardedHeader
+    ?.split(',')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .pop();
   const real = request.headers.get('x-real-ip')?.trim();
-  return (forwarded || real || 'unknown').slice(0, 120);
+  return (lastHop || real || 'unknown').slice(0, 120);
 }
 
 function retryAfterSeconds(now: Date, windowStartedAt: Date) {

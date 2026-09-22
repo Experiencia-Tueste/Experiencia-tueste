@@ -30,6 +30,7 @@ import {
   canTransitionMarket,
   canTransitionTree,
   canTransitionUnity,
+  validateMarketImage,
 } from './operations-schemas';
 import type { DbClient } from '@/db/db-types';
 import type { AdminCapability } from './permissions';
@@ -139,6 +140,7 @@ export async function createMarketListing(input: unknown) {
   const admin = await requireManage('market.manage');
   const parsed = MARKET_LISTING_CREATE_SCHEMA.parse(input);
   const { reason, ...record } = parsed;
+  validateMarketImage(record);
   return getDb().transaction(async (tx) => {
     const row = await getAdminOperationsRepository().createListing(
       {
@@ -192,6 +194,7 @@ export async function createVendorListing(input: unknown) {
   if (!admin.vendorId) throw new Error('403: no hay un vendedor vinculado a esta cuenta.');
   const parsed = MARKET_LISTING_SELF_CREATE_SCHEMA.parse(input);
   const { reason, ...record } = parsed;
+  validateMarketImage({ ...record, vendorId: admin.vendorId });
   return getDb().transaction(async (tx) => {
     const row = await getAdminOperationsRepository().createListing(
       {
@@ -221,6 +224,7 @@ export async function updateVendorListing(input: unknown) {
   if (!admin.vendorId) throw new Error('403: no hay un vendedor vinculado a esta cuenta.');
   const parsed = MARKET_LISTING_UPDATE_SCHEMA.parse(input);
   const { id, reason, ...record } = parsed;
+  validateMarketImage({ ...record, vendorId: admin.vendorId });
   return getDb().transaction(async (tx) => {
     const repository = getAdminOperationsRepository();
     const current = await repository.findListingByIdForUpdate(id, tx);

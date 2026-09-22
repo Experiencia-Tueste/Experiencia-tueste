@@ -29,7 +29,7 @@ export async function POST(request: Request) {
   let rateLimit;
   try {
     rateLimit = await checkEngagementRateLimit({
-      origin: requestOrigin(request),
+      origin: requestOrigin(request.headers),
       userId: error || !user?.id ? undefined : user.id,
     });
   } catch {

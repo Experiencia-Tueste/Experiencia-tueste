@@ -14,7 +14,7 @@ export async function POST(request: Request) {
 
   let rateLimit;
   try {
-    rateLimit = await checkAnalyticsRateLimit(requestOrigin(request));
+    rateLimit = await checkAnalyticsRateLimit(requestOrigin(request.headers));
   } catch {
     // Falla cerrado: si el bucket no está disponible, no se escribe el evento.
     return NextResponse.json({ message: 'Analítica no disponible.' }, { status: 503 });

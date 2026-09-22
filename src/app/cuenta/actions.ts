@@ -1,12 +1,18 @@
 'use server';
 
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 import { loadSiteUrl } from '@/lib/config/env-server';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { customerCredentialsSchema } from '@/features/customer-auth/schemas';
 import { getAdminByEmail } from '@/lib/auth/authorization';
 import { postSignInDestination, safePostSignInPath } from '@/features/customer-auth/post-sign-in';
 import { resumePendingEngagementAfterAuth } from '@/features/customer-auth/resume-pending';
+import { requestOrigin } from '@/features/engagements/rate-limit';
+import {
+  checkCustomerLoginRateLimit,
+  checkCustomerRegisterRateLimit,
+} from '@/features/customer-auth/rate-limit';
 
 export interface CustomerAuthState {
   status: 'idle' | 'error' | 'success';
@@ -59,6 +65,43 @@ function credentialsFrom(formData: FormData) {
   });
 }
 
+/**
+ * `null` si está dentro del límite; un `CustomerAuthState` de error listo
+ * para devolver si no. El origen sale de `X-Real-IP` (ver
+ * `requestOrigin`), nunca de un header falsificable por el cliente.
+ */
+async function loginRateLimitOrNull(email: string): Promise<CustomerAuthState | null> {
+  let rateLimit;
+  try {
+    rateLimit = await checkCustomerLoginRateLimit(requestOrigin(await headers()), email);
+  } catch {
+    return { status: 'error', message: 'El acceso de clientes aún no está disponible.' };
+  }
+  if (!rateLimit.allowed) {
+    return {
+      status: 'error',
+      message: `Demasiados intentos. Inténtalo de nuevo en ${rateLimit.retryAfterSeconds} segundos.`,
+    };
+  }
+  return null;
+}
+
+async function registerRateLimitOrNull(email: string): Promise<CustomerAuthState | null> {
+  let rateLimit;
+  try {
+    rateLimit = await checkCustomerRegisterRateLimit(requestOrigin(await headers()), email);
+  } catch {
+    return { status: 'error', message: 'El registro de clientes aún no está disponible.' };
+  }
+  if (!rateLimit.allowed) {
+    return {
+      status: 'error',
+      message: `Demasiados intentos. Inténtalo de nuevo en ${rateLimit.retryAfterSeconds} segundos.`,
+    };
+  }
+  return null;
+}
+
 export async function loginCustomerAction(
   _previousState: CustomerAuthState,
   formData: FormData,
@@ -67,6 +110,9 @@ export async function loginCustomerAction(
   if (!parsed.success) {
     return { status: 'error', message: parsed.error.issues[0]?.message ?? 'Revisa los datos.' };
   }
+
+  const rateLimited = await loginRateLimitOrNull(parsed.data.email);
+  if (rateLimited) return rateLimited;
 
   const supabase = await createServerSupabase();
   if (!supabase) {
@@ -96,6 +142,9 @@ export async function registerCustomerAction(
   if (!parsed.success) {
     return { status: 'error', message: parsed.error.issues[0]?.message ?? 'Revisa los datos.' };
   }
+
+  const rateLimited = await registerRateLimitOrNull(parsed.data.email);
+  if (rateLimited) return rateLimited;
 
   const supabase = await createServerSupabase();
   if (!supabase) {

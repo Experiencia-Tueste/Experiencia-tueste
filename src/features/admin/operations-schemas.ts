@@ -17,6 +17,54 @@ export const BACKSTAGE_STATUSES = [
 ] as const;
 export const MARKET_IMAGE_MAX_BYTES = 5_000_000;
 
+/** Extensiones de imagen permitidas para listings de mercado y su content-type real esperado en Storage. */
+export const MARKET_IMAGE_CONTENT_TYPES = {
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
+} as const;
+
+export type MarketImageExtension = keyof typeof MARKET_IMAGE_CONTENT_TYPES;
+
+const MARKET_IMAGE_EXTENSION_PATTERN = /\.(jpg|jpeg|png|webp)$/i;
+
+/** Extensión de imagen de mercado válida (minúsculas), o `null` si no coincide. */
+export function marketImageExtension(path: string): MarketImageExtension | null {
+  const match = MARKET_IMAGE_EXTENSION_PATTERN.exec(path);
+  if (!match) return null;
+  return match[1].toLowerCase() as MarketImageExtension;
+}
+
+/** Content-type real que Storage debe reportar para una ruta de imagen dada, o `null` si la extensión no es válida. */
+export function expectedMarketImageContentType(path: string): string | null {
+  const extension = marketImageExtension(path);
+  return extension ? MARKET_IMAGE_CONTENT_TYPES[extension] : null;
+}
+
+/** Solicitud de un vendedor para obtener una URL firmada de subida de imagen. */
+export const VENDOR_IMAGE_UPLOAD_REQUEST_SCHEMA = z.object({
+  filename: z
+    .string()
+    .trim()
+    .min(1)
+    .max(255)
+    .refine((value) => marketImageExtension(value) !== null, {
+      message: 'la imagen debe ser JPG, PNG o WebP.',
+    }),
+  mimeType: z
+    .string()
+    .trim()
+    .min(1)
+    .max(120)
+    .refine((value) => (Object.values(MARKET_IMAGE_CONTENT_TYPES) as string[]).includes(value), {
+      message: 'tipo de archivo no permitido; usa JPG, PNG o WebP.',
+    }),
+  sizeBytes: z.coerce.number().int().min(1).max(MARKET_IMAGE_MAX_BYTES),
+});
+
+export type VendorImageUploadRequestInput = z.infer<typeof VENDOR_IMAGE_UPLOAD_REQUEST_SCHEMA>;
+
 const marketProductFields = {
   title: z.string().trim().min(2).max(180),
   brand: z.string().trim().min(2).max(180),
@@ -207,7 +255,7 @@ export function validateMarketImage(input: {
   if (!path.startsWith(expectedPrefix) || path.includes('..') || path.includes('?')) {
     throw new Error('400: la imagen no pertenece a la ruta del vendedor.');
   }
-  if (!/\.(?:jpg|jpeg|png|webp)$/i.test(path)) {
+  if (marketImageExtension(path) === null) {
     throw new Error('400: la imagen debe ser JPG, PNG o WebP.');
   }
 }

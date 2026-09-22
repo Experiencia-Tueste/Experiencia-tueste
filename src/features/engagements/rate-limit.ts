@@ -42,8 +42,8 @@ export interface EngagementRateLimitDecision {
  * local, donde no hay proxy de Railway por delante) se cae a `'unknown'`,
  * que agrupa ese tráfico en un único balde de rate limit en vez de fallar.
  */
-export function requestOrigin(request: Request): string {
-  const real = request.headers.get('x-real-ip')?.trim();
+export function requestOrigin(headers: Headers): string {
+  const real = headers.get('x-real-ip')?.trim();
   return (real || 'unknown').slice(0, 120);
 }
 

@@ -8,6 +8,7 @@ import { getDb } from '@/db/client';
 import { getCurrentAdmin } from '@/lib/auth/authorization';
 import type { CurrentAdmin } from './authorization-core';
 import { parseAuditEntry, type AuditAction } from './audit';
+import { assertMarketListingImageStored } from './market-image-service';
 import {
   AUCTION_BID_SCHEMA,
   AUCTION_CREATE_SCHEMA,
@@ -175,6 +176,9 @@ export async function changeMarketListingStatus(input: unknown) {
       throw new Error('409: la publicación cambió de estado o ya no existe.');
     }
     if (parsed.to === 'published') assertMarketListingComplete(current);
+    if (parsed.to === 'review' || parsed.to === 'published') {
+      await assertMarketListingImageStored(current);
+    }
     const row = await repository.setListingStatus(parsed.id, parsed.from, parsed.to, admin.id, tx);
     if (!row) throw new Error('409: la publicación cambió de estado o ya no existe.');
     await getAdminRepository().appendAudit(
@@ -265,6 +269,7 @@ export async function submitVendorListingForReview(input: unknown) {
     }
     if (current.status !== 'draft') throw new Error('409: solo un borrador puede ir a revisión.');
     assertMarketListingComplete(current);
+    await assertMarketListingImageStored(current);
     const row = await repository.setListingStatus(current.id, 'draft', 'review', admin.id, tx);
     if (!row) throw new Error('409: la publicación cambió mientras se enviaba a revisión.');
     await getAdminRepository().appendAudit(

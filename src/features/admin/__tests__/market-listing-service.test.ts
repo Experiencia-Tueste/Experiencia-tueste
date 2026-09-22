@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   },
   appendAudit: vi.fn(),
   findVendorByUserId: vi.fn(),
+  assertMarketListingImageStored: vi.fn(),
 }));
 
 vi.mock('@/db/client', () => ({
@@ -28,6 +29,9 @@ vi.mock('@/db/admin-identity-repository', () => ({
 }));
 vi.mock('@/db/admin-operations-repository', () => ({
   getAdminOperationsRepository: () => mocks.repository,
+}));
+vi.mock('../market-image-service', () => ({
+  assertMarketListingImageStored: mocks.assertMarketListingImageStored,
 }));
 
 import {
@@ -104,6 +108,7 @@ describe('operación de productos del vendedor', () => {
       ],
     });
     mocks.findVendorByUserId.mockResolvedValue({ id: SELLER.vendorId, name: 'Finca Roble' });
+    mocks.assertMarketListingImageStored.mockResolvedValue(undefined);
   });
 
   it('fuerza el vendorId de la sesión al crear un borrador', async () => {
@@ -191,5 +196,64 @@ describe('operación de productos del vendedor', () => {
       }),
     ).rejects.toThrow('producto está incompleto');
     expect(mocks.repository.setListingStatus).not.toHaveBeenCalled();
+  });
+
+  it('no envía a revisión un listing cuya imagen declarada no existe en Storage', async () => {
+    mocks.repository.findListingByIdForUpdate.mockResolvedValue({
+      ...LISTING,
+      imagePath: `vendors/${SELLER.vendorId}/foto.webp`,
+      imageSizeBytes: 1000,
+    });
+    mocks.assertMarketListingImageStored.mockRejectedValue(
+      new Error('400: la imagen declarada no existe en Storage.'),
+    );
+
+    await expect(
+      submitVendorListingForReview({ id: LISTING.id, reason: 'Envío a moderación' }),
+    ).rejects.toThrow('no existe en Storage');
+    expect(mocks.assertMarketListingImageStored).toHaveBeenCalledWith(
+      expect.objectContaining({ imagePath: `vendors/${SELLER.vendorId}/foto.webp` }),
+    );
+    expect(mocks.repository.setListingStatus).not.toHaveBeenCalled();
+  });
+
+  it('no publica un listing cuya imagen declarada no existe en Storage', async () => {
+    mocks.getCurrentAdmin.mockResolvedValue(OWNER);
+    mocks.repository.findListingByIdForUpdate.mockResolvedValue({
+      ...LISTING,
+      status: 'review',
+      imagePath: `vendors/${SELLER.vendorId}/foto.webp`,
+      imageSizeBytes: 1000,
+    });
+    mocks.assertMarketListingImageStored.mockRejectedValue(
+      new Error('400: el tamaño real de la imagen no coincide con el declarado.'),
+    );
+
+    await expect(
+      changeMarketListingStatus({
+        id: LISTING.id,
+        from: 'review',
+        to: 'published',
+        reason: 'Publicación de prueba',
+      }),
+    ).rejects.toThrow('tamaño real');
+    expect(mocks.repository.setListingStatus).not.toHaveBeenCalled();
+  });
+
+  it('no verifica la imagen en Storage para transiciones que no llegan a review/published', async () => {
+    mocks.getCurrentAdmin.mockResolvedValue(OWNER);
+    mocks.repository.findListingByIdForUpdate.mockResolvedValue({
+      ...LISTING,
+      status: 'published',
+    });
+
+    await changeMarketListingStatus({
+      id: LISTING.id,
+      from: 'published',
+      to: 'paused',
+      reason: 'Pausa temporal',
+    });
+
+    expect(mocks.assertMarketListingImageStored).not.toHaveBeenCalled();
   });
 });

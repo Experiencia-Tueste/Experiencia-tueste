@@ -10,6 +10,32 @@ import type {
   StoredAssetInput,
 } from '@/features/admin/storage-contract';
 
+/**
+ * `getObjectMetadata` se llama desde `assertMarketListingImageStored`
+ * mientras una transacción sostiene `FOR UPDATE` sobre la fila del listing
+ * (ver `operations-service.ts`). El SDK de Storage no expone un `signal`
+ * para `.info()`, así que el timeout se implementa acá: si Storage no
+ * responde a tiempo, la promesa se rechaza y la transacción se libera en
+ * vez de quedar colgada indefinidamente sosteniendo el lock de fila.
+ */
+const OBJECT_METADATA_TIMEOUT_MS = 8000;
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, timeoutMessage: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(timeoutMessage)), timeoutMs);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
+}
+
 function sanitizePathPart(value: string): string {
   return value
     .trim()
@@ -93,7 +119,11 @@ export class SupabaseStorageProvider implements StorageProvider {
 
   async getObjectMetadata(key: string): Promise<StorageObjectMetadata | null> {
     const path = key.startsWith(`${this.bucket}/`) ? key.slice(this.bucket.length + 1) : key;
-    const { data, error } = await this.client.storage.from(this.bucket).info(path);
+    const { data, error } = await withTimeout(
+      this.client.storage.from(this.bucket).info(path),
+      OBJECT_METADATA_TIMEOUT_MS,
+      '503: tiempo de espera agotado al verificar la imagen en Storage.',
+    );
     if (error) {
       const status = (error as { status?: number }).status;
       if (status === 404 || status === 400) return null;

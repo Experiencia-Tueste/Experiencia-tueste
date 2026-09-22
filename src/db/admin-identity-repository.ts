@@ -256,9 +256,11 @@ export class DrizzleAdminIdentityRepository implements AdminIdentityRepository {
     },
     tx: DbClient,
   ) {
-    const normalizedName = input.name.trim().toLocaleLowerCase('es');
     const normalizedEmail = input.email.trim().toLowerCase();
-    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${normalizedName}))`);
+    // Serializa por email verificado (no por nombre de marca, ver abajo) para
+    // que dos aprobaciones concurrentes del mismo solicitante no dupliquen
+    // la identidad administrativa ni dejen un vendedor huérfano.
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${normalizedEmail}))`);
 
     // Las solicitudes públicas traen el UUID de `auth.users`, mientras que
     // `vendor_memberships.user_id` representa la identidad administrativa
@@ -293,26 +295,26 @@ export class DrizzleAdminIdentityRepository implements AdminIdentityRepository {
       return { vendor: existingMembership, createdVendor: false, createdMembership: false };
     }
 
-    const [existingVendor] = await tx
-      .select()
-      .from(vendors)
-      .where(sql`lower(${vendors.name}) = ${normalizedName}`)
-      .limit(1);
-    const vendorRow =
-      existingVendor ??
-      (
-        await tx
-          .insert(vendors)
-          .values({
-            name: input.name.trim(),
-            email: input.email.trim().toLowerCase() || null,
-            phone: input.phone?.trim() || null,
-            status: 'active',
-            commissionBps: 0,
-            createdBy: input.actorId,
-          })
-          .returning()
-      )[0];
+    // Nunca se resuelve la identidad de vendedor por coincidencia del nombre
+    // de marca escrito por el solicitante: los nombres de vendedores son
+    // públicos (aparecen en el catálogo), así que emparejar por texto libre
+    // permitiría a cualquiera secuestrar la cuenta de un vendedor activo con
+    // solo repetir su nombre en una solicitud nueva. Cada aprobación sin una
+    // membresía ya verificada por email crea un vendedor NUEVO. Vincular
+    // (fusionar) con un vendedor existente es una acción explícita y
+    // separada que dispara un admin/owner a propósito — ver
+    // `createVendorMembership` en `src/features/admin/identity-service.ts`.
+    const [vendorRow] = await tx
+      .insert(vendors)
+      .values({
+        name: input.name.trim(),
+        email: input.email.trim().toLowerCase() || null,
+        phone: input.phone?.trim() || null,
+        status: 'active',
+        commissionBps: 0,
+        createdBy: input.actorId,
+      })
+      .returning();
     if (!vendorRow) throw new Error('No fue posible crear el vendedor.');
 
     const membership = await tx
@@ -339,7 +341,7 @@ export class DrizzleAdminIdentityRepository implements AdminIdentityRepository {
 
     return {
       vendor: this.mapVendor(vendorRow, [adminUser.id]),
-      createdVendor: !existingVendor,
+      createdVendor: true,
       createdMembership: true,
     };
   }

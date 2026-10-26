@@ -56,6 +56,14 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Migrador de despliegue: las migraciones versionadas, el script runtime y
+# el paquete completo de drizzle-orm (el bundle standalone no traza el
+# submódulo del migrador, que sí se usa en preDeploy). `pg` ya viene en el
+# standalone porque la app lo importa.
+COPY --from=builder --chown=nextjs:nodejs /app/drizzle ./drizzle
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/migrate.mjs ./scripts/migrate.mjs
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/drizzle-orm ./node_modules/drizzle-orm
+
 USER nextjs
 
 EXPOSE 3000

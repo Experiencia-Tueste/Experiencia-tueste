@@ -38,6 +38,19 @@ export function supabasePublicEnv(): PublicEnv {
 }
 
 /**
+ * URL pública de Supabase, sin exigir la anon key. Sirve para armar URLs de
+ * objetos PÚBLICOS de Storage (p. ej. el audio de radio), que no requieren
+ * credencial. Devuelve la URL sin barra final, o `null` si no está definida
+ * (modo demo). A diferencia de `loadPublicConfig`, no lanza por config
+ * parcial: los medios públicos solo necesitan el host del proyecto.
+ */
+export function publicSupabaseUrl(env: PublicEnv = process.env): string | null {
+  const url = env.NEXT_PUBLIC_SUPABASE_URL;
+  if (typeof url !== 'string' || url.trim() === '') return null;
+  return url.trim().replace(/\/+$/, '');
+}
+
+/**
  * Lee y valida la configuración pública de Supabase.
  *
  * @param env Entorno a leer (por defecto `process.env`); inyectable para

@@ -3,11 +3,20 @@
  * ---------------------------------------------------------------------
  * Reproductor único de Origen Tostado + señales de radio.
  *
- * Contrato temporal: los masters WAV viven en `public/audio`. El navegador
- * no descarga nada hasta que la persona pulsa reproducir. Cuando Storage
- * tenga el plan adecuado, estos archivos se podrán migrar a un CDN sin
- * modificar la identidad del catálogo.
+ * Contrato de medios: el audio pesado NO vive en el repo ni en Postgres.
+ * Se sirve como objeto público desde Supabase Storage (bucket `radio`), con
+ * range requests y caché de CDN. El navegador no descarga nada hasta que la
+ * persona pulsa reproducir.
+ *
+ * - `src`    → master comprimido en Opus (streaming ligero, ~3-5 MB).
+ * - `master` → WAV lossless, para descarga opcional (no lo usa el player).
+ *
+ * La URL base se arma con `NEXT_PUBLIC_SUPABASE_URL` (ya es build arg del
+ * Dockerfile) y el bucket público. Sin Supabase configurado (p. ej. modo
+ * demo), cae a `/audio` local para que el desarrollo siga funcionando.
  */
+
+import { publicSupabaseUrl } from '@/lib/config/env-public';
 
 import type { TrackId } from '../../lib/audio';
 
@@ -20,8 +29,10 @@ export interface Track {
   /** Frecuencia ritual en Hz (111, 222, 432, 528…). */
   hz: number;
   mode: TrackMode;
-  /** Archivo WAV estático que se descarga bajo demanda. */
+  /** Master Opus servido bajo demanda (streaming). */
   src: string;
+  /** Master WAV lossless para descarga opcional. */
+  master: string;
   /** Duración estimada del master; el elemento audio confirma su metadata. */
   duration: number;
 }
@@ -35,20 +46,48 @@ export interface RadioChannel {
   queue: TrackId[];
 }
 
+/** Bucket público de Supabase Storage donde viven los masters de audio. */
+export const AUDIO_BUCKET = 'radio';
+
 /**
- * Rutas de los masters WAV que entrega Next desde `public/audio`.
- * Coherencia comparte el master de 432 Hz hasta que exista una pieza WAV
- * dedicada para esa señal.
+ * Base de las URLs de audio. Con Supabase configurado, apunta al bucket
+ * público (`.../storage/v1/object/public/radio`), estable y cacheable. Sin
+ * Supabase (modo demo/dev), cae a `/audio` local. `NEXT_PUBLIC_*` se
+ * reemplaza en build, así que esto se resuelve en el bundle del cliente.
  */
-export const TRACK_SRC: Record<TrackId, string> = {
-  'origen-111': '/audio/01-origen-111-hz.wav',
-  'raiz-222': '/audio/02-raiz-222-hz.wav',
-  'expansion-432': '/audio/03-expansion-432-hz.wav',
-  'coherencia-432': '/audio/03-expansion-432-hz.wav',
-  'despertar-528': '/audio/05-despertar-528-hz.wav',
+function resolveAudioBase(): string {
+  const supabaseUrl = publicSupabaseUrl();
+  if (supabaseUrl) {
+    return `${supabaseUrl}/storage/v1/object/public/${AUDIO_BUCKET}`;
+  }
+  return '/audio';
+}
+
+export const AUDIO_BASE = resolveAudioBase();
+
+/**
+ * Nombre base del archivo de cada pista (sin extensión). Coherencia comparte
+ * el master de 432 Hz hasta que exista una pieza dedicada para esa señal.
+ */
+const AUDIO_FILE: Record<TrackId, string> = {
+  'origen-111': '01-origen-111-hz',
+  'raiz-222': '02-raiz-222-hz',
+  'expansion-432': '03-expansion-432-hz',
+  'coherencia-432': '03-expansion-432-hz',
+  'despertar-528': '05-despertar-528-hz',
 };
 
-const TRACK_SEED: Array<Omit<Track, 'src' | 'duration'>> = [
+/** URL del master Opus (streaming) de cada pista. */
+export const TRACK_SRC: Record<TrackId, string> = Object.fromEntries(
+  Object.entries(AUDIO_FILE).map(([id, file]) => [id, `${AUDIO_BASE}/${file}.opus`]),
+) as Record<TrackId, string>;
+
+/** URL del master WAV lossless (descarga opcional) de cada pista. */
+export const TRACK_MASTER: Record<TrackId, string> = Object.fromEntries(
+  Object.entries(AUDIO_FILE).map(([id, file]) => [id, `${AUDIO_BASE}/${file}.wav`]),
+) as Record<TrackId, string>;
+
+const TRACK_SEED: Array<Omit<Track, 'src' | 'master' | 'duration'>> = [
   {
     id: 'origen-111',
     title: 'Origen 111 Hz',
@@ -93,6 +132,7 @@ const TRACK_SEED: Array<Omit<Track, 'src' | 'duration'>> = [
 export const TRACKS: Track[] = TRACK_SEED.map((t) => ({
   ...t,
   src: TRACK_SRC[t.id],
+  master: TRACK_MASTER[t.id],
   duration:
     t.id === 'origen-111'
       ? 241.625

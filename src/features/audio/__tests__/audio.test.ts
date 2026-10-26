@@ -1,9 +1,14 @@
-import { existsSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
-import { getChannel, getTrack, nextInQueue, RADIO_CHANNELS, TRACK_SRC, TRACKS } from '../index';
-
-/** public/ de la raíz del proyecto, relativo a este archivo de test. */
-const PUBLIC_URL = new URL('../../../../public/', import.meta.url);
+import { describe, expect, it, vi } from 'vitest';
+import {
+  AUDIO_BASE,
+  getChannel,
+  getTrack,
+  nextInQueue,
+  RADIO_CHANNELS,
+  TRACK_MASTER,
+  TRACK_SRC,
+  TRACKS,
+} from '../index';
 
 describe('feature audio', () => {
   it('expone el catálogo de pistas con frecuencias rituales', () => {
@@ -11,33 +16,51 @@ describe('feature audio', () => {
     expect(TRACKS.map((t) => t.hz)).toEqual([111, 222, 432, 432, 528]);
   });
 
-  it('mapea cada pista a un master WAV estático', () => {
+  it('sin Supabase configurado, la base de audio cae a /audio (modo demo)', () => {
+    // El entorno de test no define NEXT_PUBLIC_SUPABASE_URL.
+    expect(AUDIO_BASE).toBe('/audio');
+  });
+
+  it('mapea cada pista a un master Opus (streaming) y su WAV lossless', () => {
     expect(TRACK_SRC).toEqual({
-      'origen-111': '/audio/01-origen-111-hz.wav',
-      'raiz-222': '/audio/02-raiz-222-hz.wav',
-      'expansion-432': '/audio/03-expansion-432-hz.wav',
-      'coherencia-432': '/audio/03-expansion-432-hz.wav',
-      'despertar-528': '/audio/05-despertar-528-hz.wav',
+      'origen-111': '/audio/01-origen-111-hz.opus',
+      'raiz-222': '/audio/02-raiz-222-hz.opus',
+      'expansion-432': '/audio/03-expansion-432-hz.opus',
+      'coherencia-432': '/audio/03-expansion-432-hz.opus',
+      'despertar-528': '/audio/05-despertar-528-hz.opus',
     });
     for (const t of TRACKS) {
       expect(t.src).toBe(TRACK_SRC[t.id]);
+      expect(t.master).toBe(TRACK_MASTER[t.id]);
+      // src (Opus) y master (WAV) comparten el mismo nombre base.
+      expect(t.master).toBe(t.src.replace(/\.opus$/, '.wav'));
     }
   });
 
-  it('las rutas son archivos WAV locales, no datos embebidos ni URL externa', () => {
+  it('el src es Opus y el master WAV, nunca datos embebidos', () => {
     for (const t of TRACKS) {
       expect(t.src.startsWith('data:')).toBe(false);
       expect(t.src).not.toContain('base64');
-      expect(t.src).not.toMatch(/^https?:\/\//);
-      expect(t.src).toMatch(/^\/audio\/.+\.wav$/);
+      expect(t.src).toMatch(/\.opus$/);
+      expect(t.master).toMatch(/\.wav$/);
       expect(t.duration).toBeGreaterThan(75.05);
     }
   });
 
-  it('cada ruta corresponde a un archivo WAV existente en public/audio', () => {
-    for (const t of TRACKS) {
-      const file = new URL(t.src.replace(/^\/audio\//, 'audio/'), PUBLIC_URL);
-      expect(existsSync(file), `falta el archivo ${t.src}`).toBe(true);
+  it('con Supabase configurado, la base apunta al bucket público (via módulo aislado)', async () => {
+    const prev = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://proyecto.supabase.co';
+    try {
+      vi.resetModules();
+      const fresh = await import('../index');
+      expect(fresh.AUDIO_BASE).toBe('https://proyecto.supabase.co/storage/v1/object/public/radio');
+      expect(fresh.TRACK_SRC['origen-111']).toBe(
+        'https://proyecto.supabase.co/storage/v1/object/public/radio/01-origen-111-hz.opus',
+      );
+    } finally {
+      if (prev === undefined) delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+      else process.env.NEXT_PUBLIC_SUPABASE_URL = prev;
+      vi.resetModules();
     }
   });
 

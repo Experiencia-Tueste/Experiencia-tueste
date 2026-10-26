@@ -61,7 +61,7 @@ describe('useAudioPlayer (ciclo de vida del navegador)', () => {
       result.current.togglePlay();
     });
     expect(result.current.playing).toBe(true);
-    expect(audioEl.src).toContain('/audio/01-origen-111-hz.wav');
+    expect(audioEl.src).toContain('/audio/01-origen-111-hz.opus');
 
     await act(async () => {
       result.current.togglePlay();
@@ -82,7 +82,7 @@ describe('useAudioPlayer (ciclo de vida del navegador)', () => {
     expect(result.current.trackId).toBe('raiz-222');
     expect(result.current.playing).toBe(true);
     expect(result.current.currentTime).toBe(0);
-    expect(audioEl.src).toContain('/audio/02-raiz-222-hz.wav');
+    expect(audioEl.src).toContain('/audio/02-raiz-222-hz.opus');
   });
 
   it('togglePlay crea el grafo de audio en la primera interacción', async () => {

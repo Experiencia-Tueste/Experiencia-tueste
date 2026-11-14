@@ -77,9 +77,17 @@ export const COMUNIDAD = {
 
 /* ── Datos literales del dashboard de José ── */
 
+/**
+ * Conteo de adopciones. Son las mismas cifras que publica la tienda
+ * Tueste Co (ajuste `founders` de su tema: adoptados, total y primera
+ * tanda). Allá se actualizan a mano, así que aquí también: al cambiarlas
+ * en la tienda hay que cambiarlas en este objeto. Tomadas el 2026-11-14.
+ */
 export const FUNDADORES = {
-  acompanan: 64,
+  adoptados: 3710,
   total: 10200,
+  tanda: 5200,
+  fuente: 'Cifras publicadas en tueste.co al 14 de noviembre de 2026.',
   texto: 'fundadores ya acompañan el Lote 000.',
 } as const;
 

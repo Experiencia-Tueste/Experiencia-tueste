@@ -25,7 +25,7 @@
 }
 
 /* El contenido de la sección queda por encima del número, sin z-index
-   negativos. Se excluyen los elementos de diálogo/overlay (CartDrawer)
+   negativos. Se excluyen los elementos de diálogo/overlay
    para no alterar su posicionamiento fijo. */
 .ghost ~ *:not([role='dialog']):not([aria-hidden='true']) {
   position: relative;

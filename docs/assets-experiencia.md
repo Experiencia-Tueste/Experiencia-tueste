@@ -2,7 +2,7 @@
 
 Los 13 assets locales aprobados **ya existen físicamente y están
 integrados** en los catálogos. Los componentes (`ReleaseCard`,
-`ProductVisual`, `MercadoVisual`) los muestran con `next/image`; el
+`MercadoVisual`) los muestran con `next/image`; el
 fallback editorial SVG se conserva únicamente como respaldo para
 elementos futuros sin imagen.
 
@@ -42,8 +42,10 @@ elementos futuros sin imagen.
 | Print Espectrograma                         | `/images/store/print-espectrograma.webp`          | 1:1        |
 | Café del Lote 000 (empaque Café Aures 1840) | `/images/store/cafe-lote-000.webp`                | 1:1        |
 
-> Nota histórica: la ruta antigua `public/images/merch/` ya no se usa;
-> la real es `public/images/store/`.
+> Nota: la sección Tienda de `/experiencia` ya no muestra estos productos
+> (enlaza a la tienda Tueste Co). Las imágenes siguen en `public/images/store/`
+> porque el catálogo `PRODUCTS` todavía lo usa la ruta de servidor del checkout
+> antiguo. La ruta `public/images/merch/` ya no existe.
 
 ### 3 · Mercado de Origen → `public/images/mercado/` (asignado en `MERCADO_ITEMS[].imageSrc`)
 

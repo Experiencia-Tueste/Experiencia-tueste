@@ -141,7 +141,8 @@ describe('TuesteTree dashboard (cabecera compacta y progreso)', () => {
       screen.getByRole('heading', { level: 1, name: 'Panel de adopción' }),
     ).toBeInTheDocument();
     expect(screen.getByText(/Adopción abierta/)).toBeInTheDocument();
-    expect(screen.getByText('64 / 300')).toBeInTheDocument();
+    expect(screen.getByText('3.710 / 5.200')).toBeInTheDocument();
+    expect(screen.getByText('3.710 árboles adoptados · quedan 1.490')).toBeInTheDocument();
   });
 
   it('no existe el hero publicitario con imagen de cafetal', () => {
@@ -156,10 +157,11 @@ describe('TuesteTree dashboard (cabecera compacta y progreso)', () => {
 
     expect(screen.getByText('Avance de la adopción')).toBeInTheDocument();
     expect(screen.getByText('Adoptados')).toBeInTheDocument();
-    expect(screen.getByText('Liberado en drops')).toBeInTheDocument();
+    expect(screen.getAllByText('Primera tanda').length).toBeGreaterThan(1);
+    expect(screen.getByText(/3\.710 de 10\.200 árboles · 36,4%/)).toBeInTheDocument();
     expect(screen.getByText('Por liberar')).toBeInTheDocument();
     expect(
-      screen.getByText('Cifras de muestra: no reflejan el estado real de las adopciones.'),
+      screen.getByText('Cifras publicadas en tueste.co al 14 de noviembre de 2026.'),
     ).toBeInTheDocument();
   });
 
@@ -233,7 +235,7 @@ describe('TuesteTree dashboard (secciones posteriores)', () => {
     expect(
       screen.getByRole('heading', { level: 2, name: 'La adopción se abre por drops.' }),
     ).toBeInTheDocument();
-    expect(screen.getByText('300 árboles · 64 adoptados')).toBeInTheDocument();
+    expect(screen.getByText('Primera tanda en campo')).toBeInTheDocument();
     expect(
       screen.getByRole('heading', { level: 2, name: 'Lo que incluye tu adopción.' }),
     ).toBeInTheDocument();

@@ -13,7 +13,7 @@ const NAV_CARDS = [
   {
     id: 'mi-arbol',
     num: '02',
-    label: 'Ponle nombre y nivel',
+    label: 'Ponle nombre e insignia',
     sub: 'El certificado toma forma',
     href: '/tueste-tree#mi-arbol',
   },

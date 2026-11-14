@@ -16,7 +16,8 @@ const SOURCE = readFileSync(resolve(__dirname, '../page.tsx'), 'utf-8');
 describe('TuesteTree dashboard (metadata)', () => {
   it('expone la metadata propia de la ruta', () => {
     expect(metadata.title).toBe('Tueste Tree · Panel de adopción');
-    expect(metadata.description).toContain('10.200 árboles');
+    expect(metadata.description).toContain('cuatro insignias');
+    expect(metadata.description).not.toMatch(/cofundar|fundacionales/);
   });
 });
 
@@ -33,8 +34,8 @@ describe('TuesteTree dashboard (sidebar de aplicación)', () => {
       'El cultivo',
       'Tu certificado',
       'Los lotes',
-      'El modelo',
-      'El retorno',
+      'La adopción',
+      'Lo que recibes',
       'La promesa',
       'El territorio',
       'Comunidad',
@@ -139,7 +140,7 @@ describe('TuesteTree dashboard (cabecera compacta y progreso)', () => {
     expect(
       screen.getByRole('heading', { level: 1, name: 'Panel de adopción' }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/Ventana fundacional abierta/)).toBeInTheDocument();
+    expect(screen.getByText(/Adopción abierta/)).toBeInTheDocument();
     expect(screen.getByText('64 / 300')).toBeInTheDocument();
   });
 
@@ -153,14 +154,12 @@ describe('TuesteTree dashboard (cabecera compacta y progreso)', () => {
   it('muestra el progreso del proyecto con leyenda demostrativa', () => {
     render(<TuesteTreePage />);
 
-    expect(screen.getByText('Avance del proyecto fundacional')).toBeInTheDocument();
+    expect(screen.getByText('Avance de la adopción')).toBeInTheDocument();
     expect(screen.getByText('Adoptados')).toBeInTheDocument();
     expect(screen.getByText('Liberado en drops')).toBeInTheDocument();
     expect(screen.getByText('Por liberar')).toBeInTheDocument();
     expect(
-      screen.getByText(
-        'Cifras de referencia editorial, no una oferta pública ni un estado real de ventas.',
-      ),
+      screen.getByText('Cifras de muestra: no reflejan el estado real de las adopciones.'),
     ).toBeInTheDocument();
   });
 
@@ -224,7 +223,8 @@ describe('TuesteTree dashboard (secciones posteriores)', () => {
     expect(
       screen.getByRole('heading', { level: 2, name: 'Comunidad y ayuda' }),
     ).toBeInTheDocument();
-    expect(screen.getByText('¿Qué significa cofundar?')).toBeInTheDocument();
+    expect(screen.getByText('¿Es una inversión?')).toBeInTheDocument();
+    expect(screen.getByText('¿Dónde se compra la adopción?')).toBeInTheDocument();
   });
 
   it('muestra lote/drops, modelo con KPIs, ecosistema y promesa', () => {
@@ -235,13 +235,27 @@ describe('TuesteTree dashboard (secciones posteriores)', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('300 árboles · 64 adoptados')).toBeInTheDocument();
     expect(
-      screen.getByRole('heading', { level: 2, name: 'Los primeros 10.200 árboles.' }),
+      screen.getByRole('heading', { level: 2, name: 'Lo que incluye tu adopción.' }),
     ).toBeInTheDocument();
-    expect(screen.getByText('USD 1,02M')).toBeInTheDocument();
-    expect(screen.getByText('30%')).toBeInTheDocument();
+    expect(screen.getByText('Bolsas de café por árbol')).toBeInTheDocument();
+    expect(
+      screen.getByText('Cuatro insignias, según cuántos árboles adoptes.'),
+    ).toBeInTheDocument();
+    for (const insignia of ['Plata', 'Oro', 'Holográfica']) {
+      expect(screen.getAllByText(insignia).length).toBeGreaterThan(0);
+    }
     expect(screen.getByText('Cuatro motores que se alimentan entre sí.')).toBeInTheDocument();
     expect(screen.getByText(/Prometemos menos\. Cumplimos siempre\./)).toBeInTheDocument();
-    expect(screen.getAllByText(/no constituyen oferta pública/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/No es una inversión/).length).toBeGreaterThan(0);
+  });
+
+  it('no muestra lenguaje de inversión: equity, capital, cofundar ni montos en dólares', () => {
+    render(<TuesteTreePage />);
+
+    const texto = document.body.textContent ?? '';
+    for (const prohibido of [/equity/i, /inversionista/i, /cofund/i, /capital objetivo/i, /USD/]) {
+      expect(texto).not.toMatch(prohibido);
+    }
   });
 
   it('el código de la ruta no contiene patrones prohibidos ni mapas', () => {

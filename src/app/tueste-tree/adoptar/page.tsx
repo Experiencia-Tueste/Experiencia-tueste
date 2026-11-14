@@ -12,14 +12,14 @@ import styles from '@/features/tueste-tree/tueste-tree.module.css';
 export const metadata: Metadata = {
   title: 'Adopta un árbol · Tueste Tree',
   description:
-    'Adopta un árbol real del Lote 000 Founders en Finca Tres Esquinas y cofunda el origen: elige tu vínculo y sigue su ciclo hasta la taza.',
+    'Adopta un árbol real del Lote 000 en Finca Tres Esquinas, ponle nombre y sigue su ciclo hasta la taza.',
 };
 
 /**
- * /tueste-tree/adoptar — ritual de adopción/cofundación (paridad con la
+ * /tueste-tree/adoptar — ritual de adopción (paridad con la
  * referencia de José): hero de dos columnas con métricas, ritual por
- * etapas (cultivo → nombre → nivel → certificado/bitácora), modelo
- * fundacional informativo y cierre de promesa/ecosistema. Sin pagos.
+ * etapas (cultivo → nombre → insignia → certificado/bitácora), qué
+ * incluye la adopción y cierre de promesa/ecosistema. Sin pagos.
  */
 export default function AdoptarPage() {
   return (

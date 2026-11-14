@@ -51,7 +51,7 @@ export const COMMERCIAL_INTENTS = {
   'tree-drop-000': {
     id: 'tree-drop-000',
     kind: 'tree-adoption',
-    label: 'Drop 000 · Cofundar un árbol',
+    label: 'Drop 000 · Adoptar un árbol',
     source: 'tueste-tree',
     status: 'informational',
   },

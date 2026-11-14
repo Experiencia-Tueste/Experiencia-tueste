@@ -17,7 +17,7 @@ import TuesteTreePageShell from '@/features/tueste-tree/components/TuesteTreePag
 export const metadata: Metadata = {
   title: 'Tueste Tree · Panel de adopción',
   description:
-    'Panel de adopción de Tueste Tree: los primeros 10.200 árboles fundacionales del Lote 000, seis niveles para cofundar el origen.',
+    'Panel de adopción de Tueste Tree: tu árbol del Lote 000, su ciclo hasta la taza y las cuatro insignias de Guardián.',
 };
 
 /**

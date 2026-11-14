@@ -2993,3 +2993,35 @@
     animation: none;
   }
 }
+
+/* ── Compra de la adopción (puente a la tienda) ────────────────────── */
+
+.formError {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--coral, #ff9a8b);
+}
+
+.pendingNotice {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-3) 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(var(--cream-rgb), 0.28);
+  background: rgba(var(--void-rgb), 0.55);
+}
+
+.pendingNotice strong {
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  font-weight: 500;
+}
+
+.pendingNotice p {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  color: rgba(var(--cream-rgb), 0.75);
+}

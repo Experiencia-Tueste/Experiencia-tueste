@@ -1,16 +1,22 @@
 'use client';
 
+import { useState } from 'react';
 import { RITUAL_CONFIRM } from '../data/content';
-import { getInsignia } from '../data/insignias';
+import { insigniaParaCantidad } from '../data/insignias';
 import { getArbol } from '../data/cultivo';
+import { goTo } from '../navigate';
 import styles from '../tueste-tree.module.css';
 
 export interface CertificadoBitacoraProps {
   arbolId: string;
   nombre: string;
-  insigniaId: string;
+  /** Árboles que se adoptan en esta compra. */
+  cantidad: number;
   onRestart: () => void;
 }
+
+const LOGIN_URL = '/cuenta/iniciar-sesion?next=%2Ftueste-tree%2Fadoptar';
+const ERROR_GENERICO = 'No pudimos preparar tu compra. Inténtalo de nuevo.';
 
 /** Hitos estáticos de la bitácora editorial del ciclo. */
 const HITOS = [
@@ -22,18 +28,49 @@ const HITOS = [
 ] as const;
 
 /**
- * Vista previa local del certificado de Guardián + bitácora editorial
- * estática. Solo aparece al completar árbol, nombre e insignia. Todo es
- * demostrativo; el aviso de que no es una compra es explícito.
+ * Vista previa del certificado de Guardián + bitácora editorial. Aparece
+ * al completar árbol, nombre y cantidad. «Ir a pagar» guarda la elección
+ * como adopción pendiente y lleva a la tienda Tueste Co con el carrito ya
+ * armado; Experiencia no cobra ni pide datos de pago.
  */
 export default function CertificadoBitacora({
   arbolId,
   nombre,
-  insigniaId,
+  cantidad,
   onRestart,
 }: CertificadoBitacoraProps) {
   const arbol = getArbol(arbolId);
-  const insignia = getInsignia(insigniaId);
+  const insignia = insigniaParaCantidad(cantidad);
+  const [enviando, setEnviando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function irAPagar() {
+    setEnviando(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/tree/adoption', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ treeId: arbolId, treeName: nombre, treesCount: cantidad }),
+      });
+      if (response.status === 401) {
+        goTo(LOGIN_URL);
+        return;
+      }
+      const body = (await response.json().catch(() => null)) as {
+        adoption?: { payUrl?: string };
+        message?: string;
+      } | null;
+      if (response.ok && body?.adoption?.payUrl) {
+        goTo(body.adoption.payUrl);
+        return;
+      }
+      setError(body?.message ?? ERROR_GENERICO);
+    } catch {
+      setError(ERROR_GENERICO);
+    }
+    setEnviando(false);
+  }
 
   return (
     <div className={styles.certWrap}>
@@ -52,11 +89,32 @@ export default function CertificadoBitacora({
             <dd>Lote 000 Founders</dd>
           </div>
           <div>
+            <dt>Árboles</dt>
+            <dd>{cantidad}</dd>
+          </div>
+          <div>
             <dt>Insignia</dt>
-            <dd>{insignia ? `${insignia.nombre} · ${insignia.arboles}` : insigniaId}</dd>
+            <dd>{insignia ? `${insignia.nombre} · ${insignia.arboles}` : '—'}</dd>
           </div>
         </dl>
         <p className={styles.certNote}>{RITUAL_CONFIRM}</p>
+        <button
+          type="button"
+          className={styles.ctaPrimary}
+          onClick={irAPagar}
+          disabled={enviando}
+          data-commercial-intent="tree-adoption-pay"
+        >
+          {enviando ? 'Preparando tu compra…' : 'Ir a pagar'}
+        </button>
+        <p className={styles.certNote}>
+          Pagas en la tienda Tueste Co. Aquí solo guardamos tu elección.
+        </p>
+        {error && (
+          <p className={styles.formError} role="alert">
+            {error}
+          </p>
+        )}
       </section>
 
       <section className={styles.bitacora} aria-labelledby="bitacora-titulo">

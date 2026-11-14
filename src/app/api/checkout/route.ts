@@ -12,8 +12,19 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   const requestId = randomUUID();
-  const checkoutConfig = loadCheckoutConfig();
-  if (checkoutConfig.mode !== 'mercadopago_legacy') {
+  let checkoutConfig: ReturnType<typeof loadCheckoutConfig> | null = null;
+  try {
+    checkoutConfig = loadCheckoutConfig();
+  } catch (error) {
+    // Igual que la página pública: una configuración inválida deja el canal
+    // desactivado (503), no un 500. Solo se registra el nombre del error para
+    // no volcar valores de entorno al log.
+    console.error(
+      '[checkout] configuración inválida; se mantiene desactivado.',
+      error instanceof Error ? error.name : 'unknown',
+    );
+  }
+  if (checkoutConfig?.mode !== 'mercadopago_legacy') {
     return Response.json(
       { message: 'El checkout no está habilitado para este canal.' },
       { status: 503 },

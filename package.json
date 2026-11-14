@@ -22,6 +22,7 @@
     "db:generate": "node --env-file=.env.local ./node_modules/drizzle-kit/bin.cjs generate",
     "db:migrate": "node --env-file=.env.local ./node_modules/drizzle-kit/bin.cjs migrate",
     "db:migrate:deploy": "node ./scripts/migrate.mjs",
+    "deploy:prepare": "node ./scripts/predeploy.mjs",
     "db:bootstrap": "node --env-file=.env.local ./scripts/bootstrap-admin.mjs",
     "db:publish-scheduled": "node --env-file=.env.local ./scripts/publish-scheduled.mjs"
   },

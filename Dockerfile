@@ -62,6 +62,13 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 # standalone porque la app lo importa.
 COPY --from=builder --chown=nextjs:nodejs /app/drizzle ./drizzle
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/migrate.mjs ./scripts/migrate.mjs
+# Pre-despliegue en un solo comando (migrar y, si ADMIN_BOOTSTRAP_EMAIL está
+# definida, sembrar roles y primer administrador). El bootstrap importa la
+# fuente única de roles desde src/db/admin-roles.mjs.
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/predeploy.mjs ./scripts/predeploy.mjs
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/lib/predeploy-plan.mjs ./scripts/lib/predeploy-plan.mjs
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/bootstrap-admin.mjs ./scripts/bootstrap-admin.mjs
+COPY --from=builder --chown=nextjs:nodejs /app/src/db/admin-roles.mjs ./src/db/admin-roles.mjs
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/drizzle-orm ./node_modules/drizzle-orm
 
 USER nextjs

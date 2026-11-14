@@ -84,6 +84,23 @@
   border-color: var(--amber);
 }
 
+a.cartbtn {
+  text-decoration: none;
+}
+
+/* Sin tienda configurada: mismo volumen que el enlace, sin acción. */
+.cartbtnDisabled {
+  display: inline-flex;
+  align-items: center;
+  border: 1px dashed rgba(var(--cream-rgb), 0.18);
+  padding: 12px 20px;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  font-family: var(--font-sans);
+  color: rgba(var(--cream-rgb), 0.6);
+}
+
 .cartbtn:focus-visible,
 .add:focus-visible {
   outline: 2px solid var(--teal-bright);

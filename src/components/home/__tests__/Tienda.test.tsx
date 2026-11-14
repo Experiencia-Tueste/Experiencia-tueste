@@ -1,41 +1,50 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import Tienda from '../Tienda';
 
 describe('Tienda', () => {
-  it('agregar abre el drawer, muestra el producto y devuelve el foco a su CTA', async () => {
-    const user = userEvent.setup();
-    render(<Tienda />);
+  it('con tienda externa configurada enlaza a Shopify en pestaña nueva', () => {
+    render(
+      <Tienda
+        checkoutConfig={{ mode: 'external_shopify', externalShopifyUrl: 'https://tueste.co' }}
+      />,
+    );
 
-    const addButton = screen.getAllByRole('button', { name: 'Agregar' })[0];
-    await user.click(addButton);
-
-    expect(screen.getByRole('dialog', { name: 'Tu selección' })).toBeVisible();
-    expect(screen.getAllByText('Coffee in Frequencies')).toHaveLength(2);
-    expect(document.body.style.overflow).toBe('hidden');
-
-    await user.click(screen.getByRole('button', { name: 'Cerrar selección' }));
-    expect(addButton).toHaveFocus();
-    expect(document.body.style.overflow).toBe('');
+    const link = screen.getByRole('link', { name: /Entrar a la tienda/ });
+    expect(link).toHaveAttribute('href', 'https://tueste.co');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link.getAttribute('rel')).toContain('noopener');
+    expect(link).toHaveAttribute('data-commercial-intent', 'merch-tienda');
+    expect(
+      screen.getByText('El pago continúa en la tienda segura de Shopify.'),
+    ).toBeInTheDocument();
   });
 
-  it('recupera un carrito persistido y no habilita un pago inexistente por defecto', async () => {
-    window.localStorage.setItem(
-      'tueste:cart:v1',
-      JSON.stringify([
-        { productId: 'cafe-lote-000', qty: 2 },
-        { productId: 'desconocido', qty: 4 },
-      ]),
-    );
-    render(<Tienda />);
+  it('sin configuración muestra «Tienda próximamente» sin enlace roto', () => {
+    const { container } = render(<Tienda />);
 
-    expect(await screen.findByText('Café del Lote 000')).toBeInTheDocument();
-    await userEvent
-      .setup()
-      .click(screen.getByRole('button', { name: /Tu selección, 2 productos/ }));
-    expect(screen.getAllByText('Café del Lote 000')).toHaveLength(2);
-    expect(screen.getByRole('button', { name: 'Compra próximamente' })).toBeDisabled();
-    expect(screen.getByText(/checkout está desactivado/i)).toBeInTheDocument();
+    expect(screen.getByText('Tienda próximamente')).toBeInTheDocument();
+    expect(container.querySelector('a')).toBeNull();
+  });
+
+  it('otros modos de checkout no exponen un enlace de compra', () => {
+    const { container } = render(
+      <Tienda checkoutConfig={{ mode: 'mercadopago_legacy', externalShopifyUrl: null }} />,
+    );
+
+    expect(container.querySelector('a')).toBeNull();
+    expect(screen.getByText('Tienda próximamente')).toBeInTheDocument();
+  });
+
+  it('no ofrece productos, precios ni carrito propios', () => {
+    render(
+      <Tienda
+        checkoutConfig={{ mode: 'external_shopify', externalShopifyUrl: 'https://tueste.co' }}
+      />,
+    );
+
+    expect(screen.queryByRole('button')).toBeNull();
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.queryByText(/\$\s?\d/)).toBeNull();
   });
 });

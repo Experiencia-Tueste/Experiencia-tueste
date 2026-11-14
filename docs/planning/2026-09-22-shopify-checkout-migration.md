@@ -53,7 +53,7 @@ del 2026-09-22.
   bloqueado por plan Free — requiere Pro+. No se resuelve con este cambio.
 - El conector de Shopify de la cuenta claude.ai (para inspección conversacional
   del catálogo) estaba roto al momento de este planning (`Incompatible auth
-  server: does not support dynamic client registration`). No bloquea el
+server: does not support dynamic client registration`). No bloquea el
   trabajo real de Cauto/Teo, que usa credenciales propias de la Admin API.
 
 ## Por qué está en pausa

@@ -1,10 +1,20 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EVENTS } from '@/features/events';
 import EventRow from '../EventRow';
 
 describe('EventRow', () => {
+  // Reloj fijo antes del evento: `isReservable` compara contra la fecha real y la suite caducaría.
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2027-01-15T12:00:00.000Z'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('abre el formulario, exige consentimiento y envía la solicitud', async () => {
     const user = userEvent.setup();
     const onReserva = vi.fn().mockResolvedValue(undefined);

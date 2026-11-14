@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   dbTransaction: vi.fn(),
@@ -73,9 +73,13 @@ const EVENT = {
   createdAt: '2026-09-07T12:00:00.000Z',
   updatedAt: '2026-09-07T12:00:00.000Z',
 };
+/** Reloj fijo antes del evento: sin esto el servicio lo ve como pasado y la suite caduca. */
+const NOW = new Date('2026-09-08T12:00:00.000Z');
 
 describe('confirmación de solicitudes de evento', () => {
   beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(NOW);
     vi.clearAllMocks();
     mocks.getCurrentAdmin.mockResolvedValue(ADMIN);
     mocks.dbTransaction.mockImplementation((callback: (tx: object) => unknown) => callback({}));
@@ -94,6 +98,10 @@ describe('confirmación de solicitudes de evento', () => {
       createdAt: '2026-09-07T12:00:00.000Z',
     });
     mocks.engagementRepository.setStatus.mockResolvedValue({ ...REQUEST, status: 'closed' });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('crea un asistente, cierra la solicitud y escribe dos trazas', async () => {

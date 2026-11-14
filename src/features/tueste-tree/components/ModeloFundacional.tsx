@@ -1,51 +1,44 @@
-import { LOTE_000_FOUNDERS, NIVELES_FUNDACIONALES } from '../data/niveles';
-import { MODELO_AVISO, MODELO_CAPITAL, MODELO_TITLE } from '../data/content';
+import { ADOPCION, INSIGNIAS } from '../data/insignias';
+import { MODELO_AVISO, MODELO_TITLE } from '../data/content';
 import TuesteTreeEyebrow from './TuesteTreeEyebrow';
 import styles from '../tueste-tree.module.css';
 
 /**
- * Modelo fundacional (sección independiente tras el ritual): «Los
- * primeros 10.200 árboles», capital objetivo y porcentaje como cifras
- * estrictamente informativas, lista editorial de niveles y aviso legal
- * preciso. Sin checkout ni botones de pago.
+ * Qué incluye la adopción (sección independiente tras el ritual): café
+ * por árbol, certificado, las cuatro insignias y el aviso de que no es
+ * una inversión. Sin checkout ni botones de pago: se compra en la tienda.
  */
 export default function ModeloFundacional() {
   return (
     <section className={styles.modelo} aria-labelledby="modelo-titulo">
-      <TuesteTreeEyebrow>EL MODELO FUNDACIONAL</TuesteTreeEyebrow>
+      <TuesteTreeEyebrow>LA ADOPCIÓN</TuesteTreeEyebrow>
       <h2 id="modelo-titulo" className={styles.sectionTitle}>
         {MODELO_TITLE}
       </h2>
 
       <div className={styles.modeloStats}>
         <div className={styles.modeloStat}>
-          <span className={styles.statusLabel}>Árboles fundacionales</span>
-          <strong className={styles.modeloStatValue}>
-            {LOTE_000_FOUNDERS.arboles.toLocaleString('es-CO')}
-          </strong>
+          <span className={styles.statusLabel}>Café por árbol</span>
+          <strong className={styles.modeloStatValue}>{ADOPCION.cafeTexto}</strong>
         </div>
         <div className={styles.modeloStat}>
-          <span className={styles.statusLabel}>Capital objetivo</span>
-          <strong className={styles.modeloStatValue}>{MODELO_CAPITAL}</strong>
+          <span className={styles.statusLabel}>Certificado numerado</span>
+          <strong className={styles.modeloStatValue}>{ADOPCION.certificadoTexto}</strong>
         </div>
         <div className={styles.modeloStat}>
-          <span className={styles.statusLabel}>Participación del proyecto</span>
-          <strong className={styles.modeloStatValue}>
-            {LOTE_000_FOUNDERS.participacionProyecto}
-          </strong>
+          <span className={styles.statusLabel}>Insignias</span>
+          <strong className={styles.modeloStatValue}>{INSIGNIAS.length}</strong>
         </div>
       </div>
 
       <ul className={styles.modeloList}>
-        {NIVELES_FUNDACIONALES.map((nivel) => (
-          <li key={nivel.id} className={styles.modeloRow}>
+        {INSIGNIAS.map((insignia) => (
+          <li key={insignia.id} className={styles.modeloRow}>
             <span className={styles.levelNum} aria-hidden="true">
-              {nivel.nivel}
+              {insignia.orden}
             </span>
-            <strong className={styles.modeloRowName}>{nivel.nombre}</strong>
-            <span className={styles.modeloRowMeta}>{nivel.arboles}</span>
-            <span className={styles.modeloRowMeta}>{nivel.equity}</span>
-            <span className={styles.modeloRowUsd}>{nivel.usd}</span>
+            <strong className={styles.modeloRowName}>{insignia.nombre}</strong>
+            <span className={styles.modeloRowMeta}>{insignia.arboles}</span>
           </li>
         ))}
       </ul>

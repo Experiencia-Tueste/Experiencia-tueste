@@ -1,23 +1,23 @@
 import { MODELO_KPIS } from '../data/dashboard';
-import { NIVELES_FUNDACIONALES } from '../data/niveles';
-import { MODELO_AVISO } from '../data/content';
+import { INSIGNIAS } from '../data/insignias';
+import { INSIGNIAS_TITLE, MODELO_AVISO, MODELO_TITLE } from '../data/content';
 import TuesteTreeEyebrow from './TuesteTreeEyebrow';
 import styles from '../tueste-tree.module.css';
 
 /**
- * Sección «03 · El modelo»: «Los primeros 10.200 árboles», KPIs
- * informativos, escalera de seis niveles y aviso legal. Sin checkout.
+ * Sección «03 · La adopción»: qué incluye, las cuatro insignias y el
+ * aviso de que no es una inversión. Sin checkout.
  */
 export default function DashboardModelo() {
   return (
     <section className={styles.blockSection} aria-labelledby="modelo-dash-titulo">
-      <TuesteTreeEyebrow>03 · EL MODELO</TuesteTreeEyebrow>
+      <TuesteTreeEyebrow>03 · LA ADOPCIÓN</TuesteTreeEyebrow>
       <h2 id="modelo-dash-titulo" className={styles.sectionTitle}>
-        Los primeros 10.200 árboles.
+        {MODELO_TITLE}
       </h2>
       <p className={styles.moduleText}>
-        Una etapa única de consolidación, no una oferta permanente. Después, cada nuevo árbol será
-        solo de adopción.
+        Adoptas un árbol real, lo sigues hasta su primera cosecha y recibes tu café. La compra se
+        hace en la tienda Tueste Co.
       </p>
 
       <div className={styles.kpis}>
@@ -29,17 +29,15 @@ export default function DashboardModelo() {
         ))}
       </div>
 
-      <h3 className={styles.blockSubTitle}>Seis niveles para cofundar.</h3>
+      <h3 className={styles.blockSubTitle}>{INSIGNIAS_TITLE}</h3>
       <ul className={styles.ladder}>
-        {NIVELES_FUNDACIONALES.map((nivel) => (
-          <li key={nivel.id} className={styles.ladderRow}>
+        {INSIGNIAS.map((insignia) => (
+          <li key={insignia.id} className={styles.ladderRow}>
             <span className={styles.levelNum} aria-hidden="true">
-              {nivel.nivel}
+              {insignia.orden}
             </span>
-            <strong className={styles.ladderName}>{nivel.nombre}</strong>
-            <span className={styles.ladderMeta}>{nivel.arboles}</span>
-            <span className={styles.ladderMeta}>{nivel.equity}</span>
-            <span className={styles.ladderUsd}>{nivel.usd}</span>
+            <strong className={styles.ladderName}>{insignia.nombre}</strong>
+            <span className={styles.ladderMeta}>{insignia.arboles}</span>
           </li>
         ))}
       </ul>

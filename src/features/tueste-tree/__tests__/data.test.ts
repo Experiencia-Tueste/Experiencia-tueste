@@ -9,11 +9,11 @@ import {
   LEGAL_NOTE,
 } from '../data/content';
 import { ARBOLES_GROVE, SOLES_CULTIVO } from '../data/cultivo';
-import { LOTE_000_FOUNDERS, NIVELES_FUNDACIONALES, getNivel } from '../data/niveles';
+import { ADOPCION, INSIGNIAS, getInsignia, insigniaParaCantidad } from '../data/insignias';
 
 /**
- * Contrato de datos de Tueste Tree: textos literales del mockup de José
- * y estructura fundacional (seis niveles, Lote 000 Founders).
+ * Contrato de datos de Tueste Tree: navegación, textos y las cuatro
+ * insignias de la adopción (alineadas con la ficha de la tienda).
  */
 
 describe('tueste-tree · navegación y secciones', () => {
@@ -38,38 +38,58 @@ describe('tueste-tree · navegación y secciones', () => {
     expect(DASHBOARD_SECTIONS.at(-1)).toMatchObject({ id: 'inquietudes', num: '12' });
   });
 
-  it('conserva el copy fundacional del mockup', () => {
-    expect(FOUNDING_WINDOW).toContain('10.200 árboles');
-    expect(ADOPT_TITLE).toBe('Adopta un árbol. Cofunda un origen.');
+  it('el copy habla de adopción y Guardián, no de cofundación', () => {
+    expect(FOUNDING_WINDOW).toContain('Adopción abierta');
+    expect(ADOPT_TITLE).toBe('Adopta un árbol. Sé su Guardián.');
     expect(LEGAL_NOTE).toContain('Monacua Global Company S.A.S.');
+    expect(LEGAL_NOTE).toContain('no es una inversión');
   });
 });
 
-describe('tueste-tree · niveles fundacionales', () => {
-  it('expone los seis niveles del mockup en orden', () => {
-    expect(NIVELES_FUNDACIONALES).toHaveLength(6);
-    expect(NIVELES_FUNDACIONALES.map((n) => n.nivel)).toEqual([
-      'Nivel 01',
-      'Nivel 02',
-      'Nivel 03',
-      'Nivel 04',
-      'Nivel 05',
-      'Nivel 06',
+describe('tueste-tree · insignias', () => {
+  it('expone las cuatro insignias de la tienda en orden', () => {
+    expect(INSIGNIAS.map((i) => i.nombre)).toEqual(['Semilla', 'Plata', 'Oro', 'Holográfica']);
+    expect(INSIGNIAS.map((i) => [i.min, i.max])).toEqual([
+      [1, 9],
+      [10, 19],
+      [20, 29],
+      [30, null],
     ]);
-    expect(NIVELES_FUNDACIONALES[0].nombre).toBe('Entrada simbólica');
-    expect(NIVELES_FUNDACIONALES[3].nota).toBe('Consejo de Fundadores');
-    expect(NIVELES_FUNDACIONALES[5].usd).toBe('USD 100.000');
   });
 
-  it('cada nivel es localizable por id', () => {
-    expect(getNivel('inversionista-ancla')?.equity).toBe('2,94%');
-    expect(getNivel('no-existe')).toBeUndefined();
+  it('cada insignia es localizable por id', () => {
+    expect(getInsignia('oro')?.arboles).toBe('20 a 29 árboles');
+    expect(getInsignia('no-existe')).toBeUndefined();
   });
 
-  it('el Lote 000 Founders mantiene las cifras literales del mockup', () => {
-    expect(LOTE_000_FOUNDERS.arboles).toBe(10200);
-    expect(LOTE_000_FOUNDERS.precioReferenciaUsd).toBe(100);
-    expect(LOTE_000_FOUNDERS.capitalObjetivoUsd).toBe(1020000);
+  it('asigna la insignia según la cantidad de árboles, sin huecos en los bordes', () => {
+    const casos: Array<[number, string]> = [
+      [1, 'semilla'],
+      [9, 'semilla'],
+      [10, 'plata'],
+      [19, 'plata'],
+      [20, 'oro'],
+      [29, 'oro'],
+      [30, 'holografica'],
+      [1000, 'holografica'],
+    ];
+    for (const [cantidad, id] of casos) {
+      expect(insigniaParaCantidad(cantidad)?.id, `cantidad ${cantidad}`).toBe(id);
+    }
+  });
+
+  it('rechaza cantidades que no son una compra válida', () => {
+    for (const cantidad of [0, -1, 2.5, Number.NaN, Number.POSITIVE_INFINITY]) {
+      expect(insigniaParaCantidad(cantidad), `cantidad ${cantidad}`).toBeUndefined();
+    }
+  });
+
+  it('lo que incluye la adopción coincide con la ficha de la tienda', () => {
+    expect(ADOPCION).toMatchObject({
+      bolsasPorArbol: 2,
+      gramosPorBolsa: 340,
+      certificadoHoras: 48,
+    });
   });
 });
 
@@ -91,13 +111,6 @@ describe('tueste-tree · cultivo (soles y árboles del lote)', () => {
     expect(adoptados.length).toBeLessThan(ARBOLES_GROVE.length);
     // Repetir el patrón es idéntico (determinismo por construcción).
     expect(ARBOLES_GROVE.map((a) => a.estado)).toEqual(ARBOLES_GROVE.map((a) => a.estado));
-  });
-
-  it('cada nivel fundacional tiene descripción editorial', () => {
-    for (const nivel of NIVELES_FUNDACIONALES) {
-      expect(nivel.descripcion.length).toBeGreaterThan(20);
-      expect(nivel.descripcion).toContain('Referencia editorial');
-    }
   });
 });
 

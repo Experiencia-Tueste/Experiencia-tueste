@@ -10,7 +10,7 @@ import {
   RITUAL_TREE_INTRO,
 } from '../data/content';
 import CertificadoBitacora from './CertificadoBitacora';
-import CofoundingLevels from './CofoundingLevels';
+import InsigniaOptions from './InsigniaOptions';
 import TreeGrove from './TreeGrove';
 import TuesteTreeEyebrow from './TuesteTreeEyebrow';
 import styles from '../tueste-tree.module.css';
@@ -20,7 +20,7 @@ type PasoRitual = 'cultivo' | 'nombre' | 'nivel' | 'certificado';
 
 /**
  * Ritual de adopción por etapas reales de interfaz (patrón del mockup):
- * 1) elegir árbol → 2) nombrarlo → 3) elegir vínculo/nivel → 4)
+ * 1) elegir árbol → 2) nombrarlo → 3) elegir insignia → 4)
  * certificado y bitácora. Nunca se muestran los pasos completos a la
  * vez. Sin pago, checkout, envío ni persistencia.
  */
@@ -28,7 +28,7 @@ export default function AdoptionRitual() {
   const [paso, setPaso] = useState<PasoRitual>('cultivo');
   const [arbolId, setArbolId] = useState<string | null>(null);
   const [nombre, setNombre] = useState('');
-  const [nivelId, setNivelId] = useState<string | null>(null);
+  const [insigniaId, setInsigniaId] = useState<string | null>(null);
 
   const pasoActual = RITUAL_STEPS.find((s) => s.num === pasoNumero(paso));
 
@@ -40,7 +40,7 @@ export default function AdoptionRitual() {
     setPaso('cultivo');
     setArbolId(null);
     setNombre('');
-    setNivelId(null);
+    setInsigniaId(null);
   };
 
   return (
@@ -119,16 +119,16 @@ export default function AdoptionRitual() {
 
       {paso === 'nivel' && (
         <section className={styles.ritualBlock} aria-labelledby="ritual-paso-03">
-          <TuesteTreeEyebrow>PASO 03 · COFUNDACIÓN</TuesteTreeEyebrow>
+          <TuesteTreeEyebrow>PASO 03 · INSIGNIA</TuesteTreeEyebrow>
           <h3 id="ritual-paso-03" className={styles.sectionTitle}>
             {RITUAL_LEVEL_LABEL}
           </h3>
           <p className={styles.ritualHint}>{RITUAL_LEVEL_HINT}</p>
-          <CofoundingLevels
-            nivelId={nivelId}
+          <InsigniaOptions
+            insigniaId={insigniaId}
             onSelect={(id) => {
               if (id) {
-                setNivelId(id);
+                setInsigniaId(id);
                 setPaso('certificado');
               }
             }}
@@ -139,11 +139,11 @@ export default function AdoptionRitual() {
         </section>
       )}
 
-      {paso === 'certificado' && arbolId && nivelId && (
+      {paso === 'certificado' && arbolId && insigniaId && (
         <CertificadoBitacora
           arbolId={arbolId}
           nombre={nombre}
-          nivelId={nivelId}
+          insigniaId={insigniaId}
           onRestart={reiniciar}
         />
       )}

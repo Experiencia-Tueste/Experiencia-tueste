@@ -13,10 +13,10 @@ export default function DashboardProgress() {
     <section className={styles.progressModule} aria-labelledby="progreso-titulo">
       <div className={styles.progressTop}>
         <h2 id="progreso-titulo" className={styles.progressModuleTitle}>
-          Avance del proyecto fundacional
+          Avance de la adopción
         </h2>
         <span className={styles.progressTotal}>
-          {FUNDADORES.acompanan} de 10.200 árboles · USD 6.400 de USD 1.020.000 ·{' '}
+          {FUNDADORES.acompanan} de {FUNDADORES.total.toLocaleString('es-CO')} árboles ·{' '}
           {pct.toLocaleString('es-CO')}%
         </span>
       </div>
@@ -24,7 +24,7 @@ export default function DashboardProgress() {
       <div
         className={styles.projectBar}
         role="progressbar"
-        aria-label="Avance del proyecto fundacional"
+        aria-label="Avance de la adopción"
         aria-valuenow={pct}
         aria-valuemin={0}
         aria-valuemax={100}
@@ -53,7 +53,7 @@ export default function DashboardProgress() {
       </ul>
 
       <p className={styles.progressNote}>
-        Cifras de referencia editorial, no una oferta pública ni un estado real de ventas.
+        Cifras de muestra: no reflejan el estado real de las adopciones.
       </p>
     </section>
   );

@@ -2,15 +2,46 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import AdoptarPage, { metadata } from '../page';
 import { ARBOLES_GROVE } from '@/features/tueste-tree/data/cultivo';
+
+const { goToMock } = vi.hoisted(() => ({ goToMock: vi.fn() }));
+vi.mock('@/features/tueste-tree/navigate', () => ({ goTo: goToMock }));
+
+const fetchMock = vi.fn();
+
+beforeEach(() => {
+  goToMock.mockReset();
+  fetchMock.mockReset();
+  vi.stubGlobal('fetch', fetchMock);
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+type User = ReturnType<typeof userEvent.setup>;
+
+async function llegarAlPasoCantidad(user: User, arbol: string) {
+  await user.click(screen.getByRole('button', { name: `Seleccionar árbol ${arbol} del Lote 000` }));
+  await user.type(screen.getByLabelText('Nombre de tu árbol'), 'Aurora');
+  await user.click(screen.getByRole('button', { name: 'Continuar' }));
+}
+
+async function llegarAlCertificado(user: User, arbol: string, cantidad: string) {
+  await llegarAlPasoCantidad(user, arbol);
+  const campo = screen.getByLabelText('¿Cuántos árboles adoptas?');
+  await user.clear(campo);
+  await user.type(campo, cantidad);
+  await user.click(screen.getByRole('button', { name: 'Continuar' }));
+}
 
 /**
  * Pruebas del ritual de adopción (/tueste-tree/adoptar): hero con dos
  * CTA y métricas, cultivo de 300 árboles, ritual por etapas (un paso a
- * la vez), certificado/bitácora y modelo fundacional. Sin pagos, red,
- * persistencia ni mapas.
+ * la vez), certificado/bitácora, «Ir a pagar» (sale a la tienda; la red y
+ * la navegación se sustituyen) y modelo fundacional. Sin mapas.
  */
 
 const SOURCE = readFileSync(resolve(__dirname, '../page.tsx'), 'utf-8');
@@ -97,7 +128,7 @@ describe('Tueste Tree adopción (ritual por etapas)', () => {
     expect(continuar).toBeEnabled();
   });
 
-  it('nombrar y continuar abre el paso 03 con las cuatro insignias', async () => {
+  it('nombrar y continuar abre el paso 03 con la cantidad y las cuatro insignias', async () => {
     const user = userEvent.setup();
     render(<AdoptarPage />);
 
@@ -117,22 +148,72 @@ describe('Tueste Tree adopción (ritual por etapas)', () => {
     }
     expect(screen.getAllByRole('button', { name: /^Insignia / })).toHaveLength(4);
 
-    // La selección de insignia es local y no dispara navegación ni pago:
-    // al elegirla, el ritual avanza al certificado sin salir de la página.
-    const nivel = screen.getByRole('button', { name: 'Insignia Semilla: 1 a 9 árboles' });
-    expect(nivel).toHaveAttribute('aria-pressed', 'false');
-    await user.click(nivel);
-    expect(screen.getByText('CERTIFICADO DE GUARDIÁN · VISTA PREVIA')).toBeInTheDocument();
+    // Empieza en 1 árbol: la insignia sale de la cantidad, no se elige aparte.
+    expect(screen.getByLabelText('¿Cuántos árboles adoptas?')).toHaveValue(1);
+    expect(screen.getByRole('button', { name: 'Insignia Semilla: 1 a 9 árboles' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(screen.getByText('Tu insignia: Semilla · 1 a 9 árboles')).toBeInTheDocument();
   });
 
-  it('al elegir insignia aparece el certificado local y la bitácora', async () => {
+  it('la insignia sigue a la cantidad escrita', async () => {
     const user = userEvent.setup();
     render(<AdoptarPage />);
+    await llegarAlPasoCantidad(user, '002');
 
-    await user.click(screen.getByRole('button', { name: 'Seleccionar árbol 003 del Lote 000' }));
-    await user.type(screen.getByLabelText('Nombre de tu árbol'), 'Aurora');
-    await user.click(screen.getByRole('button', { name: 'Continuar' }));
-    await user.click(screen.getByRole('button', { name: 'Insignia Plata: 10 a 19 árboles' }));
+    const cantidad = screen.getByLabelText('¿Cuántos árboles adoptas?');
+    await user.clear(cantidad);
+    await user.type(cantidad, '12');
+
+    expect(screen.getByText('Tu insignia: Plata · 10 a 19 árboles')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Insignia Plata: 10 a 19 árboles' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(screen.getByRole('button', { name: 'Insignia Semilla: 1 a 9 árboles' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+  });
+
+  it('pulsar una insignia lleva la cantidad a su mínimo, sin avanzar ni pagar', async () => {
+    const user = userEvent.setup();
+    render(<AdoptarPage />);
+    await llegarAlPasoCantidad(user, '002');
+
+    await user.click(screen.getByRole('button', { name: 'Insignia Oro: 20 a 29 árboles' }));
+
+    expect(screen.getByLabelText('¿Cuántos árboles adoptas?')).toHaveValue(20);
+    expect(screen.queryByText('CERTIFICADO DE GUARDIÁN · VISTA PREVIA')).not.toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('no deja continuar con una cantidad vacía, cero o por encima del tope', async () => {
+    const user = userEvent.setup();
+    render(<AdoptarPage />);
+    await llegarAlPasoCantidad(user, '002');
+
+    const cantidad = screen.getByLabelText('¿Cuántos árboles adoptas?');
+    const continuar = screen.getByRole('button', { name: 'Continuar' });
+
+    await user.clear(cantidad);
+    expect(continuar).toBeDisabled();
+    await user.type(cantidad, '0');
+    expect(continuar).toBeDisabled();
+    await user.clear(cantidad);
+    await user.type(cantidad, '1000');
+    expect(continuar).toBeDisabled();
+    expect(screen.getByText('Escribe un número entre 1 y 999.')).toBeInTheDocument();
+    await user.clear(cantidad);
+    await user.type(cantidad, '999');
+    expect(continuar).toBeEnabled();
+  });
+
+  it('al continuar aparece el certificado con la cantidad, la insignia y la bitácora', async () => {
+    const user = userEvent.setup();
+    render(<AdoptarPage />);
+    await llegarAlCertificado(user, '003', '12');
 
     expect(screen.getByText('CERTIFICADO DE GUARDIÁN · VISTA PREVIA')).toBeInTheDocument();
     expect(screen.getByText('Aurora')).toBeInTheDocument();
@@ -141,16 +222,84 @@ describe('Tueste Tree adopción (ritual por etapas)', () => {
     expect(
       screen.getByText(/Se formaliza al comprarla en la tienda Tueste Co\./),
     ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ir a pagar' })).toBeEnabled();
+    // Llegar al certificado todavía no guarda ni compra nada.
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('«Ir a pagar» guarda la elección y sale a la tienda con el enlace recibido', async () => {
+    const user = userEvent.setup();
+    const payUrl =
+      'https://tueste.co/cart/51668810006816:12?attributes%5Bref-experiencia%5D=TT-0000000000000000';
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ adoption: { payUrl } }), { status: 201 }),
+    );
+    render(<AdoptarPage />);
+    await llegarAlCertificado(user, '003', '12');
+
+    await user.click(screen.getByRole('button', { name: 'Ir a pagar' }));
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe('/api/tree/adoption');
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(init.body)).toEqual({
+      treeId: 'arbol-003',
+      treeName: 'Aurora',
+      treesCount: 12,
+    });
+    expect(goToMock).toHaveBeenCalledWith(payUrl);
+  });
+
+  it('sin sesión, «Ir a pagar» lleva a iniciar sesión y vuelve a la adopción', async () => {
+    const user = userEvent.setup();
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ message: 'Inicia sesión para continuar.' }), { status: 401 }),
+    );
+    render(<AdoptarPage />);
+    await llegarAlCertificado(user, '003', '1');
+
+    await user.click(screen.getByRole('button', { name: 'Ir a pagar' }));
+
+    expect(goToMock).toHaveBeenCalledWith('/cuenta/iniciar-sesion?next=%2Ftueste-tree%2Fadoptar');
+  });
+
+  it('si el servidor falla, muestra el mensaje y no sale de la página', async () => {
+    const user = userEvent.setup();
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ message: 'La tienda aún no está disponible.' }), {
+        status: 503,
+      }),
+    );
+    render(<AdoptarPage />);
+    await llegarAlCertificado(user, '003', '1');
+
+    await user.click(screen.getByRole('button', { name: 'Ir a pagar' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('La tienda aún no está disponible.');
+    expect(goToMock).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Ir a pagar' })).toBeEnabled();
+  });
+
+  it('si la red falla, muestra un mensaje genérico y permite reintentar', async () => {
+    const user = userEvent.setup();
+    fetchMock.mockRejectedValue(new Error('sin red'));
+    render(<AdoptarPage />);
+    await llegarAlCertificado(user, '003', '1');
+
+    await user.click(screen.getByRole('button', { name: 'Ir a pagar' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'No pudimos preparar tu compra. Inténtalo de nuevo.',
+    );
+    expect(goToMock).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Ir a pagar' })).toBeEnabled();
   });
 
   it('«Empezar de nuevo» limpia exclusivamente el estado local', async () => {
     const user = userEvent.setup();
     render(<AdoptarPage />);
-
-    await user.click(screen.getByRole('button', { name: 'Seleccionar árbol 004 del Lote 000' }));
-    await user.type(screen.getByLabelText('Nombre de tu árbol'), 'Aurora');
-    await user.click(screen.getByRole('button', { name: 'Continuar' }));
-    await user.click(screen.getByRole('button', { name: 'Insignia Semilla: 1 a 9 árboles' }));
+    await llegarAlCertificado(user, '004', '5');
 
     await user.click(screen.getByRole('button', { name: 'Empezar de nuevo' }));
 
@@ -159,6 +308,7 @@ describe('Tueste Tree adopción (ritual por etapas)', () => {
     expect(
       screen.getByRole('button', { name: 'Seleccionar árbol 001 del Lote 000' }),
     ).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
 

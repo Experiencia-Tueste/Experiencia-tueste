@@ -9,6 +9,8 @@ import {
   RITUAL_STEPS,
   RITUAL_TREE_INTRO,
 } from '../data/content';
+import { getInsignia, insigniaParaCantidad } from '../data/insignias';
+import { MAX_ARBOLES_POR_COMPRA } from '../purchase';
 import CertificadoBitacora from './CertificadoBitacora';
 import InsigniaOptions from './InsigniaOptions';
 import TreeGrove from './TreeGrove';
@@ -20,15 +22,21 @@ type PasoRitual = 'cultivo' | 'nombre' | 'nivel' | 'certificado';
 
 /**
  * Ritual de adopción por etapas reales de interfaz (patrón del mockup):
- * 1) elegir árbol → 2) nombrarlo → 3) elegir insignia → 4)
- * certificado y bitácora. Nunca se muestran los pasos completos a la
- * vez. Sin pago, checkout, envío ni persistencia.
+ * 1) elegir árbol → 2) nombrarlo → 3) elegir cuántos árboles (la
+ * insignia sale de la cantidad) → 4) certificado, bitácora e «Ir a
+ * pagar». Nunca se muestran los pasos completos a la vez. El pago ocurre
+ * en la tienda Tueste Co; aquí no hay checkout.
  */
 export default function AdoptionRitual() {
   const [paso, setPaso] = useState<PasoRitual>('cultivo');
   const [arbolId, setArbolId] = useState<string | null>(null);
   const [nombre, setNombre] = useState('');
-  const [insigniaId, setInsigniaId] = useState<string | null>(null);
+  const [cantidadTexto, setCantidadTexto] = useState('1');
+
+  const cantidad = /^[0-9]+$/.test(cantidadTexto) ? Number(cantidadTexto) : Number.NaN;
+  const cantidadValida =
+    Number.isInteger(cantidad) && cantidad >= 1 && cantidad <= MAX_ARBOLES_POR_COMPRA;
+  const insignia = cantidadValida ? insigniaParaCantidad(cantidad) : undefined;
 
   const pasoActual = RITUAL_STEPS.find((s) => s.num === pasoNumero(paso));
 
@@ -40,7 +48,7 @@ export default function AdoptionRitual() {
     setPaso('cultivo');
     setArbolId(null);
     setNombre('');
-    setInsigniaId(null);
+    setCantidadTexto('1');
   };
 
   return (
@@ -124,26 +132,52 @@ export default function AdoptionRitual() {
             {RITUAL_LEVEL_LABEL}
           </h3>
           <p className={styles.ritualHint}>{RITUAL_LEVEL_HINT}</p>
+          <label className={styles.nameLabel} htmlFor="arbol-cantidad">
+            ¿Cuántos árboles adoptas?
+          </label>
+          <input
+            id="arbol-cantidad"
+            className={styles.nameInput}
+            type="number"
+            inputMode="numeric"
+            min={1}
+            max={MAX_ARBOLES_POR_COMPRA}
+            step={1}
+            value={cantidadTexto}
+            aria-describedby="arbol-cantidad-insignia"
+            onChange={(event) => setCantidadTexto(event.target.value)}
+          />
+          <p id="arbol-cantidad-insignia" className={styles.ritualHint} aria-live="polite">
+            {insignia
+              ? `Tu insignia: ${insignia.nombre} · ${insignia.arboles}`
+              : `Escribe un número entre 1 y ${MAX_ARBOLES_POR_COMPRA}.`}
+          </p>
           <InsigniaOptions
-            insigniaId={insigniaId}
+            insigniaId={insignia?.id ?? null}
             onSelect={(id) => {
-              if (id) {
-                setInsigniaId(id);
-                setPaso('certificado');
-              }
+              const elegida = getInsignia(id);
+              if (elegida) setCantidadTexto(String(elegida.min));
             }}
           />
+          <button
+            type="button"
+            className={styles.ctaPrimary}
+            disabled={!cantidadValida}
+            onClick={() => setPaso('certificado')}
+          >
+            Continuar
+          </button>
           <button type="button" className={styles.ctaGhost} onClick={reiniciar}>
             Volver al inicio
           </button>
         </section>
       )}
 
-      {paso === 'certificado' && arbolId && insigniaId && (
+      {paso === 'certificado' && arbolId && cantidadValida && (
         <CertificadoBitacora
           arbolId={arbolId}
-          nombre={nombre}
-          insigniaId={insigniaId}
+          nombre={nombre.trim()}
+          cantidad={cantidad}
           onRestart={reiniciar}
         />
       )}

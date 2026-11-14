@@ -4,16 +4,16 @@ import { INSIGNIAS } from '../data/insignias';
 import styles from '../tueste-tree.module.css';
 
 export interface InsigniaOptionsProps {
-  /** Insignia seleccionada temporalmente. */
+  /** Insignia que corresponde a la cantidad elegida. */
   insigniaId: string | null;
-  /** Selecciona una insignia. */
+  /** Avisa qué insignia se pulsó (el ritual ajusta la cantidad a su mínimo). */
   onSelect: (id: string) => void;
 }
 
 /**
  * Las cuatro insignias de la adopción: orden, nombre y rango de árboles.
- * Selección local, sin navegación externa ni pago: la compra se hace en
- * la tienda Tueste Co.
+ * La insignia depende de la cantidad: pulsar una lleva la cantidad a su
+ * mínimo. Sin navegación ni pago aquí; la compra se hace en la tienda.
  */
 export default function InsigniaOptions({ insigniaId, onSelect }: InsigniaOptionsProps) {
   return (
@@ -27,7 +27,7 @@ export default function InsigniaOptions({ insigniaId, onSelect }: InsigniaOption
               className={`${styles.levelCard}${esSeleccionada ? ` ${styles.levelCardSelected}` : ''}`}
               aria-pressed={esSeleccionada}
               aria-label={`Insignia ${insignia.nombre}: ${insignia.arboles}`}
-              onClick={() => onSelect(esSeleccionada ? '' : insignia.id)}
+              onClick={() => onSelect(insignia.id)}
               data-commercial-intent={`tree-insignia-${insignia.id}`}
             >
               <span className={styles.levelNum} aria-hidden="true">

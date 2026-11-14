@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { MI_ARBOL_DEMO } from '../data/dashboard';
+import PendingAdoptionNotice from './PendingAdoptionNotice';
 import TuesteTreeEyebrow from './TuesteTreeEyebrow';
 import styles from '../tueste-tree.module.css';
 
@@ -31,6 +32,7 @@ export default function DashboardMyTree() {
               Cuando elijas tu árbol, aquí verás su número, su lote y el ciclo que acompaña. Por
               ahora, el primer paso es elegir el punto del cultivo que vas a acompañar.
             </p>
+            <PendingAdoptionNotice />
             <Link href="/tueste-tree/adoptar" className={styles.ctaPrimary}>
               Elegir mi árbol <span aria-hidden="true">↓</span>
             </Link>

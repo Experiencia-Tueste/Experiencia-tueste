@@ -170,7 +170,7 @@ export const RITUAL_NAME_LABEL = 'Ponle nombre a tu árbol';
 export const RITUAL_NAME_HINT = 'El nombre viaja contigo en la memoria del lote.';
 export const RITUAL_LEVEL_LABEL = 'Elige cuántos árboles acompañas';
 export const RITUAL_LEVEL_HINT =
-  'Tu insignia depende de cuántos árboles adoptes. Elegirla aquí no compra ni reserva nada.';
+  'Tu insignia depende de cuántos árboles adoptes. Todavía no compras nada: el pago es en la tienda.';
 export const RITUAL_CONFIRM =
   'Esta es una vista previa de tu adopción. Se formaliza al comprarla en la tienda Tueste Co.';
 

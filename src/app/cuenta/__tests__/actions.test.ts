@@ -62,10 +62,7 @@ describe('loginCustomerAction — rate limit de fuerza bruta', () => {
   });
 
   it('consulta el rate limit con el origen y el correo normalizados antes de tocar Supabase', async () => {
-    await loginCustomerAction(
-      { status: 'idle', message: '' },
-      credentialsForm(),
-    );
+    await loginCustomerAction({ status: 'idle', message: '' }, credentialsForm());
 
     expect(mocks.requestOrigin).toHaveBeenCalledWith(FAKE_HEADERS);
     expect(mocks.checkCustomerLoginRateLimit).toHaveBeenCalledWith('203.0.113.10', EMAIL);
@@ -77,10 +74,7 @@ describe('loginCustomerAction — rate limit de fuerza bruta', () => {
       retryAfterSeconds: 137,
     });
 
-    const result = await loginCustomerAction(
-      { status: 'idle', message: '' },
-      credentialsForm(),
-    );
+    const result = await loginCustomerAction({ status: 'idle', message: '' }, credentialsForm());
 
     expect(result).toEqual({
       status: 'error',
@@ -95,10 +89,7 @@ describe('loginCustomerAction — rate limit de fuerza bruta', () => {
   it('falla cerrado con mensaje genérico si el checker de rate limit lanza', async () => {
     mocks.checkCustomerLoginRateLimit.mockRejectedValue(new Error('db down'));
 
-    const result = await loginCustomerAction(
-      { status: 'idle', message: '' },
-      credentialsForm(),
-    );
+    const result = await loginCustomerAction({ status: 'idle', message: '' }, credentialsForm());
 
     expect(result).toEqual({
       status: 'error',
@@ -113,10 +104,7 @@ describe('loginCustomerAction — rate limit de fuerza bruta', () => {
       auth: { signInWithPassword },
     });
 
-    const result = await loginCustomerAction(
-      { status: 'idle', message: '' },
-      credentialsForm(),
-    );
+    const result = await loginCustomerAction({ status: 'idle', message: '' }, credentialsForm());
 
     expect(mocks.checkCustomerLoginRateLimit).toHaveBeenCalledTimes(1);
     expect(signInWithPassword).toHaveBeenCalledWith({ email: EMAIL, password: PASSWORD });
@@ -135,10 +123,7 @@ describe('registerCustomerAction — rate limit de abuso de registro', () => {
   });
 
   it('consulta el rate limit de registro con el origen y el correo antes de tocar Supabase', async () => {
-    await registerCustomerAction(
-      { status: 'idle', message: '' },
-      credentialsForm(),
-    );
+    await registerCustomerAction({ status: 'idle', message: '' }, credentialsForm());
 
     expect(mocks.requestOrigin).toHaveBeenCalledWith(FAKE_HEADERS);
     expect(mocks.checkCustomerRegisterRateLimit).toHaveBeenCalledWith('203.0.113.10', EMAIL);
@@ -150,10 +135,7 @@ describe('registerCustomerAction — rate limit de abuso de registro', () => {
       retryAfterSeconds: 58,
     });
 
-    const result = await registerCustomerAction(
-      { status: 'idle', message: '' },
-      credentialsForm(),
-    );
+    const result = await registerCustomerAction({ status: 'idle', message: '' }, credentialsForm());
 
     expect(result).toEqual({
       status: 'error',
@@ -167,10 +149,7 @@ describe('registerCustomerAction — rate limit de abuso de registro', () => {
   it('falla cerrado con mensaje genérico si el checker de rate limit lanza', async () => {
     mocks.checkCustomerRegisterRateLimit.mockRejectedValue(new Error('db down'));
 
-    const result = await registerCustomerAction(
-      { status: 'idle', message: '' },
-      credentialsForm(),
-    );
+    const result = await registerCustomerAction({ status: 'idle', message: '' }, credentialsForm());
 
     expect(result).toEqual({
       status: 'error',
@@ -183,10 +162,7 @@ describe('registerCustomerAction — rate limit de abuso de registro', () => {
     const signUp = vi.fn().mockResolvedValue({ error: null });
     mocks.createServerSupabase.mockResolvedValue({ auth: { signUp } });
 
-    const result = await registerCustomerAction(
-      { status: 'idle', message: '' },
-      credentialsForm(),
-    );
+    const result = await registerCustomerAction({ status: 'idle', message: '' }, credentialsForm());
 
     expect(mocks.checkCustomerRegisterRateLimit).toHaveBeenCalledTimes(1);
     expect(signUp).toHaveBeenCalledTimes(1);

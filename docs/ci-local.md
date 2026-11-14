@@ -1,18 +1,10 @@
-# CI local temporal — verificación manual de calidad
+# Verificación de calidad y flujo de ramas
 
-## Propósito y carácter temporal
+> Este archivo conserva su nombre por los enlaces existentes. El «CI local
+> temporal» que describía terminó: GitHub Actions volvió a estar activo el
+> 2026-11-13 (`.github/workflows/ci.yml`).
 
-El repositorio es privado y la cuenta de GitHub tiene **GitHub Actions
-bloqueado por facturación**: el workflow `CI` falla antes de iniciar el
-runner (no por el código). Mientras se resuelve ese bloqueo externo, la
-verificación de calidad se ejecuta **localmente** con un único comando.
-
-Este proceso es **temporal y documentado**: el workflow original no se
-borra, solo se mueve fuera de `.github/workflows/` para que GitHub no lo
-ejecute (`.github/workflows-disabled/ci.yml.disabled`). Se restaurará
-cuando Actions vuelva a estar disponible.
-
-## Requisito previo
+## Comando único
 
 Tras un clon limpio o un cambio de dependencias, instalar exactamente el
 árbol de `package-lock.json`:
@@ -21,7 +13,7 @@ Tras un clon limpio o un cambio de dependencias, instalar exactamente el
 npm ci
 ```
 
-## Comando obligatorio
+Después, en local y en CI se ejecuta lo mismo:
 
 ```bash
 npm run verify
@@ -37,40 +29,20 @@ Encadena, en orden, los cinco pasos de calidad (detiene al primer fallo):
 | Tests     | `npm test`             | Suite de Vitest completa (jsdom + node)       |
 | Build     | `npm run build`        | Build de producción de Next.js (SSR/SSG)      |
 
-## Protocolo antes de fusionar a `main`
+## CI en GitHub Actions
 
-1. Partir de `develop` limpio (`git status` sin cambios pendientes).
-2. Ejecutar `npm run verify` — debe terminar en verde.
-3. Registrar **fecha, commit SHA y resultado** en la descripción o un
-   comentario del Pull Request.
-4. Revisar visualmente la experiencia (hero, Barista, Origen,
-   Lanzamientos, Tienda, Mercado, modo día/noche, 375 px).
-5. Solo entonces aprobar y fusionar el PR.
+El workflow `CI` corre `npm run verify` en cada Pull Request y deja el
+check `validate`. `main` y `staging` están protegidas: no aceptan commits
+directos y exigen ese check en verde, también para administradores.
 
-> El hosting futuro será **Latinoamérica Hosting H1**. H1 es el hosting
-> de despliegue, no un reemplazo automático del CI: la verificación
-> seguirá siendo `npm run verify` (local o en el CI cuando se reactive).
+## Flujo de ramas
 
-## Cómo reactivar GitHub Actions
-
-Cuando el bloqueo de facturación esté resuelto:
-
-1. Mover el archivo de vuelta:
-   `git mv .github/workflows-disabled/ci.yml.disabled .github/workflows/ci.yml`
-2. Eliminar la nota temporal del inicio del archivo (los comentarios
-   «CI LOCAL TEMPORAL — WORKFLOW DESACTIVADO»).
-3. Reactivar el workflow que fue desactivado manualmente (mover el
-   archivo no basta: si el workflow sigue en estado `disabled_manually`,
-   GitHub no lo ejecutará aunque vuelva a estar en
-   `.github/workflows/ci.yml`):
-
-   ```bash
-   gh workflow enable CI --repo tovarsantiagopalacio-debug/Tueste.web
-   ```
-
-4. Commitear y subir a `develop`.
-5. Confirmar que los checks del PR vuelven a ejecutarse y quedan **en
-   verde** antes de fusionar.
+1. Trabajar en una rama `feat/` o `fix/` creada desde `staging`.
+2. `npm run verify` en verde antes de subir.
+3. Pull Request a `staging`; esperar el check `validate`.
+4. Tras el merge, verificar el cambio en staging desplegado (flujo real,
+   no solo que compile).
+5. Pull Request de `staging` a `main`. `main` es producción.
 
 No inventar resultados ni fechas: cada verificación registrada debe ser
 la ejecución real del comando.

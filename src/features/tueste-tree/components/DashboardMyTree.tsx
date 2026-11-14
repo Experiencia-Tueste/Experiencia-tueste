@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { MI_ARBOL_DEMO } from '../data/dashboard';
+import PendingAdoptionNotice from './PendingAdoptionNotice';
 import TuesteTreeEyebrow from './TuesteTreeEyebrow';
 import styles from '../tueste-tree.module.css';
 
@@ -31,6 +32,7 @@ export default function DashboardMyTree() {
               Cuando elijas tu árbol, aquí verás su número, su lote y el ciclo que acompaña. Por
               ahora, el primer paso es elegir el punto del cultivo que vas a acompañar.
             </p>
+            <PendingAdoptionNotice />
             <Link href="/tueste-tree/adoptar" className={styles.ctaPrimary}>
               Elegir mi árbol <span aria-hidden="true">↓</span>
             </Link>
@@ -57,45 +59,37 @@ export default function DashboardMyTree() {
           </div>
         </article>
 
-        <aside className={styles.participationStack} aria-label="Participación editorial">
+        <aside className={styles.participationStack} aria-label="Tu insignia">
           <article className={styles.participationCard}>
-            <TuesteTreeEyebrow>Tu participación</TuesteTreeEyebrow>
+            <TuesteTreeEyebrow>Tu insignia</TuesteTreeEyebrow>
             <div className={styles.participationMetrics}>
               <div>
                 <strong>1</strong>
                 <span>Árboles</span>
               </div>
               <div>
-                <strong>0,003%</strong>
-                <span>Equity</span>
+                <strong>Semilla</strong>
+                <span>Insignia</span>
               </div>
               <div>
-                <strong>USD 100</strong>
-                <span>Aporte</span>
+                <strong>2</strong>
+                <span>Bolsas de café</span>
               </div>
               <div>
-                <strong>01</strong>
-                <span>Nivel</span>
+                <strong>48 h</strong>
+                <span>Certificado</span>
               </div>
             </div>
             <div className={styles.levelProgress}>
-              <span>Nivel 01 · Entrada simbólica</span>
-              <span>Siguiente nivel</span>
+              <span>Semilla · 1 a 9 árboles</span>
+              <span>Plata desde 10</span>
               <i>
                 <b />
               </i>
             </div>
-            <input
-              className={styles.participationControl}
-              type="range"
-              min="1"
-              max="6"
-              defaultValue="1"
-              aria-label="Simulación editorial del nivel de participación"
-            />
             <p className={styles.participationNote}>
-              Mueve el control para explorar los niveles. Cifras indicativas y sujetas a
-              estructuración legal.
+              Ejemplo con un árbol. La insignia depende de cuántos adoptes: Semilla (1 a 9), Plata
+              (10 a 19), Oro (20 a 29) y Holográfica (30 o más).
             </p>
           </article>
           <article className={styles.frequencyCard}>

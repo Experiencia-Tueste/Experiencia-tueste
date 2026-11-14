@@ -11,7 +11,7 @@ import styles from '../tueste-tree.module.css';
 /**
  * Hero de adopción (paridad con la referencia): composición premium de
  * dos columnas — copy con dos CTA («Elegir mi árbol» → #cultivo y
- * «Ver niveles» → #modelo), tres métricas editoriales y el vitral verde
+ * «Ver insignias» → #modelo), tres métricas editoriales y el vitral verde
  * local con halo y sombra. En móvil: una columna sin cortes.
  */
 export default function AdoptionHero() {
@@ -34,7 +34,7 @@ export default function AdoptionHero() {
             <span aria-hidden="true">↓</span>
           </a>
           <a href="#modelo" className={styles.ctaGhost}>
-            Ver niveles
+            Ver insignias
           </a>
         </div>
 

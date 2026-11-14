@@ -178,6 +178,17 @@ export function loadShopifyStoreUrl(env: PublicEnv = process.env): string | null
 }
 
 /**
+ * Secreto con el que la tienda Tueste Co (Shopify) firma sus avisos de
+ * pago. Es un secreto de servidor: nunca lleva prefijo público ni viaja
+ * al cliente. Si falta o está vacío devuelve `null` y la ruta de avisos
+ * queda cerrada: sin secreto no se puede verificar ninguna firma.
+ */
+export function loadShopifyWebhookSecret(env: PublicEnv = process.env): string | null {
+  const raw = env.SHOPIFY_WEBHOOK_SECRET;
+  return typeof raw === 'string' && raw.trim() !== '' ? raw.trim() : null;
+}
+
+/**
  * Configuracion privada de Supabase Storage para activos del panel.
  *
  * Es opcional durante desarrollo: si las tres variables estan ausentes

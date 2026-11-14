@@ -18,7 +18,8 @@ accesibilidad.
 - Las variables de entorno se documentan en `.env.example` (solo las
   públicas de Supabase, sin valores reales). Copia a `.env.local`
   cuando actives la persistencia; el modo demo funciona sin ellas.
-- Contrato de configuración: `src/lib/config/env.ts` es la única fuente
+- Contrato de configuración: `src/lib/config/env-public.ts` (variables
+  `NEXT_PUBLIC_*`) y `src/lib/config/env-server.ts` (solo servidor) son la única fuente
   de verdad para `NEXT_PUBLIC_SUPABASE_URL`,
   `NEXT_PUBLIC_SUPABASE_ANON_KEY` y `SHOPIFY_STORE_URL`. Con las dos
   primeras vacías devuelve `null` (modo demo); con configuración parcial
@@ -88,7 +89,7 @@ docker run --rm -p 3000:3000 tueste-web
 - `src/components/` — componentes de presentación con CSS Modules:
   `home/` (secciones públicas de la página) y `brand/` (íconos de marca).
 - `src/lib/` — utilidades compartidas (audio, validación con Zod,
-  contrato de configuración pública en `config/env.ts`, cliente Supabase
+  contrato de configuración en `config/env-public.ts` y `config/env-server.ts`, cliente Supabase
   sin uso activo).
 - `src/styles/` — tokens globales de diseño (colores, tipografías,
   espacios, modo día/noche, `prefers-reduced-motion`).
@@ -109,15 +110,20 @@ docker run --rm -p 3000:3000 tueste-web
 - Estados de error y 404 locales (`error.tsx`, `global-error.tsx` y
   `not-found.tsx`), sin monitoreo externo todavía.
 
-## Verificación local
+## Verificación y flujo de ramas
 
-Mientras GitHub Actions está desactivado por el bloqueo de facturación
-de la cuenta, la calidad se valida localmente (detalles en
-[`docs/ci-local.md`](docs/ci-local.md)):
+La calidad se valida con un solo comando, en local y en GitHub Actions
+(workflow `CI`, check `validate`):
 
 ```bash
 npm run verify
 ```
+
+- `main` es producción y `staging` es verificación; ambas están protegidas
+  (PR obligatorio y check `validate` en verde).
+- Ruta de todo cambio: rama `feat/` o `fix/` → PR a `staging` → verificar en
+  staging desplegado → PR de `staging` a `main`.
+- Detalles en [`docs/ci-local.md`](docs/ci-local.md).
 
 ## Seguridad
 
@@ -206,6 +212,10 @@ privadas, logs y tareas programadas.
 - Contrato portable de despliegue para Railway y Latinoamérica Hosting:
   [`docs/deployment-latinoamerica-hosting.md`](docs/deployment-latinoamerica-hosting.md).
 - Configuración de Railway sin secretos en `railway.json`.
+- En Railway, `staging` despliega la rama `staging` y `production` la rama
+  `main`. Ambos corren `node scripts/predeploy.mjs` antes de publicar
+  (migraciones y, si existe `ADMIN_BOOTSTRAP_EMAIL`, siembra del primer
+  administrador).
 
 ## Panel administrativo (Fase 1.2.1) — HISTORIAL
 

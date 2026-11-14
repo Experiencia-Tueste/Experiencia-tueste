@@ -1,22 +1,25 @@
 import { FUNDADORES } from '../data/dashboard';
 import styles from '../tueste-tree.module.css';
 
+const numero = (valor: number) => valor.toLocaleString('es-CO');
+
 /**
- * Módulo de progreso del proyecto: barra principal con segmentos,
- * leyenda (adoptados, disponibles, próximos a liberar) y etiquetas
- * editoriales. Datos estáticos y demostrativos.
+ * Módulo de progreso de la adopción: barra con los árboles adoptados
+ * sobre el total del lote y la marca de la primera tanda. Las cifras son
+ * las que publica la tienda (ver `FUNDADORES`).
  */
 export default function DashboardProgress() {
-  const pct = Number(((FUNDADORES.acompanan / FUNDADORES.total) * 100).toFixed(1));
+  const pct = Number(((FUNDADORES.adoptados / FUNDADORES.total) * 100).toFixed(1));
+  const pctTanda = Number(((FUNDADORES.tanda / FUNDADORES.total) * 100).toFixed(1));
 
   return (
     <section className={styles.progressModule} aria-labelledby="progreso-titulo">
       <div className={styles.progressTop}>
         <h2 id="progreso-titulo" className={styles.progressModuleTitle}>
-          Avance del proyecto fundacional
+          Avance de la adopción
         </h2>
         <span className={styles.progressTotal}>
-          {FUNDADORES.acompanan} de 10.200 árboles · USD 6.400 de USD 1.020.000 ·{' '}
+          {numero(FUNDADORES.adoptados)} de {numero(FUNDADORES.total)} árboles ·{' '}
           {pct.toLocaleString('es-CO')}%
         </span>
       </div>
@@ -24,18 +27,21 @@ export default function DashboardProgress() {
       <div
         className={styles.projectBar}
         role="progressbar"
-        aria-label="Avance del proyecto fundacional"
+        aria-label="Avance de la adopción"
         aria-valuenow={pct}
         aria-valuemin={0}
         aria-valuemax={100}
       >
-        <span className={styles.projectReleased} aria-hidden="true" />
+        <span
+          className={styles.projectReleased}
+          style={{ width: `${pctTanda}%` }}
+          aria-hidden="true"
+        />
         <span className={styles.projectAdopted} style={{ width: `${Math.max(pct, 0.6)}%` }} />
       </div>
       <div className={styles.projectMarks} aria-hidden="true">
-        <span style={{ left: '2.95%' }}>Lote 000</span>
-        <span style={{ left: '12.75%' }}>Lote 001</span>
-        <span style={{ right: 0 }}>10.200</span>
+        <span style={{ left: `${pctTanda}%` }}>Primera tanda · {numero(FUNDADORES.tanda)}</span>
+        <span style={{ right: 0 }}>{numero(FUNDADORES.total)}</span>
       </div>
       <ul className={styles.progressLegend}>
         <li className={styles.progressLegendItem}>
@@ -44,7 +50,7 @@ export default function DashboardProgress() {
         </li>
         <li className={styles.progressLegendItem}>
           <span className={`${styles.legendDot} ${styles.dot_available}`} aria-hidden="true" />
-          Liberado en drops
+          Primera tanda
         </li>
         <li className={styles.progressLegendItem}>
           <span className={`${styles.legendDot} ${styles.dot_soon}`} aria-hidden="true" />
@@ -52,9 +58,7 @@ export default function DashboardProgress() {
         </li>
       </ul>
 
-      <p className={styles.progressNote}>
-        Cifras de referencia editorial, no una oferta pública ni un estado real de ventas.
-      </p>
+      <p className={styles.progressNote}>{FUNDADORES.fuente}</p>
     </section>
   );
 }

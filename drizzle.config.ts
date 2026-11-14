@@ -20,6 +20,7 @@ export default defineConfig({
     './src/db/schema/admin-engagement.ts',
     './src/db/schema/admin-radio.ts',
     './src/db/schema/admin-operations.ts',
+    './src/db/schema/tree-adoption-orders.ts',
     './src/db/schema/payments.ts',
     './src/db/schema/analytics.ts',
   ],

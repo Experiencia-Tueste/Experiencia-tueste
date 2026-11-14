@@ -162,6 +162,20 @@
       "when": 1788788148240,
       "tag": "0022_vengeful_post",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1794677989838,
+      "tag": "0023_tree_adoption_orders",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1794679038892,
+      "tag": "0024_tree_adoption_payment",
+      "breakpoints": true
     }
   ]
 }

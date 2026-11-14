@@ -1,15 +1,22 @@
 'use client';
 
-import { NIVELES_FUNDACIONALES } from '../data/niveles';
+import { useState } from 'react';
+import { RITUAL_CONFIRM } from '../data/content';
+import { insigniaParaCantidad } from '../data/insignias';
 import { getArbol } from '../data/cultivo';
+import { goTo } from '../navigate';
 import styles from '../tueste-tree.module.css';
 
 export interface CertificadoBitacoraProps {
   arbolId: string;
   nombre: string;
-  nivelId: string;
+  /** Árboles que se adoptan en esta compra. */
+  cantidad: number;
   onRestart: () => void;
 }
+
+const LOGIN_URL = '/cuenta/iniciar-sesion?next=%2Ftueste-tree%2Fadoptar';
+const ERROR_GENERICO = 'No pudimos preparar tu compra. Inténtalo de nuevo.';
 
 /** Hitos estáticos de la bitácora editorial del ciclo. */
 const HITOS = [
@@ -21,23 +28,54 @@ const HITOS = [
 ] as const;
 
 /**
- * Certificado visual local de «socio fundador» + bitácora editorial
- * estática. Solo aparece al completar árbol, nombre y nivel. Todo es
- * demostrativo; el aviso de intención es explícito.
+ * Vista previa del certificado de Guardián + bitácora editorial. Aparece
+ * al completar árbol, nombre y cantidad. «Ir a pagar» guarda la elección
+ * como adopción pendiente y lleva a la tienda Tueste Co con el carrito ya
+ * armado; Experiencia no cobra ni pide datos de pago.
  */
 export default function CertificadoBitacora({
   arbolId,
   nombre,
-  nivelId,
+  cantidad,
   onRestart,
 }: CertificadoBitacoraProps) {
   const arbol = getArbol(arbolId);
-  const nivel = NIVELES_FUNDACIONALES.find((n) => n.id === nivelId);
+  const insignia = insigniaParaCantidad(cantidad);
+  const [enviando, setEnviando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function irAPagar() {
+    setEnviando(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/tree/adoption', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ treeId: arbolId, treeName: nombre, treesCount: cantidad }),
+      });
+      if (response.status === 401) {
+        goTo(LOGIN_URL);
+        return;
+      }
+      const body = (await response.json().catch(() => null)) as {
+        adoption?: { payUrl?: string };
+        message?: string;
+      } | null;
+      if (response.ok && body?.adoption?.payUrl) {
+        goTo(body.adoption.payUrl);
+        return;
+      }
+      setError(body?.message ?? ERROR_GENERICO);
+    } catch {
+      setError(ERROR_GENERICO);
+    }
+    setEnviando(false);
+  }
 
   return (
     <div className={styles.certWrap}>
       <section className={styles.certificate} aria-labelledby="cert-titulo">
-        <p className={styles.certKicker}>CERTIFICADO DE SOCIO FUNDADOR</p>
+        <p className={styles.certKicker}>CERTIFICADO DE GUARDIÁN · VISTA PREVIA</p>
         <h3 id="cert-titulo" className={styles.certTitle}>
           {nombre || 'Tu árbol'}
         </h3>
@@ -51,14 +89,32 @@ export default function CertificadoBitacora({
             <dd>Lote 000 Founders</dd>
           </div>
           <div>
-            <dt>Nivel</dt>
-            <dd>{nivel ? `${nivel.nombre} · ${nivel.usd}` : nivelId}</dd>
+            <dt>Árboles</dt>
+            <dd>{cantidad}</dd>
+          </div>
+          <div>
+            <dt>Insignia</dt>
+            <dd>{insignia ? `${insignia.nombre} · ${insignia.arboles}` : '—'}</dd>
           </div>
         </dl>
+        <p className={styles.certNote}>{RITUAL_CONFIRM}</p>
+        <button
+          type="button"
+          className={styles.ctaPrimary}
+          onClick={irAPagar}
+          disabled={enviando}
+          data-commercial-intent="tree-adoption-pay"
+        >
+          {enviando ? 'Preparando tu compra…' : 'Ir a pagar'}
+        </button>
         <p className={styles.certNote}>
-          Tu selección es una intención de adopción. El proceso formal se habilitará cuando el marco
-          legal y operativo esté listo.
+          Pagas en la tienda Tueste Co. Aquí solo guardamos tu elección.
         </p>
+        {error && (
+          <p className={styles.formError} role="alert">
+            {error}
+          </p>
+        )}
       </section>
 
       <section className={styles.bitacora} aria-labelledby="bitacora-titulo">

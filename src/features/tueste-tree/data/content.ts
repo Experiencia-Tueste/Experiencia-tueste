@@ -26,10 +26,10 @@ export const SIDEBAR_GROUPS = [
     label: 'El proyecto',
     items: [
       { id: 'lotes', label: 'Los lotes', href: '/tueste-tree#lotes', tone: 'amber' },
-      { id: 'modelo', label: 'El modelo', href: '/tueste-tree#modelo-dash-titulo', tone: 'teal' },
+      { id: 'modelo', label: 'La adopción', href: '/tueste-tree#modelo-dash-titulo', tone: 'teal' },
       {
         id: 'retorno',
-        label: 'El retorno',
+        label: 'Lo que recibes',
         href: '/tueste-tree#modelo-dash-titulo',
         tone: 'coral',
       },
@@ -67,14 +67,12 @@ export const SIDEBAR_GROUPS = [
 export const DASHBOARD_KICKER = 'TUESTE TREE · PANEL DE ADOPCIÓN';
 export const DASHBOARD_TITLE = 'Panel de adopción';
 export const DASHBOARD_TITLE_EN = 'Adoption dashboard';
-export const FOUNDING_WINDOW =
-  'Ventana fundacional abierta · los primeros 10.200 árboles cofundan el origen.';
+export const FOUNDING_WINDOW = 'Adopción abierta · cada árbol es real y tiene su Guardián.';
 export const SUN_MEANING = 'Cada sol es un árbol real del Lote 000.';
 export const CERT_48H = 'El certificado se emite en las primeras 48 horas.';
 export const DROPS = 'La adopción se abre por drops, como una cosecha.';
-export const FIRST_TREES = 'Los primeros 10.200 árboles.';
-export const SIX_LEVELS = 'Seis niveles para cofundar.';
-export const COFOUND_NOTE = 'Quienes entran ahora no adoptan: cofundan.';
+export const INSIGNIAS_TITLE = 'Cuatro insignias, según cuántos árboles adoptes.';
+export const GUARDIAN_NOTE = 'Cada persona que adopta es Guardián de su árbol.';
 export const FOUR_ENGINES = 'Cuatro motores que se alimentan entre sí.';
 export const PROMISE = 'Prometemos menos. Cumplimos siempre.';
 export const ORIGIN_LINK = 'Una conexión con el origen que no existe en ningún otro café.';
@@ -85,20 +83,20 @@ export const DASHBOARD_SECTIONS = [
   { id: 'certificado', num: '02', label: 'Certificado' },
   { id: 'cultivo', num: '03', label: 'El cultivo' },
   { id: 'lotes', num: '04', label: 'Lotes y drops' },
-  { id: 'niveles', num: '05', label: 'Niveles fundacionales' },
-  { id: 'modelo', num: '06', label: 'El modelo fundacional' },
+  { id: 'niveles', num: '05', label: 'Insignias' },
+  { id: 'modelo', num: '06', label: 'La adopción' },
   { id: 'promesa', num: '07', label: 'La promesa' },
-  { id: 'retorno', num: '08', label: 'Retorno' },
+  { id: 'retorno', num: '08', label: 'Lo que recibes' },
   { id: 'territorio', num: '09', label: 'Territorio' },
   { id: 'ecosistema', num: '10', label: 'Ecosistema' },
   { id: 'comunidad', num: '11', label: 'Comunidad' },
   { id: 'inquietudes', num: '12', label: 'Inquietudes' },
 ] as const;
 
-/* ── Adopción · flujo de cofundación ── */
+/* ── Adopción · flujo del ritual ── */
 
 export const ADOPT_KICKER = 'TUESTE TREE · ADOPCIÓN';
-export const ADOPT_TITLE = 'Adopta un árbol. Cofunda un origen.';
+export const ADOPT_TITLE = 'Adopta un árbol. Sé su Guardián.';
 export const ADOPT_LEAD =
   'El café también se escucha. Aquí eliges un árbol real en la Finca Tres Esquinas, le pones nombre y sigues su ciclo hasta la taza.';
 export const ADOPT_NOT_CHECKOUT = 'No es un checkout. Es entrar a una historia.';
@@ -111,7 +109,7 @@ export const CULTIVO_INTRO = 'Todo empieza eligiendo un punto en el cultivo.';
 export const CULTIVO_PUNTOS =
   'Cada punto es un árbol del Lote 000 Founders. Toca uno libre para empezar el ritual de adopción.';
 export const RITUAL_KICKER = '02 / RITUAL DE ADOPCIÓN';
-export const MODELO_KICKER = '03 / EL MODELO FUNDACIONAL';
+export const MODELO_KICKER = '03 / LA ADOPCIÓN';
 export const ECOSISTEMA_KICKER = '04 / EL ECOSISTEMA';
 export const ECOSISTEMA_TEXT =
   'Café, música, luz y sonido. Recolección, tueste, catas y conexión directa con el cultivo.';
@@ -128,7 +126,7 @@ export const DROP_000_LEAD =
   'Nada se libera de golpe. Cada drop es una tanda de árboles con su propia frecuencia, su historia y su café: escasez real, como la de un microlote.';
 export const DROP_000_EMPTY =
   'Aún no hay adopciones en esta cuenta. El primer paso es elegir un árbol en el Drop 000.';
-export const DROP_000_CTA = 'Adoptar / Cofundar un árbol';
+export const DROP_000_CTA = 'Adoptar un árbol';
 
 /* ── Sección de cultivo (adopción) ── */
 
@@ -164,36 +162,35 @@ export const DROP_OPEN_EYEBROW = 'DROP ABIERTO · 10.200 ÁRBOLES';
 export const RITUAL_STEPS = [
   { num: '01', titulo: 'Elegir árbol' },
   { num: '02', titulo: 'Nombrarlo' },
-  { num: '03', titulo: 'Elegir nivel' },
+  { num: '03', titulo: 'Elegir insignia' },
   { num: '04', titulo: 'Certificado y bitácora' },
 ] as const;
 export const RITUAL_TREE_INTRO = 'Todo comienza seleccionando un punto en el cultivo.';
 export const RITUAL_NAME_LABEL = 'Ponle nombre a tu árbol';
 export const RITUAL_NAME_HINT = 'El nombre viaja contigo en la memoria del lote.';
-export const RITUAL_LEVEL_LABEL = 'Elige tu nivel de cofundación';
+export const RITUAL_LEVEL_LABEL = 'Elige cuántos árboles acompañas';
 export const RITUAL_LEVEL_HINT =
-  'Cifras informativas y sujetas a estructuración legal: no implican pago inmediato.';
+  'Tu insignia depende de cuántos árboles adoptes. Todavía no compras nada: el pago es en la tienda.';
 export const RITUAL_CONFIRM =
-  'Tu selección es una intención de adopción. El proceso formal se habilitará cuando el marco legal y operativo esté listo.';
+  'Esta es una vista previa de tu adopción. Se formaliza al comprarla en la tienda Tueste Co.';
 
 /** Tres métricas editoriales del hero de adopción (referencia). */
 export const HERO_METRICS = [
-  { label: 'Árboles fundacionales', valor: '10.200' },
-  { label: 'Desde', valor: 'USD 100' },
+  { label: 'Café por árbol', valor: '2 bolsas de 340 g' },
+  { label: 'Certificado', valor: '48 h' },
   { label: 'Territorio', valor: '1.840 m' },
 ] as const;
 
 /* ── Aviso legal amplio ── */
 
 export const LEGAL_AMPLIO =
-  'Tueste Tree · un proyecto de Monacua Global Company S.A.S. Contenido informativo y demostrativo: las cifras de cofundación, niveles y participación son referencia editorial y no constituyen oferta pública, inversión ejecutable, contrato ni promesa contractual. Sin pagos ni compromisos reales hasta que el marco legal y operativo esté listo.';
+  'Tueste Tree · un proyecto de Monacua Global Company S.A.S. La adopción es una compra anticipada del café de la primera cosecha, más una experiencia: no es una inversión, no genera rendimientos ni participación, y «Guardián» es un título simbólico. La compra y sus condiciones completas están en la tienda Tueste Co.';
 
-/* ── Modelo fundacional y cierre ── */
+/* ── Qué incluye la adopción y cierre ── */
 
-export const MODELO_TITLE = 'Los primeros 10.200 árboles.';
-export const MODELO_CAPITAL = 'USD 1.020.000';
+export const MODELO_TITLE = 'Lo que incluye tu adopción.';
 export const MODELO_AVISO =
-  'Cifras indicativas sujetas a estructuración legal. Este contenido es informativo y no constituye una oferta pública de valores.';
+  'No es una inversión: compras por adelantado el café de la primera cosecha y vives la experiencia de adoptar tu árbol. No genera rendimientos ni se revende. Las condiciones completas están en la tienda Tueste Co.';
 
 export const PROMESA = {
   titulo: 'Prometemos menos. Cumplimos siempre.',
@@ -216,10 +213,10 @@ export const TERRITORIO_CIERRE = {
 export const SIGUE_TEXT = {
   titulo: 'El ciclo sigue',
   texto:
-    'Actualizaciones editoriales del cultivo, la cosecha y el proceso formal llegarán cuando el marco legal y operativo esté listo.',
+    'Las actualizaciones del cultivo y la cosecha llegan cada temporada, hasta que el café esté listo.',
 } as const;
 
 /* ── Aviso legal ── */
 
 export const LEGAL_NOTE =
-  'Tueste Tree · un proyecto de Monacua Global Company S.A.S. · Contenido informativo: no constituye oferta pública ni inversión garantizada.';
+  'Tueste Tree · un proyecto de Monacua Global Company S.A.S. · La adopción no es una inversión: es una compra anticipada de café y una experiencia.';

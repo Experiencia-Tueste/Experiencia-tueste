@@ -11,7 +11,7 @@ export default function DashboardLotes() {
     'Variedades exóticas',
   ] as const;
   const metadata = [
-    '300 árboles · 64 adoptados',
+    'Primera tanda en campo',
     '1.000 árboles',
     '1.000 por lote',
     '1.840 m · preparación',

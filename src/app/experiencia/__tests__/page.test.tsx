@@ -344,13 +344,14 @@ describe('Página pública (animación de entrada por scroll)', () => {
     }
   });
 
-  it('tienda, mercado y lanzamientos usan los assets locales integrados', () => {
+  it('mercado y lanzamientos usan los assets locales integrados', () => {
     render(<Home marketListings={PUBLIC_LISTINGS} />);
 
-    const imgs = Array.from(
-      document.querySelectorAll('#merch img, #mercado img, #lanzamientos img'),
-    );
-    expect(imgs.length).toBeGreaterThanOrEqual(13);
+    // La tienda (#merch) ya no muestra productos propios: solo enlaza a Shopify.
+    expect(document.querySelectorAll('#merch img')).toHaveLength(0);
+
+    const imgs = Array.from(document.querySelectorAll('#mercado img, #lanzamientos img'));
+    expect(imgs.length).toBeGreaterThanOrEqual(7);
 
     for (const img of imgs) {
       const src = decodeURIComponent(img.getAttribute('src') ?? '');

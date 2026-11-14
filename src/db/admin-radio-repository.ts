@@ -38,6 +38,50 @@ export class DrizzleAdminRadioRepository {
     return row;
   }
 
+  async findCompanyById(id: string, tx: DbClient) {
+    const [row] = await tx.select().from(radioCompanies).where(eq(radioCompanies.id, id)).limit(1);
+    return row ?? null;
+  }
+
+  async createOrGetCompany(
+    input: {
+      name: string;
+      contactName: string;
+      contactEmail: string;
+      city: string;
+      actorId: string;
+    },
+    tx: DbClient,
+  ) {
+    const [existing] = await tx
+      .select()
+      .from(radioCompanies)
+      .where(eq(radioCompanies.contactEmail, input.contactEmail))
+      .limit(1);
+    if (existing) return { row: existing, created: false };
+
+    const [inserted] = await tx
+      .insert(radioCompanies)
+      .values({
+        name: input.name,
+        contactName: input.contactName,
+        contactEmail: input.contactEmail,
+        city: input.city,
+        createdBy: input.actorId,
+      })
+      .onConflictDoNothing({ target: radioCompanies.contactEmail })
+      .returning();
+    if (inserted) return { row: inserted, created: true };
+
+    const [concurrent] = await tx
+      .select()
+      .from(radioCompanies)
+      .where(eq(radioCompanies.contactEmail, input.contactEmail))
+      .limit(1);
+    if (!concurrent) throw new Error('No fue posible vincular la empresa de Radio Origen.');
+    return { row: concurrent, created: false };
+  }
+
   async createChannel(
     input: { companyId: string; name: string; planId: string; notes?: string; actorId: string },
     tx: DbClient,
@@ -53,6 +97,52 @@ export class DrizzleAdminRadioRepository {
       })
       .returning();
     return row;
+  }
+
+  async findChannelById(id: string, tx: DbClient) {
+    const [row] = await tx.select().from(radioChannels).where(eq(radioChannels.id, id)).limit(1);
+    return row ?? null;
+  }
+
+  async createOrGetChannel(
+    input: {
+      companyId: string;
+      name: string;
+      planId: string;
+      notes?: string;
+      actorId: string;
+    },
+    tx: DbClient,
+  ) {
+    const [existing] = await tx
+      .select()
+      .from(radioChannels)
+      .where(and(eq(radioChannels.companyId, input.companyId), eq(radioChannels.name, input.name)))
+      .limit(1);
+    if (existing) return { row: existing, created: false };
+
+    const [inserted] = await tx
+      .insert(radioChannels)
+      .values({
+        companyId: input.companyId,
+        name: input.name,
+        planId: input.planId,
+        notes: input.notes,
+        createdBy: input.actorId,
+      })
+      .onConflictDoNothing({
+        target: [radioChannels.companyId, radioChannels.name],
+      })
+      .returning();
+    if (inserted) return { row: inserted, created: true };
+
+    const [concurrent] = await tx
+      .select()
+      .from(radioChannels)
+      .where(and(eq(radioChannels.companyId, input.companyId), eq(radioChannels.name, input.name)))
+      .limit(1);
+    if (!concurrent) throw new Error('No fue posible vincular el canal de Radio Origen.');
+    return { row: concurrent, created: false };
   }
 
   async setSubscriptionStatus(id: string, from: string, to: string, tx: DbClient) {

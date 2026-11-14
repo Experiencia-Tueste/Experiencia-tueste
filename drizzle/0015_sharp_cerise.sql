@@ -1,0 +1,2 @@
+ALTER TABLE "private"."engagement_requests" ADD COLUMN "radio_stage" text;--> statement-breakpoint
+ALTER TABLE "private"."engagement_requests" ADD CONSTRAINT "engagement_requests_radio_stage_check" CHECK ("private"."engagement_requests"."radio_stage" IS NULL OR "private"."engagement_requests"."radio_stage" IN ('new', 'qualified', 'proposal', 'won', 'lost'));

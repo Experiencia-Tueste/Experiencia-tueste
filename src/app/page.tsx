@@ -8,6 +8,7 @@ import ExperienceCard from '@/features/portal/components/ExperienceCard';
 import ShopCard from '@/features/portal/components/ShopCard';
 import TuesteTreeCard from '@/features/portal/components/TuesteTreeCard';
 import styles from '@/features/portal/portal.module.css';
+import { loadShopifyStoreUrl } from '@/lib/config/env-server';
 
 /**
  * Metadata específica del portal: la base global (metadataBase, OG y
@@ -21,6 +22,31 @@ export const metadata: Metadata = {
 };
 
 /**
+ * El portal se renderiza por petición: `SHOPIFY_STORE_URL` es configuración
+ * de runtime del contenedor. Prerenderizado en el build, la tarjeta Tienda
+ * quedaba fija en «Tienda próximamente» aunque la variable se definiera
+ * después en el entorno de despliegue.
+ */
+export const dynamic = 'force-dynamic';
+
+/**
+ * URL de la tienda leída en runtime. Una variable mal escrita no debe tumbar
+ * el portal: se registra solo el nombre del error (sin volcar el valor) y la
+ * tarjeta cae a «Tienda próximamente».
+ */
+function resolveStoreUrl(): string | null {
+  try {
+    return loadShopifyStoreUrl();
+  } catch (error) {
+    console.error(
+      '[portal] SHOPIFY_STORE_URL inválida; la tienda se muestra como próxima.',
+      error instanceof Error ? error.name : 'unknown',
+    );
+    return null;
+  }
+}
+
+/**
  * Portal de entrada Tueste: tres caminos, un origen.
  * La experiencia completa (audio, manifiesto, tienda, etc.) vive en
  * /experiencia; esta página es solo el portal editorial que la presenta
@@ -30,6 +56,8 @@ export const metadata: Metadata = {
  * El SkipLink va antes del encabezado: primer foco del documento.
  */
 export default function Home() {
+  const storeUrl = resolveStoreUrl();
+
   return (
     <>
       <SkipLink />
@@ -39,7 +67,7 @@ export default function Home() {
         <main id="contenido" tabIndex={-1}>
           <PortalHero />
           <div className={styles.cards}>
-            <ShopCard />
+            <ShopCard storeUrl={storeUrl} />
             <ExperienceCard />
             <TuesteTreeCard />
           </div>

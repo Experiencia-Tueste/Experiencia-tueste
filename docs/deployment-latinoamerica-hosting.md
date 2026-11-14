@@ -19,27 +19,61 @@ los dos proveedores.
 El Dockerfile no incluye archivos `.env*`, claves, credenciales ni el directorio
 `infra/`. Las variables se configuran en el panel seguro del proveedor.
 
-## Variables privadas del servicio
+## Contrato de variables por entorno
 
 Configurar en Railway durante staging y, posteriormente, en Latinoamérica
-Hosting. Nunca subir valores reales al repositorio:
+Hosting. Nunca subir valores reales al repositorio. `TUESTE_ENV` distingue
+los perfiles y evita que el fallback local se use en un despliegue público:
 
+| Perfil     | `TUESTE_ENV` | `SITE_URL`                                 | Checkout recomendado               |
+| ---------- | ------------ | ------------------------------------------ | ---------------------------------- |
+| Local      | `local`      | Opcional; fallback `http://localhost:3000` | `disabled`                         |
+| Preview    | `preview`    | Obligatoria, pública y HTTPS               | `disabled`                         |
+| Producción | `production` | Obligatoria, pública y HTTPS               | `disabled` hasta aprobar proveedor |
+
+En una imagen Docker, pasar `TUESTE_ENV=preview|production` y el `SITE_URL`
+correspondiente como argumentos de build además de configurar las variables de
+runtime. No se pasan secretos como argumentos de build.
+
+### Variables públicas
+
+Estas variables se inyectan en el bundle del navegador por diseño y no deben
+contener secretos:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+Ambas se configuran juntas o ambas se dejan vacías para modo demo.
+
+### Variables server-only
+
+Estas variables no deben llevar prefijo `NEXT_PUBLIC_` ni llegar al bundle:
+
+- `TUESTE_ENV`
 - `AUTH_SECRET`
 - `AUTH_GOOGLE_ID`
 - `AUTH_GOOGLE_SECRET`
 - `AUTH_TRUST_HOST` (en Railway: `true`; solo para el proxy controlado)
+- `ADMIN_BOOTSTRAP_EMAIL` (solo para el comando explícito de bootstrap)
 - `DATABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_STORAGE_URL`
 - `SUPABASE_STORAGE_ADMIN_KEY`
 - `SUPABASE_STORAGE_BUCKET`
 - `SITE_URL`
 - `SHOPIFY_STORE_URL`
+- `CHECKOUT_MODE`
+- `PAYMENTS_SERVICE_URL`
+- `PAYMENTS_JWT_PRIVATE_KEY`
+- `PAYMENTS_JWT_KEY_ID`
+- `PAYMENTS_JWT_ISSUER`
+- `PAYMENTS_JWT_AUDIENCE`
+- `PAYMENTS_REQUEST_TIMEOUT_MS`
 
-Las variables con prefijo `NEXT_PUBLIC_` son públicas por diseño. Todas las
-demás, especialmente `DATABASE_URL`, `AUTH_*` y `SUPABASE_STORAGE_ADMIN_KEY`,
-son server-only.
+`CHECKOUT_MODE=disabled` es el valor seguro. `external_shopify` exige
+`SHOPIFY_STORE_URL` HTTPS; `mercadopago_legacy` exige el BFF de pagos completo;
+`shopify` nativo permanece cerrado hasta una fase posterior con contrato
+operativo, credenciales y pruebas propias. Una combinación incompleta debe
+fallar y no activar un proveedor parcialmente.
 
 ## Migraciones
 
@@ -52,6 +86,13 @@ Desde un entorno seguro con las variables privadas cargadas:
 ```bash
 npm run db:migrate
 npm run db:bootstrap
+```
+
+Para verificar sin leer ni imprimir credenciales, se puede ejecutar la suite
+con las variables públicas deliberadamente vacías:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL='' NEXT_PUBLIC_SUPABASE_ANON_KEY='' npm run verify
 ```
 
 El bootstrap solo se ejecuta una vez para el administrador inicial. Nunca se
@@ -87,3 +128,18 @@ las tablas, acciones, permisos ni reglas de negocio.
    aparición en `/experiencia`.
 8. Configurar el dominio HTTPS y actualizar el callback de Google.
 9. Documentar rollback antes de promover a producción.
+
+## Rollback de configuración comercial
+
+Ante cualquier duda sobre proveedor, credenciales o callback, cambiar
+`CHECKOUT_MODE` a `disabled`, redeplegar y confirmar que la selección queda
+guardada sin iniciar cobros. No se debe activar un modo comercial para “probar”
+una variable puesta a mano sin pasar la verificación local y el checkpoint de
+la fase.
+
+## Advisories de Supabase
+
+La revisión de advisories y la decisión de cada aviso están registradas en
+[`docs/supabase-advisories.md`](supabase-advisories.md). El aviso de seguridad
+de contraseñas filtradas bloquea la promoción a producción hasta corregirse o
+aceptarse explícitamente por el responsable de Auth.

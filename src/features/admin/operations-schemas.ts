@@ -15,6 +15,82 @@ export const BACKSTAGE_STATUSES = [
   'revoked',
   'expired',
 ] as const;
+export const MARKET_IMAGE_MAX_BYTES = 5_000_000;
+
+/** Extensiones de imagen permitidas para listings de mercado y su content-type real esperado en Storage. */
+export const MARKET_IMAGE_CONTENT_TYPES = {
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
+} as const;
+
+export type MarketImageExtension = keyof typeof MARKET_IMAGE_CONTENT_TYPES;
+
+const MARKET_IMAGE_EXTENSION_PATTERN = /\.(jpg|jpeg|png|webp)$/i;
+
+/** Extensión de imagen de mercado válida (minúsculas), o `null` si no coincide. */
+export function marketImageExtension(path: string): MarketImageExtension | null {
+  const match = MARKET_IMAGE_EXTENSION_PATTERN.exec(path);
+  if (!match) return null;
+  return match[1].toLowerCase() as MarketImageExtension;
+}
+
+/** Content-type real que Storage debe reportar para una ruta de imagen dada, o `null` si la extensión no es válida. */
+export function expectedMarketImageContentType(path: string): string | null {
+  const extension = marketImageExtension(path);
+  return extension ? MARKET_IMAGE_CONTENT_TYPES[extension] : null;
+}
+
+/** Solicitud de un vendedor para obtener una URL firmada de subida de imagen. */
+export const VENDOR_IMAGE_UPLOAD_REQUEST_SCHEMA = z.object({
+  filename: z
+    .string()
+    .trim()
+    .min(1)
+    .max(255)
+    .refine((value) => marketImageExtension(value) !== null, {
+      message: 'la imagen debe ser JPG, PNG o WebP.',
+    }),
+  mimeType: z
+    .string()
+    .trim()
+    .min(1)
+    .max(120)
+    .refine((value) => (Object.values(MARKET_IMAGE_CONTENT_TYPES) as string[]).includes(value), {
+      message: 'tipo de archivo no permitido; usa JPG, PNG o WebP.',
+    }),
+  sizeBytes: z.coerce.number().int().min(1).max(MARKET_IMAGE_MAX_BYTES),
+});
+
+export type VendorImageUploadRequestInput = z.infer<typeof VENDOR_IMAGE_UPLOAD_REQUEST_SCHEMA>;
+
+const marketProductFields = {
+  title: z.string().trim().min(2).max(180),
+  brand: z.string().trim().min(2).max(180),
+  category: z.string().trim().min(2).max(100),
+  variety: z.string().trim().min(2).max(120),
+  process: z.string().trim().min(2).max(160),
+  origin: z.string().trim().min(2).max(180),
+  presentation: z.string().trim().min(2).max(120),
+  weightGrams: z.coerce.number().int().min(0).max(1_000_000),
+  inventory: z.coerce.number().int().min(0).max(1_000_000),
+  priceCents: z.coerce.number().int().min(1).max(2_000_000_000),
+  imagePath: z
+    .string()
+    .trim()
+    .max(500)
+    .optional()
+    .or(z.literal(''))
+    .transform((value) => value || undefined),
+  imageSizeBytes: z.preprocess(
+    (value) => (value === '' || value === undefined ? 0 : value),
+    z.coerce.number().int().min(0).max(MARKET_IMAGE_MAX_BYTES),
+  ),
+  delivery: z.string().trim().min(2).max(500),
+  traceability: z.string().trim().min(2).max(1200),
+  notes: optionalText,
+};
 
 export const TREE_ADOPTION_CREATE_SCHEMA = z.object({
   lotId: z.string().uuid(),
@@ -28,11 +104,22 @@ export const TREE_ADOPTION_CREATE_SCHEMA = z.object({
 
 export const MARKET_LISTING_CREATE_SCHEMA = z.object({
   vendorId: z.string().uuid(),
-  title: z.string().trim().min(2).max(180),
-  category: z.string().trim().min(2).max(100),
-  inventory: z.coerce.number().int().min(0).max(1_000_000),
-  priceCents: z.coerce.number().int().min(1),
-  notes: optionalText,
+  ...marketProductFields,
+  reason,
+});
+
+export const MARKET_LISTING_SELF_CREATE_SCHEMA = MARKET_LISTING_CREATE_SCHEMA.omit({
+  vendorId: true,
+});
+
+export const MARKET_LISTING_UPDATE_SCHEMA = z.object({
+  id: z.string().uuid(),
+  ...marketProductFields,
+  reason,
+});
+
+export const MARKET_LISTING_REVIEW_SCHEMA = z.object({
+  id: z.string().uuid(),
   reason,
 });
 
@@ -148,6 +235,83 @@ export function canTransitionMarket(from: string, to: string) {
     paused: ['published', 'archived'],
     archived: [],
   });
+}
+
+export function validateMarketImage(input: {
+  vendorId: string;
+  imagePath?: string | null;
+  imageSizeBytes?: number | null;
+}) {
+  const path = input.imagePath?.trim();
+  const size = input.imageSizeBytes ?? 0;
+  if (!path) {
+    if (size !== 0) throw new Error('400: una imagen sin ruta no puede tener tamaño.');
+    return;
+  }
+  if (size < 1 || size > MARKET_IMAGE_MAX_BYTES) {
+    throw new Error(`400: la imagen debe pesar entre 1 y ${MARKET_IMAGE_MAX_BYTES} bytes.`);
+  }
+  const expectedPrefix = `vendors/${input.vendorId}/`;
+  if (!path.startsWith(expectedPrefix) || path.includes('..') || path.includes('?')) {
+    throw new Error('400: la imagen no pertenece a la ruta del vendedor.');
+  }
+  if (marketImageExtension(path) === null) {
+    throw new Error('400: la imagen debe ser JPG, PNG o WebP.');
+  }
+}
+
+export function assertMarketListingComplete(input: {
+  vendorId: string;
+  brand?: string | null;
+  title?: string | null;
+  category?: string | null;
+  variety?: string | null;
+  process?: string | null;
+  origin?: string | null;
+  presentation?: string | null;
+  weightGrams?: number | null;
+  inventory?: number | null;
+  priceCents?: number | null;
+  imagePath?: string | null;
+  imageSizeBytes?: number | null;
+  delivery?: string | null;
+  traceability?: string | null;
+}) {
+  const required: Array<[string, string | null | undefined]> = [
+    ['título', input.title],
+    ['marca', input.brand],
+    ['categoría', input.category],
+    ['variedad', input.variety],
+    ['proceso', input.process],
+    ['origen', input.origin],
+    ['presentación', input.presentation],
+    ['entrega', input.delivery],
+    ['trazabilidad', input.traceability],
+  ];
+  const missing = required.find(([, value]) => !value?.trim());
+  if (missing) throw new Error(`400: el producto está incompleto; falta ${missing[0]}.`);
+  if (
+    typeof input.weightGrams !== 'number' ||
+    !Number.isInteger(input.weightGrams) ||
+    input.weightGrams < 1
+  ) {
+    throw new Error('400: el peso debe ser un entero mayor que cero.');
+  }
+  if (
+    typeof input.inventory !== 'number' ||
+    !Number.isInteger(input.inventory) ||
+    input.inventory < 0
+  ) {
+    throw new Error('400: el inventario debe ser un entero no negativo.');
+  }
+  if (
+    typeof input.priceCents !== 'number' ||
+    !Number.isInteger(input.priceCents) ||
+    input.priceCents < 1
+  ) {
+    throw new Error('400: el precio debe ser un entero mayor que cero.');
+  }
+  validateMarketImage(input);
 }
 
 export function canTransitionUnity(from: string, to: string) {

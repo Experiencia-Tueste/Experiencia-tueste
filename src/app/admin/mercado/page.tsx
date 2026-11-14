@@ -17,15 +17,120 @@ import {
   Stats,
   StatusBadge,
 } from '../_components/AdminUi';
-import { changeMarketStatusAction, createMarketListingAction } from './actions';
+import {
+  changeMarketStatusAction,
+  createMarketListingAction,
+  createVendorListingAction,
+  submitVendorListingForReviewAction,
+  updateVendorListingAction,
+} from './actions';
 import styles from '../operations.module.css';
 
 export const dynamic = 'force-dynamic';
+
+type ListingValues = {
+  id?: string;
+  title?: string | null;
+  brand?: string | null;
+  category?: string | null;
+  variety?: string | null;
+  process?: string | null;
+  origin?: string | null;
+  presentation?: string | null;
+  weightGrams?: number | null;
+  inventory?: number | null;
+  priceCents?: number | null;
+  imagePath?: string | null;
+  imageSizeBytes?: number | null;
+  delivery?: string | null;
+  traceability?: string | null;
+  notes?: string | null;
+};
+
+function ListingFields({ listing }: { listing?: ListingValues }) {
+  return (
+    <>
+      <Field label="Título" name="title" defaultValue={listing?.title ?? ''} required />
+      <Field label="Marca" name="brand" defaultValue={listing?.brand ?? ''} required />
+      <Field
+        label="Categoría"
+        name="category"
+        placeholder="Café tostado…"
+        defaultValue={listing?.category ?? ''}
+        required
+      />
+      <Field label="Variedad" name="variety" defaultValue={listing?.variety ?? ''} required />
+      <Field label="Proceso" name="process" defaultValue={listing?.process ?? ''} required />
+      <Field label="Origen" name="origin" defaultValue={listing?.origin ?? ''} required />
+      <Field
+        label="Presentación"
+        name="presentation"
+        placeholder="340 g, bolsa…"
+        defaultValue={listing?.presentation ?? ''}
+        required
+      />
+      <Field
+        label="Peso en gramos"
+        name="weightGrams"
+        type="number"
+        min="0"
+        defaultValue={listing?.weightGrams ?? 0}
+        required
+      />
+      <Field
+        label="Precio en centavos COP"
+        name="priceCents"
+        type="number"
+        min="1"
+        defaultValue={listing?.priceCents ?? ''}
+        required
+      />
+      <Field
+        label="Inventario"
+        name="inventory"
+        type="number"
+        min="0"
+        defaultValue={listing?.inventory ?? 0}
+        required
+      />
+      <Field
+        label="Ruta de imagen en Storage (opcional)"
+        name="imagePath"
+        placeholder="vendors/<id>/producto.webp"
+        defaultValue={listing?.imagePath ?? ''}
+      />
+      <Field
+        label="Tamaño de imagen en bytes"
+        name="imageSizeBytes"
+        type="number"
+        min="0"
+        max="5000000"
+        defaultValue={listing?.imageSizeBytes ?? 0}
+      />
+      <Field
+        label="Entrega"
+        name="delivery"
+        placeholder="Envíos nacionales, tiempos…"
+        defaultValue={listing?.delivery ?? ''}
+        required
+      />
+      <Field
+        label="Trazabilidad"
+        name="traceability"
+        placeholder="Lote, finca y respaldo…"
+        defaultValue={listing?.traceability ?? ''}
+        required
+      />
+      <Field label="Notas editoriales" name="notes" defaultValue={listing?.notes ?? ''} />
+    </>
+  );
+}
 
 export default async function MercadoPage() {
   const admin = await requireCapability('market.read');
   const workspace = await getMarketWorkspace(admin);
   const canManage = admin.capabilities.includes('market.manage');
+  const canSelf = admin.capabilities.includes('market.self') && Boolean(admin.vendorId);
   const published = workspace.listings.filter((item) => item.status === 'published').length;
   const inventory = workspace.listings
     .filter((item) => item.status === 'published')
@@ -67,35 +172,27 @@ export default async function MercadoPage() {
                     </option>
                   ))}
                 </Select>
-                <Field label="Título" name="title" required />
-                <Field
-                  label="Categoría"
-                  name="category"
-                  placeholder="Café, experiencia, objeto…"
-                  required
-                />
-                <Field
-                  label="Precio en centavos COP"
-                  name="priceCents"
-                  type="number"
-                  min="1"
-                  required
-                />
-                <Field
-                  label="Inventario"
-                  name="inventory"
-                  type="number"
-                  min="0"
-                  defaultValue="0"
-                  required
-                />
-                <Field label="Notas editoriales" name="notes" />
+                <ListingFields />
                 <Field label="Razón administrativa" name="reason" required minLength={3} />
                 <div className={styles.wide}>
                   <PrimaryButton>Crear borrador</PrimaryButton>
                 </div>
               </form>
             )}
+          </Panel>
+        ) : null}
+        {canSelf && !canManage ? (
+          <Panel
+            title="Tu catálogo"
+            description="Crea y edita únicamente tus borradores. Cada envío requiere revisión de Tueste."
+          >
+            <form action={createVendorListingAction} className={styles.formGrid}>
+              <ListingFields />
+              <Field label="Razón administrativa" name="reason" required minLength={3} />
+              <div className={styles.wide}>
+                <PrimaryButton>Crear borrador</PrimaryButton>
+              </div>
+            </form>
           </Panel>
         ) : null}
         <Panel
@@ -135,6 +232,36 @@ export default async function MercadoPage() {
                       </div>
                     </div>
                     {listing.notes ? <p className={styles.muted}>{listing.notes}</p> : null}
+                    <p className={styles.muted}>
+                      {listing.brand || 'Marca pendiente'} ·{' '}
+                      {listing.variety || 'Variedad pendiente'} ·{' '}
+                      {listing.process || 'Proceso pendiente'} ·{' '}
+                      {listing.origin || 'Origen pendiente'}
+                    </p>
+                    <p className={styles.muted}>
+                      {listing.presentation || 'Presentación pendiente'} ·{' '}
+                      {listing.weightGrams || 0} g · {listing.delivery || 'Entrega pendiente'}
+                    </p>
+                    {canSelf &&
+                    listing.vendorId === admin.vendorId &&
+                    listing.status === 'draft' ? (
+                      <>
+                        <form action={updateVendorListingAction} className={styles.actionForm}>
+                          <input type="hidden" name="id" value={listing.id} />
+                          <ListingFields listing={listing} />
+                          <Field label="Razón del cambio" name="reason" minLength={3} required />
+                          <GhostButton>Guardar borrador</GhostButton>
+                        </form>
+                        <form
+                          action={submitVendorListingForReviewAction}
+                          className={styles.actionForm}
+                        >
+                          <input type="hidden" name="id" value={listing.id} />
+                          <Field label="Razón de envío" name="reason" minLength={3} required />
+                          <GhostButton>Enviar a revisión</GhostButton>
+                        </form>
+                      </>
+                    ) : null}
                     {canManage && nextStates.length ? (
                       <form action={changeMarketStatusAction} className={styles.actionForm}>
                         <input type="hidden" name="id" value={listing.id} />

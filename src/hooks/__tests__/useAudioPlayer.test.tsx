@@ -298,6 +298,28 @@ describe('useAudioPlayer (ciclo de vida del navegador)', () => {
     expect(result.current.error).toBe('El navegador bloqueó la reproducción.');
   });
 
+  it('retry vuelve a intentar la pista actual desde el comienzo', async () => {
+    const play = vi
+      .fn<() => Promise<void>>()
+      .mockRejectedValueOnce(new Error('blocked'))
+      .mockResolvedValueOnce(undefined);
+    HTMLMediaElement.prototype.play = play;
+    const { result } = renderHook(() => useAudioPlayer());
+
+    await act(async () => {
+      result.current.togglePlay();
+    });
+    expect(result.current.error).toBe('El navegador bloqueó la reproducción.');
+
+    await act(async () => {
+      result.current.retry();
+    });
+
+    expect(play).toHaveBeenCalledTimes(2);
+    expect(result.current.error).toBeNull();
+    expect(result.current.playing).toBe(true);
+  });
+
   it('un error del media se refleja en el estado del reproductor', async () => {
     const { result } = renderHook(() => useAudioPlayer());
 

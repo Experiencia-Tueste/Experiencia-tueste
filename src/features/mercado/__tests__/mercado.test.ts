@@ -100,7 +100,7 @@ describe('feature mercado', () => {
 
   it('el aviso visible aclara que existe revisión antes de publicar', () => {
     expect(AVISO_MERCADO).toBe(
-      'Las solicitudes se revisan antes de publicar una marca o confirmar una venta.',
+      'Enviar esta solicitud no genera ningún cobro. Tueste revisa la marca antes de publicar.',
     );
   });
 });

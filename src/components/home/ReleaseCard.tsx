@@ -51,8 +51,8 @@ const BARRAS = [
 
 export interface ReleaseCardProps {
   release: Release;
-  /** Selecciona la pista asociada en el reproductor. */
-  onSelect: (id: TrackId) => void;
+  /** Reproduce la pista asociada en el reproductor global. */
+  onPlay: (id: TrackId) => void;
 }
 
 /**
@@ -71,11 +71,11 @@ export interface ReleaseCardProps {
  * Spotify: si `spotifyUrl` existe, se abre en pestaña nueva con
  * `rel="noreferrer"`.
  */
-export default function ReleaseCard({ release, onSelect }: ReleaseCardProps) {
+export default function ReleaseCard({ release, onPlay }: ReleaseCardProps) {
   const [c1, c2] = SEASON_GRADIENT[release.season];
   const gradId = `rel-grad-${release.id}`;
 
-  const handleListen = () => onSelect(release.trackId);
+  const handleListen = () => onPlay(release.trackId);
   const puedeComprar = release.purchaseStatus === 'available' && release.purchaseUrl;
 
   return (

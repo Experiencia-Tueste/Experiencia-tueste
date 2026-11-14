@@ -1,31 +1,530 @@
 import 'server-only';
 
 import { randomUUID } from 'node:crypto';
+import { z } from 'zod';
+import { getAdminEventRepository } from '@/db/admin-event-repository';
 import { getEngagementRepository } from '@/db/admin-engagement-repository';
 import { getAdminRepository } from '@/db/admin-identity-repository';
+import { getAdminRadioRepository } from '@/db/admin-radio-repository';
+import { getPublicMarketRepository } from '@/db/public-market-repository';
 import { getDb } from '@/db/client';
+import type { DbClient } from '@/db/db-types';
 import { getCurrentAdmin } from '@/lib/auth/authorization';
+import type { CurrentAdmin } from '@/features/admin/authorization-core';
 import { parseAuditEntry } from '@/features/admin/audit';
-import { engagementInputSchema, engagementStatusSchema } from './index';
+import { isEventPast } from '@/features/events';
+import { RADIO_PLANS } from '@/features/radio';
+import { saveCommunityConsentInTransaction } from '@/features/community/consent-service';
+import {
+  engagementInputSchema,
+  marketApplicationStageSchema,
+  radioActivationSchema,
+  radioOpportunityStageSchema,
+  engagementStatusSchema,
+  isMarketApplicationTransitionAllowed,
+  isRadioOpportunityTransitionAllowed,
+  type EngagementInput,
+  type EngagementPayload,
+} from './index';
+import {
+  createPendingEngagementToken,
+  hashPendingEngagementToken,
+  PENDING_ENGAGEMENT_TTL_SECONDS,
+} from './pending-intent';
+
+export class EngagementDomainError extends Error {
+  constructor(
+    message: string,
+    readonly status: 400 | 404 | 409,
+  ) {
+    super(message);
+    this.name = 'EngagementDomainError';
+  }
+}
+
+function slugify(value: string) {
+  return value
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+function compactPayload(payload: Record<string, unknown>): EngagementPayload {
+  return Object.fromEntries(
+    Object.entries(payload).filter(([, value]) => value !== undefined),
+  ) as EngagementPayload;
+}
+
+function versionedPayload(payload: Record<string, unknown>): EngagementPayload {
+  return { schemaVersion: 1, ...compactPayload(payload) };
+}
+
+async function canonicalize(input: EngagementInput, tx: DbClient) {
+  if (input.type === 'community') {
+    return {
+      reference: 'membership',
+      details: `Preferencias: ${input.payload.preferences.join(', ')}`,
+      payload: versionedPayload({
+        preferences: input.payload.preferences,
+        consent: input.payload.consent,
+      }),
+    };
+  }
+
+  if (input.type === 'event') {
+    const repository = getAdminEventRepository();
+    await repository.lockEvent(input.reference, tx);
+    const event = await repository.findEvent(input.reference, tx);
+    if (
+      !event ||
+      !['open', 'waitlist'].includes(event.status) ||
+      isEventPast({ dateTime: event.endsAt ?? event.startsAt })
+    ) {
+      throw new EngagementDomainError('El evento ya no recibe solicitudes.', 409);
+    }
+    const occupied = await repository.countOccupied(event.id, tx);
+    const availability =
+      event.status === 'waitlist' || (event.capacity !== null && occupied >= event.capacity)
+        ? 'waitlist'
+        : 'available';
+    return {
+      reference: event.id,
+      details: `${event.title} · ${event.city} · ${event.startsAt}`,
+      payload: versionedPayload({
+        eventId: event.id,
+        eventTitle: event.title,
+        attendeeCount: input.payload.attendeeCount,
+        city: input.payload.city ?? event.city,
+        comment: input.payload.comment ?? null,
+        consent: input.payload.consent,
+        availability,
+      }),
+    };
+  }
+
+  if (input.type === 'radio') {
+    const plan = RADIO_PLANS.find((candidate) => candidate.id === input.reference);
+    if (!plan) throw new EngagementDomainError('El plan de radio no existe.', 400);
+    return {
+      reference: plan.id,
+      details: `${plan.nombre} · USD ${plan.priceUsd}/mes`,
+      payload: versionedPayload({
+        planId: plan.id,
+        planName: plan.nombre,
+        priceUsd: plan.priceUsd,
+        ...compactPayload(input.payload),
+      }),
+    };
+  }
+
+  const marketPayload = input.payload;
+  if (marketPayload.intent === 'availability') {
+    const listingId = z.string().uuid().safeParse(input.reference);
+    if (!listingId.success) {
+      throw new EngagementDomainError('El producto no existe en el catálogo.', 404);
+    }
+    const item = await getPublicMarketRepository().findPublishedById(listingId.data, tx);
+    if (!item) throw new EngagementDomainError('El producto no existe en el catálogo.', 404);
+    const itemSlug = `${slugify(item.title) || 'producto'}-${item.id.slice(0, 8)}`;
+    return {
+      reference: `availability:${item.id}`,
+      details: `${item.brand} · ${item.category} · ${item.origin}`,
+      payload: versionedPayload({
+        intent: 'availability',
+        itemSlug,
+        listingId: item.id,
+        brand: item.brand,
+        category: item.category,
+        origin: item.origin,
+      }),
+    };
+  }
+
+  if (input.reference !== 'seller-onboarding') {
+    throw new EngagementDomainError('Referencia de vendedor inválida.', 400);
+  }
+  if (marketPayload.intent !== 'seller_application') {
+    throw new EngagementDomainError('Intención de mercado inválida.', 400);
+  }
+  return {
+    reference: 'seller-onboarding',
+    details: `${marketPayload.brand} · ${marketPayload.category} · ${marketPayload.region}`,
+    payload: versionedPayload(marketPayload),
+  };
+}
 
 export async function createEngagementRequest(user: { id: string; email: string }, input: unknown) {
   const parsed = engagementInputSchema.parse(input);
-  const requesterName = user.email.split('@')[0] || 'Cliente Tueste';
-  return getDb().transaction((tx) =>
-    getEngagementRepository().createOrGet(
-      {
-        ...parsed,
-        requesterUserId: user.id,
-        requesterEmail: user.email.trim().toLowerCase(),
-        requesterName,
-      },
-      tx,
-    ),
-  );
+  return getDb().transaction(async (tx) => {
+    return createEngagementRequestInTransaction(user, parsed, tx);
+  });
 }
 
-export async function getEngagementRequests() {
-  return getEngagementRepository().list();
+async function createEngagementRequestInTransaction(
+  user: { id: string; email: string },
+  parsed: EngagementInput,
+  tx: DbClient,
+) {
+  const canonical = await canonicalize(parsed, tx);
+  const requesterName = user.email.split('@')[0] || 'Cliente Tueste';
+  const result = await getEngagementRepository().createOrGet(
+    {
+      type: parsed.type,
+      requesterUserId: user.id,
+      requesterEmail: user.email.trim().toLowerCase(),
+      requesterName,
+      reference: canonical.reference,
+      details: canonical.details,
+      payload: canonical.payload,
+      radioStage: parsed.type === 'radio' ? 'new' : null,
+      marketStage:
+        parsed.type === 'market' && parsed.payload.intent === 'seller_application'
+          ? 'submitted'
+          : null,
+    },
+    tx,
+  );
+  if (parsed.type === 'community') {
+    const refreshed = await getEngagementRepository().updateCommunityPayload(
+      result.request.id,
+      canonical.details,
+      canonical.payload,
+      tx,
+    );
+    await saveCommunityConsentInTransaction(
+      { id: user.id, email: user.email, name: requesterName },
+      parsed.payload,
+      tx,
+      result.request.id,
+    );
+    return { request: refreshed ?? result.request, created: result.created };
+  }
+  return result;
+}
+
+export async function createPendingEngagementIntent(input: EngagementInput) {
+  const { token, tokenHash } = createPendingEngagementToken();
+  const expiresAt = new Date(Date.now() + PENDING_ENGAGEMENT_TTL_SECONDS * 1000);
+  await getDb().transaction((tx) =>
+    getEngagementRepository().createPendingIntent({ tokenHash, payload: input, expiresAt }, tx),
+  );
+  return token;
+}
+
+/** Consume la intención y crea la solicitud dentro de la misma transacción. */
+export async function resumePendingEngagement(user: { id: string; email: string }, token: string) {
+  const tokenHash = hashPendingEngagementToken(token);
+  return getDb().transaction(async (tx) => {
+    const pending = await getEngagementRepository().consumePendingIntent(tokenHash, new Date(), tx);
+    if (!pending) return null;
+    const input = engagementInputSchema.parse(pending.payload);
+    return createEngagementRequestInTransaction(user, input, tx);
+  });
+}
+
+export async function changeRadioOpportunityStage(input: unknown) {
+  const admin = await getCurrentAdmin();
+  if (!admin) throw new Error('401: sesión administrativa requerida.');
+  if (!admin.capabilities.includes('crm.manage')) throw new Error('403: se requiere crm.manage.');
+
+  const parsed = radioOpportunityStageSchema.parse(input);
+  if (parsed.from === parsed.to) throw new Error('400: etapa sin cambios.');
+  if (!isRadioOpportunityTransitionAllowed(parsed.from, parsed.to)) {
+    throw new Error(`400: transición de Radio no permitida (${parsed.from} → ${parsed.to}).`);
+  }
+
+  return getDb().transaction(async (tx) => {
+    const request = await getEngagementRepository().setRadioStage(
+      parsed.id,
+      parsed.from,
+      parsed.to,
+      tx,
+    );
+    if (!request) throw new Error('409: la oportunidad cambió de etapa o no existe.');
+    await getAdminRepository().appendAudit(
+      parseAuditEntry({
+        id: randomUUID(),
+        actorUserId: admin.id,
+        actorEmail: admin.email,
+        action: 'engagement.radio_stage_changed',
+        targetType: 'engagement_request',
+        targetId: request.id,
+        occurredAt: new Date().toISOString(),
+        reason: parsed.reason,
+        metadata: { from: parsed.from, to: parsed.to, type: request.type },
+      }),
+      tx,
+    );
+    return request;
+  });
+}
+
+function payloadString(payload: EngagementPayload, key: string) {
+  const value = payload[key];
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    throw new EngagementDomainError(`La solicitud de Radio no tiene ${key}.`, 409);
+  }
+  return value.trim();
+}
+
+export async function activateRadioOpportunity(input: unknown) {
+  const admin = await getCurrentAdmin();
+  if (!admin) throw new Error('401: sesión administrativa requerida.');
+  if (!admin.capabilities.includes('crm.manage')) {
+    throw new Error('403: se requiere crm.manage.');
+  }
+  if (!admin.capabilities.includes('radio.manage')) {
+    throw new Error('403: se requiere radio.manage.');
+  }
+
+  const parsed = radioActivationSchema.parse(input);
+  return getDb().transaction(async (tx) => {
+    const engagementRepository = getEngagementRepository();
+    const request = await engagementRepository.findByIdForUpdate(parsed.id, tx);
+    if (!request || request.type !== 'radio') {
+      throw new EngagementDomainError('La oportunidad de Radio no existe.', 404);
+    }
+    if (request.radioStage !== 'won') {
+      throw new EngagementDomainError(
+        'Solo una oportunidad ganada puede crear un canal de Radio Origen.',
+        409,
+      );
+    }
+
+    const radioRepository = getAdminRadioRepository();
+    if (request.radioCompanyId && request.radioChannelId) {
+      const [company, channel] = await Promise.all([
+        radioRepository.findCompanyById(request.radioCompanyId, tx),
+        radioRepository.findChannelById(request.radioChannelId, tx),
+      ]);
+      if (!company || !channel) {
+        throw new EngagementDomainError('La activación vinculada ya no existe completa.', 409);
+      }
+      return { request, company, channel };
+    }
+    const companyPayload = {
+      name: payloadString(request.payload, 'company'),
+      contactName: payloadString(request.payload, 'responsible'),
+      contactEmail: request.requesterEmail.trim().toLowerCase(),
+      city: payloadString(request.payload, 'city'),
+      actorId: admin.id,
+    };
+    const company = request.radioCompanyId
+      ? await radioRepository.findCompanyById(request.radioCompanyId, tx).then((row) => {
+          if (!row) throw new EngagementDomainError('La empresa vinculada ya no existe.', 409);
+          return { row, created: false };
+        })
+      : await radioRepository.createOrGetCompany(companyPayload, tx);
+
+    const plan = RADIO_PLANS.find((candidate) => candidate.id === request.reference);
+    if (!plan) throw new EngagementDomainError('El plan de Radio no existe.', 409);
+    const channel = request.radioChannelId
+      ? await radioRepository.findChannelById(request.radioChannelId, tx).then((row) => {
+          if (!row) throw new EngagementDomainError('El canal vinculado ya no existe.', 409);
+          return { row, created: false };
+        })
+      : await radioRepository.createOrGetChannel(
+          {
+            companyId: company.row.id,
+            name: `Radio Origen · ${plan.nombre}`,
+            planId: plan.id,
+            notes: `Solicitud ${request.id}. Servicio pendiente de confirmación operativa; sin cobro automático.`,
+            actorId: admin.id,
+          },
+          tx,
+        );
+
+    const linked = await engagementRepository.linkRadioActivation(
+      request.id,
+      company.row.id,
+      channel.row.id,
+      tx,
+    );
+    if (!linked) throw new Error('409: la oportunidad cambió mientras se activaba.');
+
+    const adminRepository = getAdminRepository();
+    if (company.created) {
+      await adminRepository.appendAudit(
+        parseAuditEntry({
+          id: randomUUID(),
+          actorUserId: admin.id,
+          actorEmail: admin.email,
+          action: 'radio.company_created',
+          targetType: 'radio_company',
+          targetId: company.row.id,
+          occurredAt: new Date().toISOString(),
+          reason: parsed.reason,
+          metadata: { sourceRequestId: request.id, city: company.row.city },
+        }),
+        tx,
+      );
+    }
+    if (channel.created) {
+      await adminRepository.appendAudit(
+        parseAuditEntry({
+          id: randomUUID(),
+          actorUserId: admin.id,
+          actorEmail: admin.email,
+          action: 'radio.channel_created',
+          targetType: 'radio_channel',
+          targetId: channel.row.id,
+          occurredAt: new Date().toISOString(),
+          reason: parsed.reason,
+          metadata: { sourceRequestId: request.id, companyId: company.row.id, planId: plan.id },
+        }),
+        tx,
+      );
+    }
+    await adminRepository.appendAudit(
+      parseAuditEntry({
+        id: randomUUID(),
+        actorUserId: admin.id,
+        actorEmail: admin.email,
+        action: 'engagement.radio_activated',
+        targetType: 'engagement_request',
+        targetId: request.id,
+        occurredAt: new Date().toISOString(),
+        reason: parsed.reason,
+        metadata: {
+          radioCompanyId: company.row.id,
+          radioChannelId: channel.row.id,
+          planId: plan.id,
+          subscriptionStatus: channel.row.subscriptionStatus,
+        },
+      }),
+      tx,
+    );
+
+    return { request: linked, company: company.row, channel: channel.row };
+  });
+}
+
+export async function changeMarketApplicationStage(input: unknown) {
+  const admin = await getCurrentAdmin();
+  if (!admin) throw new Error('401: sesión administrativa requerida.');
+  if (!admin.capabilities.includes('crm.manage')) throw new Error('403: se requiere crm.manage.');
+
+  const parsed = marketApplicationStageSchema.parse(input);
+  if (parsed.from === parsed.to) {
+    if (parsed.from !== 'approved') throw new Error('400: etapa sin cambios.');
+    return getDb().transaction(async (tx) => {
+      const request = await getEngagementRepository().findByIdForUpdate(parsed.id, tx);
+      if (!request || request.type !== 'market' || request.marketStage !== 'approved') {
+        throw new Error('409: la solicitud de vendedor cambió de etapa o no existe.');
+      }
+      if (!request.marketVendorId)
+        throw new Error('409: la aprobación no tiene vendedor vinculado.');
+      return request;
+    });
+  }
+  if (!isMarketApplicationTransitionAllowed(parsed.from, parsed.to)) {
+    throw new Error(`400: transición de vendedor no permitida (${parsed.from} → ${parsed.to}).`);
+  }
+  if (parsed.to === 'approved' && !admin.capabilities.includes('market.manage')) {
+    throw new Error('403: se requiere market.manage para aprobar vendedores.');
+  }
+
+  return getDb().transaction(async (tx) => {
+    const engagementRepository = getEngagementRepository();
+    const request = await engagementRepository.findByIdForUpdate(parsed.id, tx);
+    if (!request || request.type !== 'market') {
+      throw new Error('409: la solicitud de vendedor cambió de etapa o no existe.');
+    }
+    if (request.marketStage === 'approved' && request.marketVendorId && parsed.to === 'approved') {
+      return request;
+    }
+    if (request.marketStage !== parsed.from) {
+      throw new Error('409: la solicitud de vendedor cambió de etapa o no existe.');
+    }
+
+    let vendorId: string | null = null;
+    let vendorCreated = false;
+    if (parsed.to === 'approved') {
+      const payload = request.payload;
+      const vendor = await getAdminRepository().createOrGetVendorMembership(
+        {
+          userId: request.requesterUserId,
+          name: payloadString(payload, 'brand'),
+          email: request.requesterEmail,
+          phone: typeof payload.phone === 'string' ? payload.phone : undefined,
+          actorId: admin.id,
+        },
+        tx,
+      );
+      vendorId = vendor.vendor.id;
+      vendorCreated = vendor.createdVendor;
+    }
+
+    const updated = await engagementRepository.setMarketStage(
+      parsed.id,
+      parsed.from,
+      parsed.to,
+      tx,
+    );
+    if (!updated) throw new Error('409: la solicitud de vendedor cambió de etapa o no existe.');
+    const linked = vendorId
+      ? await engagementRepository.linkMarketVendor(updated.id, vendorId, tx)
+      : updated;
+    if (!linked) throw new Error('409: no fue posible vincular el vendedor a la solicitud.');
+
+    if (vendorCreated) {
+      await getAdminRepository().appendAudit(
+        parseAuditEntry({
+          id: randomUUID(),
+          actorUserId: admin.id,
+          actorEmail: admin.email,
+          action: 'vendor.created',
+          targetType: 'vendor',
+          targetId: vendorId!,
+          occurredAt: new Date().toISOString(),
+          reason: parsed.reason,
+          metadata: { sourceRequestId: linked.id, userId: linked.requesterUserId },
+        }),
+        tx,
+      );
+    }
+    await getAdminRepository().appendAudit(
+      parseAuditEntry({
+        id: randomUUID(),
+        actorUserId: admin.id,
+        actorEmail: admin.email,
+        action: 'engagement.market_stage_changed',
+        targetType: 'engagement_request',
+        targetId: request.id,
+        occurredAt: new Date().toISOString(),
+        reason: parsed.reason,
+        metadata: {
+          from: parsed.from,
+          to: parsed.to,
+          type: request.type,
+          ...(vendorId ? { vendorId } : {}),
+        },
+      }),
+      tx,
+    );
+    return linked;
+  });
+}
+
+/**
+ * Bandeja de CRM. `crm.read` por sí solo (rol `vendedor`, `lector`) NO da
+ * visibilidad de toda la plataforma: solo `crm.manage` (operador/admin/owner)
+ * ve todas las solicitudes. Sin ese permiso, el caller solo ve sus propias
+ * solicitudes de vendedor ya vinculadas (`marketVendorId === admin.vendorId`)
+ * — nunca asistentes a eventos, miembros de comunidad, leads de Radio Origen
+ * ni solicitudes de otros vendedores. Un `vendedor` sin vendorId resuelto no
+ * ve nada.
+ */
+export async function getEngagementRequests(admin: CurrentAdmin) {
+  const requests = await getEngagementRepository().list();
+  if (admin.capabilities.includes('crm.manage')) return requests;
+  if (!admin.vendorId) return [];
+  const vendorId = admin.vendorId;
+  return requests.filter(
+    (request) => request.type === 'market' && request.marketVendorId === vendorId,
+  );
 }
 
 export async function changeEngagementStatus(input: unknown) {

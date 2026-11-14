@@ -8,7 +8,7 @@
 # Los secretos NUNCA se pasan como build args ni se hornean en la
 # imagen: Latinoamérica Hosting los inyectará desde su configuración segura
 # de variables (fase de despliegue).
-# SITE_URL y las variables NEXT_PUBLIC_* son públicas y se admiten como
+# TUESTE_ENV, SITE_URL y las variables NEXT_PUBLIC_* son públicas y se admiten como
 # argumentos de build. Next.js necesita estas últimas durante `npm run build`
 # para insertarlas en el bundle del navegador.
 
@@ -24,11 +24,13 @@ RUN npm ci --ignore-scripts
 
 COPY . .
 
-# Variables públicas de build (no secretos). SITE_URL define canonical
-# y metadata; si no se entrega, el contrato usa el fallback demo local.
+# Variables públicas de build (no secretos). TUESTE_ENV y SITE_URL definen
+# el perfil y la canonical metadata; el fallback demo solo aplica en local.
+ARG TUESTE_ENV=local
 ARG SITE_URL=http://localhost:3000
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
+ENV TUESTE_ENV=${TUESTE_ENV}
 ENV SITE_URL=${SITE_URL}
 ENV NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
@@ -53,6 +55,21 @@ RUN groupadd --system --gid 1001 nodejs \
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Migrador de despliegue: las migraciones versionadas, el script runtime y
+# el paquete completo de drizzle-orm (el bundle standalone no traza el
+# submódulo del migrador, que sí se usa en preDeploy). `pg` ya viene en el
+# standalone porque la app lo importa.
+COPY --from=builder --chown=nextjs:nodejs /app/drizzle ./drizzle
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/migrate.mjs ./scripts/migrate.mjs
+# Pre-despliegue en un solo comando (migrar y, si ADMIN_BOOTSTRAP_EMAIL está
+# definida, sembrar roles y primer administrador). El bootstrap importa la
+# fuente única de roles desde src/db/admin-roles.mjs.
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/predeploy.mjs ./scripts/predeploy.mjs
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/lib/predeploy-plan.mjs ./scripts/lib/predeploy-plan.mjs
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/bootstrap-admin.mjs ./scripts/bootstrap-admin.mjs
+COPY --from=builder --chown=nextjs:nodejs /app/src/db/admin-roles.mjs ./src/db/admin-roles.mjs
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/drizzle-orm ./node_modules/drizzle-orm
 
 USER nextjs
 

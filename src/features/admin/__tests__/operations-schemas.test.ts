@@ -3,15 +3,20 @@ import { describe, expect, it } from 'vitest';
 import {
   AUCTION_CREATE_SCHEMA,
   BACKSTAGE_PASS_CREATE_SCHEMA,
+  MARKET_IMAGE_MAX_BYTES,
   MARKET_LISTING_CREATE_SCHEMA,
   TREE_ADOPTION_CREATE_SCHEMA,
   UNITY_OPPORTUNITY_CREATE_SCHEMA,
+  VENDOR_IMAGE_UPLOAD_REQUEST_SCHEMA,
   assertChanged,
+  assertMarketListingComplete,
   canTransitionAuction,
   canTransitionBackstage,
   canTransitionMarket,
   canTransitionTree,
   canTransitionUnity,
+  expectedMarketImageContentType,
+  validateMarketImage,
 } from '../operations-schemas';
 
 const id = '0e824480-7b6f-4a30-8c4a-2141291fa8a1';
@@ -33,9 +38,17 @@ describe('admin operations schemas', () => {
       MARKET_LISTING_CREATE_SCHEMA.parse({
         vendorId: id,
         title: 'Café de origen',
+        brand: 'Finca Roble',
         category: 'Café',
+        variety: 'Castillo',
+        process: 'Lavado',
+        origin: 'Quindío',
+        presentation: 'Bolsa de 340 g',
+        weightGrams: '340',
         inventory: '12',
         priceCents: '4500000',
+        delivery: 'Envío nacional en 3 días',
+        traceability: 'Lote QR-001 · Finca Roble',
         reason: 'Catálogo inicial',
       }).inventory,
     ).toBe(12);
@@ -83,5 +96,87 @@ describe('admin operations schemas', () => {
     expect(canTransitionUnity('proposal', 'won')).toBe(true);
     expect(canTransitionBackstage('issued', 'revoked')).toBe(true);
     expect(() => assertChanged('active', 'active')).toThrow('estado no cambió');
+  });
+
+  it('bloquea productos incompletos y rutas de imagen ajenas', () => {
+    const complete = {
+      vendorId: id,
+      title: 'Café de origen',
+      brand: 'Finca Roble',
+      category: 'Café tostado',
+      variety: 'Castillo',
+      process: 'Lavado',
+      origin: 'Quindío',
+      presentation: 'Bolsa de 340 g',
+      weightGrams: 340,
+      inventory: 12,
+      priceCents: 4500000,
+      delivery: 'Envío nacional en 3 días',
+      traceability: 'Lote QR-001 · Finca Roble',
+    };
+    expect(() => assertMarketListingComplete(complete)).not.toThrow();
+    expect(() => assertMarketListingComplete({ ...complete, variety: '' })).toThrow(
+      'producto está incompleto',
+    );
+    expect(() =>
+      validateMarketImage({
+        vendorId: id,
+        imagePath: `vendors/otro/${id}.png`,
+        imageSizeBytes: 1000,
+      }),
+    ).toThrow('no pertenece');
+    expect(() =>
+      validateMarketImage({
+        vendorId: id,
+        imagePath: `vendors/${id}/producto.gif`,
+        imageSizeBytes: 1000,
+      }),
+    ).toThrow('JPG, PNG o WebP');
+    expect(() =>
+      validateMarketImage({
+        vendorId: id,
+        imagePath: `vendors/${id}/producto.webp`,
+        imageSizeBytes: MARKET_IMAGE_MAX_BYTES + 1,
+      }),
+    ).toThrow('pesar');
+    // Path traversal (`..`) sigue bloqueado, aun con un vendorId correcto.
+    expect(() =>
+      validateMarketImage({
+        vendorId: id,
+        imagePath: `vendors/${id}/../otro/producto.webp`,
+        imageSizeBytes: 1000,
+      }),
+    ).toThrow('no pertenece');
+  });
+
+  it('deriva el content-type real esperado de la extensión de la imagen', () => {
+    expect(expectedMarketImageContentType(`vendors/${id}/foto.webp`)).toBe('image/webp');
+    expect(expectedMarketImageContentType(`vendors/${id}/foto.JPG`)).toBe('image/jpeg');
+    expect(expectedMarketImageContentType(`vendors/${id}/foto.png`)).toBe('image/png');
+    expect(expectedMarketImageContentType(`vendors/${id}/foto.gif`)).toBeNull();
+  });
+
+  it('valida la solicitud de subida de imagen de vendedor', () => {
+    expect(() =>
+      VENDOR_IMAGE_UPLOAD_REQUEST_SCHEMA.parse({
+        filename: 'foto.webp',
+        mimeType: 'image/webp',
+        sizeBytes: 1000,
+      }),
+    ).not.toThrow();
+    expect(() =>
+      VENDOR_IMAGE_UPLOAD_REQUEST_SCHEMA.parse({
+        filename: 'foto.gif',
+        mimeType: 'image/gif',
+        sizeBytes: 1000,
+      }),
+    ).toThrow();
+    expect(() =>
+      VENDOR_IMAGE_UPLOAD_REQUEST_SCHEMA.parse({
+        filename: 'foto.webp',
+        mimeType: 'image/webp',
+        sizeBytes: MARKET_IMAGE_MAX_BYTES + 1,
+      }),
+    ).toThrow();
   });
 });

@@ -14,6 +14,8 @@ const welcome = readFileSync(
   resolve(__dirname, '../../../features/customer-auth/components/CustomerWelcome.tsx'),
   'utf8',
 );
+const resumePending = readFileSync(resolve(__dirname, '../resume-pending.ts'), 'utf8');
+const engagementsService = readFileSync(resolve(__dirname, '../../engagements/service.ts'), 'utf8');
 
 describe('frontera de autenticación pública', () => {
   it('valida la cuenta y renueva sesión con getClaims, nunca con getSession', () => {
@@ -57,6 +59,19 @@ describe('frontera de autenticación pública', () => {
   it('convierte errores del proveedor en una respuesta segura y recuperable', () => {
     expect(confirmRoute).toContain('try {');
     expect(confirmRoute).toContain("publicRedirect('/cuenta/iniciar-sesion'");
+  });
+
+  it('reanuda la intención pendiente solo después de autenticar', () => {
+    expect(customerActions).toContain('resumePendingEngagementAfterAuth');
+    expect(confirmRoute).toContain('resumePendingEngagementAfterAuth');
+    expect(resumePending).toContain('PENDING_ENGAGEMENT_COOKIE');
+    expect(resumePending).toContain('cookieStore.delete(PENDING_ENGAGEMENT_COOKIE)');
+  });
+
+  it('mantiene consumo y mutación dentro de una transacción', () => {
+    expect(engagementsService).toContain('consumePendingIntent');
+    expect(engagementsService).toContain('createEngagementRequestInTransaction(user, input, tx)');
+    expect(engagementsService.match(/getDb\(\)\.transaction/g)?.length).toBeGreaterThanOrEqual(3);
   });
 
   it('protege adopciones de Tree en servidor y conserva el retorno', () => {

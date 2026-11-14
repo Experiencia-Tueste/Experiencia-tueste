@@ -1,0 +1,2 @@
+ALTER TABLE "private"."engagement_requests" ADD COLUMN "market_stage" text;--> statement-breakpoint
+ALTER TABLE "private"."engagement_requests" ADD CONSTRAINT "engagement_requests_market_stage_check" CHECK ("private"."engagement_requests"."market_stage" IS NULL OR "private"."engagement_requests"."market_stage" IN ('submitted', 'review', 'approved', 'rejected'));

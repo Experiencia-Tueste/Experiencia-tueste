@@ -4,7 +4,6 @@ import { AdminShell } from '../AdminShell';
 import {
   changeMemberStatusAction,
   changePostStatusAction,
-  createMemberAction,
   createPostAction,
   createReportAction,
   resolveReportAction,
@@ -19,6 +18,7 @@ export default async function ComunidadPage() {
   const canModerate = admin.capabilities.includes('community.moderate');
   const openReports = workspace.reports.filter((report) => report.status === 'open');
   const restricted = workspace.members.filter((member) => member.status !== 'active');
+  const withdrawn = workspace.members.filter((member) => member.consentStatus === 'withdrawn');
 
   return (
     <AdminShell admin={admin} currentPath="/admin/comunidad">
@@ -35,6 +35,7 @@ export default async function ComunidadPage() {
             <Stat value={workspace.posts.length} label="Publicaciones" />
             <Stat value={openReports.length} label="Reportes abiertos" />
             <Stat value={restricted.length} label="Restringidos" />
+            <Stat value={withdrawn.length} label="Sin consentimiento" />
           </div>
         </section>
 
@@ -42,14 +43,6 @@ export default async function ComunidadPage() {
           <section className="admin-module-section">
             <h2>Ingreso operativo</h2>
             <div className={styles.formGrid}>
-              <form action={createMemberAction} className={styles.form}>
-                <h3>Nuevo miembro</h3>
-                <Field name="displayName" label="Nombre visible" required />
-                <Field name="email" label="Correo" type="email" required />
-                <Field name="notes" label="Notas" />
-                <Field name="reason" label="Razón" required minLength={3} />
-                <button className={styles.button}>Registrar miembro</button>
-              </form>
               <form action={createPostAction} className={styles.form}>
                 <h3>Registrar publicación</h3>
                 <label className={styles.label}>
@@ -198,6 +191,28 @@ export default async function ComunidadPage() {
                     </div>
                     <span className={styles.badge}>{member.status}</span>
                   </div>
+                  <p className={styles.meta}>
+                    Consentimiento:{' '}
+                    <strong>{member.consentStatus === 'active' ? 'activo' : 'retirado'}</strong>
+                  </p>
+                  <p className={styles.meta}>
+                    Preferencias:{' '}
+                    {Array.isArray(member.preferences) ? member.preferences.join(', ') : 'general'}
+                  </p>
+                  {member.consentedAt ? (
+                    <p className={styles.meta}>Consentido: {formatDate(member.consentedAt)}</p>
+                  ) : null}
+                  {member.withdrawnAt ? (
+                    <p className={styles.meta}>Retirado: {formatDate(member.withdrawnAt)}</p>
+                  ) : null}
+                  {workspace.consentEvents
+                    .filter((event) => event.memberId === member.id)
+                    .slice(-1)
+                    .map((event) => (
+                      <p className={styles.meta} key={event.id}>
+                        Último evento: {event.action} · {formatDate(event.occurredAt)}
+                      </p>
+                    ))}
                   {canModerate ? (
                     <form action={changeMemberStatusAction} className={styles.compactForm}>
                       <input type="hidden" name="id" value={member.id} />
@@ -222,6 +237,10 @@ export default async function ComunidadPage() {
       </main>
     </AdminShell>
   );
+}
+
+function formatDate(value: string | Date) {
+  return new Date(value).toLocaleString('es-CO');
 }
 
 function Field({

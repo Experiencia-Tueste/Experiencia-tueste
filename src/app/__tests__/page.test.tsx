@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
-import Home, { metadata } from '../page';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import Home, { dynamic, metadata } from '../page';
 
 describe('Portal de entrada (metadata)', () => {
   it('expone la metadata específica del portal', () => {
@@ -24,6 +24,10 @@ describe('Portal de entrada (orden de foco por teclado)', () => {
 });
 
 describe('Portal de entrada (contenido)', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it('presenta el kicker, el titular y el subtítulo del hero', () => {
     render(<Home />);
 
@@ -74,6 +78,33 @@ describe('Portal de entrada (contenido)', () => {
 
     expect(screen.getByText('Tienda próximamente')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Entrar a la tienda/ })).not.toBeInTheDocument();
+  });
+
+  it('con SHOPIFY_STORE_URL válida enlaza a la tienda', () => {
+    vi.stubEnv('SHOPIFY_STORE_URL', 'https://tienda.example.com');
+
+    render(<Home />);
+
+    expect(screen.getByRole('link', { name: /Entrar a la tienda/ })).toHaveAttribute(
+      'href',
+      'https://tienda.example.com',
+    );
+    expect(screen.queryByText('Tienda próximamente')).not.toBeInTheDocument();
+  });
+
+  it('con SHOPIFY_STORE_URL inválida no rompe el portal: muestra «Tienda próximamente»', () => {
+    vi.stubEnv('SHOPIFY_STORE_URL', '"https://tienda.example.com"');
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    render(<Home />);
+
+    expect(screen.getByText('Tienda próximamente')).toBeInTheDocument();
+    expect(JSON.stringify(consoleError.mock.calls)).not.toContain('tienda.example.com');
+    consoleError.mockRestore();
+  });
+
+  it('se renderiza por petición para leer la URL de la tienda en runtime, no en el build', () => {
+    expect(dynamic).toBe('force-dynamic');
   });
 
   it('cierra con la línea editorial del portal', () => {

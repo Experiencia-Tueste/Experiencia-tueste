@@ -3,11 +3,14 @@ import { getTrack } from '../../audio';
 import {
   brewTotalSeconds,
   CHAT_FLOW,
+  adjustRecipe,
   EQUIPO,
   INTENCION,
+  interpretFreeText,
   METHODS,
   PREF,
   recommend,
+  scoreFrequency,
   scoreSensorial,
   TIEMPO_FIT,
 } from '../index';
@@ -78,6 +81,43 @@ describe('feature barista', () => {
   it('calcula la duración total de una preparación', () => {
     const v60 = METHODS.find((m) => m.id === 'v60')!;
     expect(brewTotalSeconds(v60)).toBe(45 + 30 + 30 + 105);
+  });
+
+  it('interpreta una intención libre de forma determinista', () => {
+    const interpretation = interpretFreeText('Quiero algo dulce y rápido para concentrarme');
+
+    expect(interpretation.answers).toEqual({
+      intencion: 'enfoque',
+      sensorial: 'dulzor',
+      tiempo: 'rapido',
+      equipo: 'todos',
+    });
+    expect(interpretation.summary).toContain('intención: enfoque');
+    expect(interpretation.matched).toHaveLength(4);
+  });
+
+  it('calcula frecuencia y playlist explicables para una recomendación', () => {
+    expect(scoreFrequency('enfoque', 128)).toBe(1);
+    const result = recommend({
+      intencion: 'enfoque',
+      sensorial: 'equilibrio',
+      tiempo: 'medio',
+      equipo: 'todos',
+    });
+
+    expect(result.playlist.length).toBeGreaterThanOrEqual(3);
+    expect(result.playlist.length).toBeLessThanOrEqual(5);
+    expect(result.explanation.method).toContain(result.method.name);
+    expect(result.explanation.frequency).toContain(`${result.method.freq} Hz`);
+  });
+
+  it('aplica ajustes reales sin mutar la receta original', () => {
+    const original = METHODS.find((method) => method.id === 'v60')!;
+    const adjusted = adjustRecipe(original, 'fuerte');
+
+    expect(adjusted.method.coffee).toBe('22 g');
+    expect(adjusted.changes).toContain('dosis +2 g');
+    expect(original.coffee).toBe('20 g');
   });
 
   it('el flujo de consulta tiene cuatro preguntas en orden', () => {

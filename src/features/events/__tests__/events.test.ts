@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { EVENTS, isReservable, reservaMensaje } from '../index';
+import { EVENTS, isEventPast, isReservable, reservaMensaje } from '../index';
 import type { EventStatus } from '../index';
 
 const ESTADOS_VALIDOS: readonly EventStatus[] = ['few', 'open', 'wait', 'past'];
@@ -44,6 +44,14 @@ describe('feature events', () => {
     expect(isReservable('open')).toBe(true);
     expect(isReservable('wait')).toBe(true);
     expect(isReservable('past')).toBe(false);
+  });
+
+  it('la fecha vence aunque el estado editorial todavía diga que hay cupos', () => {
+    const future = { ...EVENTS[0], dateTime: '2027-01-01' };
+    expect(isEventPast(future, new Date('2026-09-06T12:00:00-05:00'))).toBe(false);
+    expect(isReservable(future, new Date('2026-09-06T12:00:00-05:00'))).toBe(true);
+    expect(isEventPast(EVENTS[0], new Date('2026-09-06T12:00:00-05:00'))).toBe(true);
+    expect(isReservable(EVENTS[0], new Date('2026-09-06T12:00:00-05:00'))).toBe(false);
   });
 
   it('reservaMensaje deja claro que una solicitud no es todavía una reserva', () => {

@@ -46,6 +46,16 @@ export default async function AnaliticaPage() {
             label="Ingresos"
             hint="Pagos confirmados"
           />
+          <Stat
+            value={workspace.metrics.publicEvents}
+            label="Eventos públicos"
+            hint="Últimos 14 días"
+          />
+          <Stat
+            value={workspace.metrics.operationalErrors}
+            label="Errores operativos"
+            hint="Últimos 14 días"
+          />
         </Stats>
         <Panel
           title="Actividad de los últimos 14 días"
@@ -110,6 +120,33 @@ export default async function AnaliticaPage() {
               </div>
             ))}
           </div>
+        </Panel>
+        <Panel
+          title="Señales públicas y salud"
+          description="Eventos first-party sin PII y errores agrupados por ruta; el detalle sensible no se almacena."
+        >
+          <div className={styles.groups}>
+            {workspace.signals.funnel.map((step) => (
+              <div className={styles.group} key={step.label}>
+                <strong>{step.value}</strong>
+                <span>{step.label}</span>
+              </div>
+            ))}
+          </div>
+          {workspace.signals.health.errorGroups.length > 0 ? (
+            <div className={operationStyles.stack}>
+              {workspace.signals.health.errorGroups.map((group) => (
+                <div className={operationStyles.cardHeader} key={group.route}>
+                  <strong>{group.route}</strong>
+                  <span className={operationStyles.meta}>{group.value} errores</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <EmptyState title="Sin errores operativos registrados">
+              No hay errores de API en la ventana de observación.
+            </EmptyState>
+          )}
         </Panel>
         <Panel title="Órdenes recientes" description="Últimas señales del flujo de compra.">
           {workspace.recentOrders.length === 0 ? (

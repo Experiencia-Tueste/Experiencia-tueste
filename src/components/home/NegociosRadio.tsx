@@ -1,12 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { getChannel, getTrack } from '@/features/audio';
-import type { TrackId } from '@/lib/audio';
+import { RADIO_DEMO_OPTIONS } from '@/features/audio';
+import type { RadioDemoOption } from '@/features/audio';
+import type { EngagementInput } from '@/features/engagements';
 import { RADIO_PLANS } from '@/features/radio';
 import type { RadioPlan } from '@/features/radio';
 import { loginPath, submitEngagement } from './engagement-client';
+import { trackAnalytics } from '@/features/analytics/client';
 import SectionGhost from './SectionGhost';
 import Reveal from './Reveal';
 import styles from './NegociosRadio.module.css';
@@ -19,42 +21,62 @@ const ACCENT: Record<RadioPlan['accent'], string> = {
 };
 
 export interface NegociosRadioProps {
-  /** Selecciona una pista en el reproductor (estado compartido). */
-  onSelect: (id: TrackId) => void;
+  /** Activa una señal y reproduce su cola en el reproductor global. */
+  onSelectChannel: (option: RadioDemoOption) => void;
 }
 
 /**
  * Bloque B2B (#negocios) + sección «08 / RADIO ORIGEN» (#radio).
- * «Probar la Señal Café» selecciona el primer track del canal `cafe`
- * (RADIO_CHANNELS/getChannel de features/audio) y anuncia el resultado
+ * «Probar la Señal Café» activa el canal `cafe` y reproduce su cola
+ * (RADIO_DEMO_OPTIONS de features/audio), anunciando el resultado
  * localmente. Los planes registran una solicitud autenticada: el equipo
  * confirma operación y condiciones antes de activar una suscripción.
  */
-export default function NegociosRadio({ onSelect }: NegociosRadioProps) {
+export default function NegociosRadio({ onSelectChannel }: NegociosRadioProps) {
   const [anuncio, setAnuncio] = useState<string | null>(null);
   const [pendingPlan, setPendingPlan] = useState<string | null>(null);
+  const [openPlan, setOpenPlan] = useState<RadioPlan['id'] | null>(null);
   const router = useRouter();
 
   const probarSenal = () => {
-    const canal = getChannel('cafe');
-    const primer = canal?.queue[0];
-    if (primer) onSelect(primer);
-    const nombre = primer ? getTrack(primer)?.title : undefined;
-    setAnuncio(`Señal Café seleccionada en el reproductor${nombre ? `: «${nombre}»` : ''}.`);
+    const cafe = RADIO_DEMO_OPTIONS.find((option) => option.id === 'cafe');
+    if (!cafe) return;
+    onSelectChannel(cafe);
+    setAnuncio('Señal Café activa en el reproductor y encadenando piezas.');
   };
 
-  const suscribir = async (plan: RadioPlan) => {
+  const suscribir = async (plan: RadioPlan, event: FormEvent<HTMLFormElement>) => {
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    const optional = (name: string) => {
+      const value = String(data.get(name) ?? '').trim();
+      return value || undefined;
+    };
+    const payload: Extract<EngagementInput, { type: 'radio' }>['payload'] = {
+      company: String(data.get('company') ?? '').trim(),
+      responsible: String(data.get('responsible') ?? '').trim(),
+      phone: optional('phone'),
+      city: String(data.get('city') ?? '').trim(),
+      businessType: String(data.get('businessType') ?? '').trim(),
+      locations: Number(data.get('locations')),
+      hours: String(data.get('hours') ?? '').trim(),
+      comment: optional('comment'),
+      consent: true,
+    };
     setPendingPlan(plan.id);
     const result = await submitEngagement({
       type: 'radio',
       reference: plan.id,
-      details: `${plan.nombre} · USD ${plan.priceUsd}/mes`,
+      payload,
     });
     setPendingPlan(null);
     if (result.kind === 'login') {
       setAnuncio('Inicia sesión con tu cuenta Tueste para solicitar este plan.');
       router.push(loginPath('radio'));
       return;
+    }
+    if (result.kind === 'ok') {
+      void trackAnalytics('radio_request_submitted', { planId: plan.id });
     }
     setAnuncio(result.message);
   };
@@ -138,11 +160,92 @@ export default function NegociosRadio({ onSelect }: NegociosRadioProps) {
                 <button
                   type="button"
                   className={styles.btn}
-                  onClick={() => suscribir(plan)}
+                  onClick={() => setOpenPlan((current) => (current === plan.id ? null : plan.id))}
                   disabled={pendingPlan === plan.id}
+                  aria-expanded={openPlan === plan.id}
+                  aria-controls={`radio-request-${plan.id}`}
                 >
                   {pendingPlan === plan.id ? 'Enviando…' : 'Solicitar plan'}
                 </button>
+                {openPlan === plan.id ? (
+                  <form
+                    id={`radio-request-${plan.id}`}
+                    className={styles.requestForm}
+                    onSubmit={(event) => suscribir(plan, event)}
+                  >
+                    <div className={styles.requestGrid}>
+                      <label className={styles.field}>
+                        Empresa *
+                        <input name="company" required maxLength={160} autoFocus />
+                      </label>
+                      <label className={styles.field}>
+                        Responsable *
+                        <input name="responsible" required maxLength={160} />
+                      </label>
+                      <label className={styles.field}>
+                        Ciudad *
+                        <input name="city" required maxLength={120} />
+                      </label>
+                      <label className={styles.field}>
+                        Tipo de negocio *
+                        <input
+                          name="businessType"
+                          required
+                          maxLength={100}
+                          placeholder="Café, hotel…"
+                        />
+                      </label>
+                      <label className={styles.field}>
+                        Sedes *
+                        <input
+                          name="locations"
+                          type="number"
+                          min={1}
+                          max={1000}
+                          defaultValue={1}
+                          required
+                        />
+                      </label>
+                      <label className={styles.field}>
+                        Horario *
+                        <input
+                          name="hours"
+                          required
+                          maxLength={120}
+                          placeholder="Lun–Dom, 8:00–18:00"
+                        />
+                      </label>
+                      <label className={styles.field}>
+                        Teléfono
+                        <input name="phone" type="tel" maxLength={40} />
+                      </label>
+                      <label className={`${styles.field} ${styles.wide}`}>
+                        Comentario operativo
+                        <textarea name="comment" maxLength={500} rows={3} />
+                      </label>
+                    </div>
+                    <label className={styles.consent}>
+                      <input name="consent" type="checkbox" required />
+                      Acepto que Tueste use estos datos para evaluar la solicitud comercial.
+                    </label>
+                    <div className={styles.requestActions}>
+                      <button
+                        type="submit"
+                        className={styles.requestSubmit}
+                        disabled={pendingPlan === plan.id}
+                      >
+                        {pendingPlan === plan.id ? 'Enviando…' : 'Enviar solicitud'}
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.requestCancel}
+                        onClick={() => setOpenPlan(null)}
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </form>
+                ) : null}
               </article>
             ))}
           </div>
@@ -150,9 +253,9 @@ export default function NegociosRadio({ onSelect }: NegociosRadioProps) {
 
         <Reveal>
           <p className={styles.note}>
-            Servicio para usuarios registrados · sin permanencia · tu solicitud se revisa antes de
-            cualquier facturación o activación. Todos los planes suenan en continuo, 24/7, desde
-            cualquier dispositivo; pruébalos en el reproductor de la página.
+            Esta es una demostración con audio local; no representa todavía un servicio desplegado
+            24/7. Tu solicitud se revisa antes de cualquier facturación o activación, y el equipo
+            confirmará el alcance del servicio para tu espacio.
           </p>
         </Reveal>
 

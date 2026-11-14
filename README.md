@@ -29,6 +29,10 @@ accesibilidad.
   portal de entrada. Debe ser una URL absoluta `https://`; si está vacía
   o ausente, la tarjeta Tienda muestra «Tienda próximamente» (sin enlace
   roto). La URL final será la de Shopify cuando se active la tienda.
+- `CHECKOUT_MODE` declara el canal comercial de la Tienda sin inferencias:
+  `disabled` (por defecto), `external_shopify`, `mercadopago_legacy` o
+  `shopify` (reservado para la integración nativa futura). El modo
+  `external_shopify` requiere una `SHOPIFY_STORE_URL` válida.
 - CI (`.github/workflows/ci.yml`) valida en cada `push` y `pull_request`
   con la versión de `.nvmrc`, caché de npm y `npm ci`, ejecutando en
   orden: `lint`, `format:check`, `typecheck`, `test` y `build`.
@@ -183,6 +187,9 @@ privadas, logs y tareas programadas.
 - Storage y biblioteca multimedia implementados; programación temporal y
   proyección pública de contenido publicado conectadas. El ejecutor se activa
   con `npm run db:publish-scheduled` en un cron independiente.
+- Las solicitudes de Experiencia usan payloads JSONB especializados y la
+  migración `0014_engagement_payload.sql`; debe aplicarse con
+  `npm run db:migrate` antes de habilitar el endpoint en un entorno conectado.
 
 ## Panel administrativo (Fase 1.2.2)
 

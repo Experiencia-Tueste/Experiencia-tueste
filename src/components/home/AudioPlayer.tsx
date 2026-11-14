@@ -41,6 +41,7 @@ export default function AudioPlayer({ player }: AudioPlayerProps) {
     hasInteracted,
     togglePlay,
     select,
+    retry,
     seek,
     selectChannel,
   } = player;
@@ -98,7 +99,16 @@ export default function AudioPlayer({ player }: AudioPlayerProps) {
         </div>
 
         <p className={styles.liveNote} data-live role="status" aria-live="polite">
-          {error ?? mensaje ?? '\u00A0'}
+          {error ? (
+            <>
+              <span>{error}</span>
+              <button type="button" className={styles.retry} onClick={retry}>
+                Reintentar
+              </button>
+            </>
+          ) : (
+            (mensaje ?? '\u00A0')
+          )}
         </p>
       </div>
     </div>

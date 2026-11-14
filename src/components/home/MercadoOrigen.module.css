@@ -79,7 +79,78 @@
   margin: 0;
 }
 
-/* ── Catálogo demo ── */
+/* ── Catálogo público ── */
+.filters {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+
+.filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.56rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(var(--cream-rgb), 0.68);
+}
+
+.filter select {
+  min-width: 150px;
+  background: rgba(var(--cream-rgb), 0.07);
+  border: 1px solid rgba(var(--cream-rgb), 0.18);
+  border-radius: 12px;
+  padding: 10px 12px;
+  color: var(--cream);
+  font-family: var(--font-sans);
+  font-size: 0.84rem;
+}
+
+.filter select:focus-visible,
+.detailLink:focus-visible {
+  outline: 2px solid var(--teal-bright);
+  outline-offset: 3px;
+}
+
+.empty {
+  grid-column: 1 / -1;
+  border: 1px dashed rgba(var(--cream-rgb), 0.18);
+  border-radius: 18px;
+  padding: 28px;
+  color: rgba(var(--cream-rgb), 0.7);
+  line-height: 1.6;
+}
+
+.detail {
+  max-width: 980px;
+  margin-bottom: 22px;
+}
+
+.detailMeta {
+  display: flex;
+  gap: 12px 20px;
+  flex-wrap: wrap;
+  margin: 0 0 18px;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(var(--cream-rgb), 0.65);
+}
+
+.detailLink {
+  color: var(--teal-bright);
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -231,7 +302,9 @@
 .buy:focus-visible,
 .pub:focus-visible,
 .field input:focus-visible,
-.field select:focus-visible {
+.field select:focus-visible,
+.field textarea:focus-visible,
+.consent input:focus-visible {
   outline: 2px solid var(--teal-bright);
   outline-offset: 3px;
 }
@@ -314,7 +387,8 @@
 }
 
 .field input,
-.field select {
+.field select,
+.field textarea {
   background: rgba(var(--cream-rgb), 0.07);
   border: 1px solid rgba(var(--cream-rgb), 0.18);
   border-radius: 12px;
@@ -327,8 +401,14 @@
   transition: border-color 0.25s;
 }
 
+.field textarea {
+  min-height: 48px;
+  resize: vertical;
+}
+
 .field input:focus,
-.field select:focus {
+.field select:focus,
+.field textarea:focus {
   border-color: var(--amber);
 }
 
@@ -339,6 +419,22 @@
 
 .wide {
   grid-column: 1 / -1;
+}
+
+.consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: rgba(var(--cream-rgb), 0.72);
+  font-size: 0.78rem;
+  line-height: 1.45;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.consent input {
+  accent-color: var(--amber);
+  margin-top: 3px;
 }
 
 .pub {
@@ -405,10 +501,15 @@
 }
 
 :global(body.day) .field input,
-:global(body.day) .field select {
+:global(body.day) .field select,
+:global(body.day) .field textarea {
   background: rgba(46, 42, 36, 0.06);
   border-color: rgba(46, 42, 36, 0.2);
   color: var(--ink);
+}
+
+:global(body.day) .consent {
+  color: rgba(46, 42, 36, 0.72);
 }
 
 :global(body.day) .field select option {

@@ -45,6 +45,8 @@ describe('contrato del contenedor de producción', () => {
   });
 
   it('SITE_URL es un build arg público con fallback demo (no secreto)', () => {
+    expect(DOCKERFILE).toContain('ARG TUESTE_ENV=local');
+    expect(DOCKERFILE).toContain('ENV TUESTE_ENV=${TUESTE_ENV}');
     expect(DOCKERFILE).toContain('ARG SITE_URL=http://localhost:3000');
     expect(DOCKERFILE).toContain('ENV SITE_URL=${SITE_URL}');
     expect(DOCKERFILE).not.toMatch(/ARG .*SECRET|ARG .*TOKEN|ARG .*PASSWORD/);

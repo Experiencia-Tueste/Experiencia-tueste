@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { ATTENDEE_CREATE_SCHEMA, EVENT_CREATE_SCHEMA, canTransitionEvent } from '../event-schemas';
+import {
+  ATTENDEE_CREATE_SCHEMA,
+  EVENT_CONFIRM_REQUEST_SCHEMA,
+  EVENT_CREATE_SCHEMA,
+  EVENT_FILTER_SCHEMA,
+  canTransitionEvent,
+} from '../event-schemas';
 
 describe('contratos administrativos de eventos', () => {
   it('normaliza slug y datos de un evento válido', () => {
@@ -47,5 +53,18 @@ describe('contratos administrativos de eventos', () => {
     expect(canTransitionEvent('open', 'waitlist')).toBe(true);
     expect(canTransitionEvent('closed', 'open')).toBe(false);
     expect(canTransitionEvent('cancelled', 'open')).toBe(false);
+  });
+
+  it('valida la confirmación y normaliza filtros del panel', () => {
+    expect(
+      EVENT_CONFIRM_REQUEST_SCHEMA.parse({
+        requestId: '11111111-1111-4111-8111-111111111111',
+        reason: 'Cupo confirmado por el equipo',
+      }).requestId,
+    ).toBe('11111111-1111-4111-8111-111111111111');
+    expect(EVENT_FILTER_SCHEMA.parse({ status: '', city: ' Bogotá ', from: '2026-09-10' })).toEqual(
+      { status: undefined, city: 'Bogotá', from: '2026-09-10', to: undefined },
+    );
+    expect(() => EVENT_FILTER_SCHEMA.parse({ from: '2026-09-12', to: '2026-09-10' })).toThrow();
   });
 });

@@ -61,4 +61,21 @@ describe('db · repositorio de identidad (server-only)', () => {
     const codigo = SOURCE.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
     expect(codigo).toContain('parseAuditEntry');
   });
+
+  it('createOrGetVendorMembership nunca resuelve identidad de vendedor por nombre de marca', () => {
+    // Regresión: un texto libre y público (el nombre de marca del
+    // solicitante) NO puede usarse para emparejar con un vendedor
+    // existente — eso permitiría secuestrar la cuenta de otro vendedor
+    // solo repitiendo su nombre en una solicitud nueva.
+    const method = SOURCE.slice(
+      SOURCE.indexOf('async createOrGetVendorMembership'),
+      SOURCE.indexOf('async appendAudit'),
+    );
+    expect(method).not.toContain('lower(${vendors.name})');
+    expect(method).not.toContain('normalizedName');
+    // Cada aprobación sin membresía ya verificada por email inserta un
+    // vendedor nuevo incondicionalmente.
+    expect(method).toContain('.insert(vendors)');
+    expect(method).toContain('createdVendor: true');
+  });
 });

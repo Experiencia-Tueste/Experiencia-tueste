@@ -307,6 +307,94 @@
   flex: none;
 }
 
+.timer {
+  display: block !important;
+  counter-increment: none !important;
+  padding: 14px 16px;
+  border: 1px solid rgba(var(--void-rgb), 0.18);
+  border-radius: 12px;
+  background: rgba(var(--void-rgb), 0.05);
+}
+
+.timer::before {
+  display: none;
+}
+
+.timerHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.timerHead span {
+  color: var(--coral-deep) !important;
+}
+
+.timer > strong {
+  display: block;
+  margin-top: 8px;
+}
+
+.timerActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 12px;
+}
+
+.timerActions button,
+.adjustments button {
+  border: 1px solid rgba(var(--void-rgb), 0.3);
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.68rem;
+  cursor: pointer;
+}
+
+.timerActions button:hover,
+.adjustments button:hover {
+  background: var(--ink);
+  color: var(--cream);
+}
+
+.timerActions button:focus-visible,
+.adjustments button:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 3px;
+}
+
+.adjustments {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  padding: 0 20px 16px;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.adjustments > span {
+  color: rgba(var(--void-rgb), 0.6);
+}
+
+.adjustments p {
+  width: 100%;
+  min-height: 1.2em;
+  margin: 3px 0 0;
+  color: var(--teal);
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+
 .foot {
   font-family: var(--font-mono);
   font-size: 0.56rem;
@@ -318,5 +406,16 @@
 @media (prefers-reduced-motion: reduce) {
   .pf i {
     transition: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .recipe {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .timerActions button,
+  .adjustments button {
+    min-height: 40px;
   }
 }

@@ -70,6 +70,7 @@ describe('admin · auditoría (reason obligatoria)', () => {
       'tree.adoption_created',
       'tree.adoption_status_changed',
       'market.listing_created',
+      'market.listing_updated',
       'market.listing_status_changed',
       'unity.opportunity_created',
       'unity.opportunity_stage_changed',
@@ -79,6 +80,9 @@ describe('admin · auditoría (reason obligatoria)', () => {
       'backstage.pass_created',
       'backstage.pass_status_changed',
       'engagement.status_changed',
+      'engagement.radio_stage_changed',
+      'engagement.radio_activated',
+      'engagement.market_stage_changed',
     ]);
   });
 

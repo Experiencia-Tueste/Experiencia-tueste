@@ -7,6 +7,7 @@ import {
   loadCheckoutConfig,
   loadDeploymentEnvironment,
   loadShopifyStoreUrl,
+  loadShopifyWebhookSecret,
   loadSiteUrl,
 } from '../env-server';
 
@@ -247,5 +248,17 @@ describe('aislamiento server-only / público', () => {
 
   it('env-server no lee NEXT_PUBLIC_*', () => {
     expect(serverSrc).not.toContain('NEXT_PUBLIC_');
+  });
+});
+
+describe('loadShopifyWebhookSecret (secreto de los avisos de la tienda)', () => {
+  it('devuelve null si falta o está vacío: la ruta de avisos queda cerrada', () => {
+    expect(loadShopifyWebhookSecret({})).toBeNull();
+    expect(loadShopifyWebhookSecret({ SHOPIFY_WEBHOOK_SECRET: '' })).toBeNull();
+    expect(loadShopifyWebhookSecret({ SHOPIFY_WEBHOOK_SECRET: '   ' })).toBeNull();
+  });
+
+  it('devuelve el secreto sin espacios ni saltos de línea alrededor', () => {
+    expect(loadShopifyWebhookSecret({ SHOPIFY_WEBHOOK_SECRET: '  abc123\n' })).toBe('abc123');
   });
 });

@@ -26,11 +26,19 @@ export const treeAdoptionOrders = privateSchema.table(
     treesCount: integer('trees_count').notNull(),
     reference: text('reference').notNull(),
     status: text('status').notNull().default('pending'),
+    /** Pedido de Shopify que pagó la adopción; se fija al activarla. */
+    shopifyOrderId: text('shopify_order_id'),
+    paidAt: timestamp('paid_at', { withTimezone: true }),
+    cancelledAt: timestamp('cancelled_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
     uniqueIndex('tree_adoption_orders_reference_unique').on(table.reference),
+    // Un pedido de la tienda activa como máximo una adopción.
+    uniqueIndex('tree_adoption_orders_shopify_order_unique')
+      .on(table.shopifyOrderId)
+      .where(sql`${table.shopifyOrderId} IS NOT NULL`),
     // Un cliente tiene como máximo una adopción pendiente: reintentar el
     // pago actualiza esa fila en vez de crear duplicados.
     uniqueIndex('tree_adoption_orders_customer_pending_unique')
@@ -44,3 +52,16 @@ export const treeAdoptionOrders = privateSchema.table(
     ),
   ],
 );
+
+/**
+ * Avisos de la tienda ya atendidos. Shopify reintenta y puede repetir una
+ * entrega: cada aviso se registra por su identificador en la misma
+ * transacción que su efecto, así un repetido no vuelve a aplicarse (por
+ * ejemplo, no descuenta dos veces un reembolso parcial).
+ */
+export const shopifyWebhookDeliveries = privateSchema.table('shopify_webhook_deliveries', {
+  deliveryId: text('delivery_id').primaryKey(),
+  topic: text('topic').notNull(),
+  outcome: text('outcome').notNull(),
+  receivedAt: timestamp('received_at', { withTimezone: true }).notNull().defaultNow(),
+});

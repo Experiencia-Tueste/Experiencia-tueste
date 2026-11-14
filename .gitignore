@@ -12,6 +12,12 @@ target/
 .env*
 !.env.example
 
+# Masters de audio: se sirven desde Supabase Storage (bucket público),
+# no desde el repo ni la imagen. Se suben con scripts/upload-radio-audio.mjs.
+/public/audio/*.wav
+/public/audio/*.opus
+/public/audio/*.mp3
+
 # Sistema
 .DS_Store
 Thumbs.db

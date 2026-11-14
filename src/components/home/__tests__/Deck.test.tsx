@@ -322,7 +322,8 @@ describe('Deck (visualizador del reproductor en canvas)', () => {
           description: 'Transformación',
           hz: 528,
           mode: 'house',
-          src: '/audio/05-despertar-528-hz.mp3',
+          src: '/audio/05-despertar-528-hz.opus',
+          master: '/audio/05-despertar-528-hz.wav',
           duration: 75.05,
         }}
       />,
@@ -341,7 +342,8 @@ describe('Deck (visualizador del reproductor en canvas)', () => {
           description: 'Paisaje sonoro',
           hz: 111,
           mode: 'ambient',
-          src: '/audio/01-origen-111-hz.mp3',
+          src: '/audio/01-origen-111-hz.opus',
+          master: '/audio/01-origen-111-hz.wav',
           duration: 75.05,
         }}
       />,
@@ -362,7 +364,8 @@ describe('Deck (visualizador del reproductor en canvas)', () => {
           description: 'Paisaje sonoro',
           hz: 111,
           mode: 'ambient',
-          src: '/audio/01-origen-111-hz.mp3',
+          src: '/audio/01-origen-111-hz.opus',
+          master: '/audio/01-origen-111-hz.wav',
           duration: 75.05,
         }}
       />,
@@ -383,7 +386,8 @@ describe('Deck (visualizador del reproductor en canvas)', () => {
           description: 'Organic house',
           hz: 432,
           mode: 'house',
-          src: '/audio/03-expansion-432-hz.mp3',
+          src: '/audio/03-expansion-432-hz.opus',
+          master: '/audio/03-expansion-432-hz.wav',
           duration: 75.05,
         }}
       />,
